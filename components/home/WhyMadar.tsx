@@ -70,7 +70,7 @@ export default function WhyMadar() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   return (
-    <section className="py-20 sm:py-32 bg-white">
+    <section id="about" className="py-20 sm:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -92,7 +92,16 @@ export default function WhyMadar() {
             <div
               key={feature.id}
               onClick={() => setExpandedId(expandedId === feature.id ? null : feature.id)}
-              className="group relative bg-gradient-to-br from-white to-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-8 transition-all duration-300 hover:shadow-xl hover:border-[#6C3BFF]/20 cursor-pointer"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setExpandedId(expandedId === feature.id ? null : feature.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedId === feature.id}
+              className="group relative cursor-pointer rounded-2xl border border-[#E2E8F0] bg-gradient-to-br from-white to-[#F8FAFC] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#6C3BFF]/20 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2"
             >
               {/* Background Gradient */}
               <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} to-transparent opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`} />

@@ -1,42 +1,49 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { siteConfig } from '@/src/config/site';
+import './globals.css';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const metadataBase = new URL(siteConfig.baseUrl);
 
 export const metadata: Metadata = {
-  title: {
-    default: "ORBIT | مدار",
-    template: "%s | ORBIT",
-  },
-  description:
-    "ORBIT is a modern marketplace for premium digital products, templates, and AI-powered business systems.",
+  metadataBase,
+  title: { default: siteConfig.seo.title, template: siteConfig.seo.titleTemplate },
+  description: siteConfig.description,
+  applicationName: siteConfig.shortName,
+  keywords: [...siteConfig.seo.keywords],
+  authors: [{ name: siteConfig.companyName, url: siteConfig.baseUrl }],
+  creator: siteConfig.companyName,
+  publisher: siteConfig.companyName,
+  alternates: { canonical: siteConfig.links.home },
   icons: {
-    icon: "/brand/favicon.ico",
-    shortcut: "/brand/favicon.ico",
-    apple: "/brand/symbol-180x180.png",
+    icon: siteConfig.assets.favicon,
+    shortcut: siteConfig.assets.favicon,
+    apple: siteConfig.assets.appleTouchIcon,
+  },
+  openGraph: {
+    title: siteConfig.seo.title,
+    description: siteConfig.description,
+    url: siteConfig.baseUrl,
+    siteName: siteConfig.name,
+    locale: siteConfig.locale,
+    type: siteConfig.openGraph.type,
+    images: [{ url: siteConfig.assets.ogImage, width: siteConfig.openGraph.imageWidth, height: siteConfig.openGraph.imageHeight, alt: siteConfig.openGraph.imageAlt }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.seo.title,
+    description: siteConfig.description,
+    creator: siteConfig.seo.twitterHandle,
+    images: [siteConfig.assets.ogImage],
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = { themeColor: siteConfig.themeColor };
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ar" dir="rtl" className="h-full scroll-smooth antialiased">
+      <body className="flex min-h-full flex-col bg-white text-[#0F172A]">{children}</body>
     </html>
   );
 }

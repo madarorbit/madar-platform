@@ -1,0 +1,8 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MADAR logo</title>
+  <desc id="desc">Replaceable production logo mark for MADAR.</desc>
+  <rect width="128" height="128" rx="28" fill="url(#paint0_linear)"/>
+  <path d="M34 82V46h12l18 22 18-22h12v36H82V63L66 82h-4L46 63v19H34Z" fill="white"/>
+  <circle cx="64" cy="64" r="49" stroke="white" stroke-opacity=".35" stroke-width="6"/>
+  <defs><linearGradient id="paint0_linear" x1="18" y1="17" x2="112" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#6C3BFF"/><stop offset="1" stop-color="#00C2A8"/></linearGradient></defs>
+</svg>

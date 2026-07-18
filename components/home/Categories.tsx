@@ -1,6 +1,5 @@
-'use client';
-
-import { useState } from 'react';
+import Link from 'next/link';
+import { siteConfig } from '@/src/config/site';
 
 interface Category {
   id: number;
@@ -56,8 +55,6 @@ const categories: Category[] = [
 ];
 
 export default function Categories() {
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
-
   return (
     <section id="categories" className="py-20 sm:py-32 bg-[#F8FAFC]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -78,11 +75,10 @@ export default function Categories() {
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {categories.map((category) => (
-            <div
+            <Link
               key={category.id}
-              onMouseEnter={() => setHoveredId(category.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              className="group relative bg-white rounded-2xl border border-[#E2E8F0] p-8 transition-all duration-300 hover:shadow-xl hover:border-[#6C3BFF]/20 cursor-pointer"
+              href={siteConfig.links.products}
+              className="group relative rounded-2xl border border-[#E2E8F0] bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[#6C3BFF]/20 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2"
             >
               {/* Background Gradient */}
               <div className={`absolute inset-0 bg-gradient-to-br ${category.color} to-transparent opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`} />
@@ -115,7 +111,7 @@ export default function Categories() {
 
               {/* Border Gradient on Hover */}
               <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-gradient-to-r from-[#6C3BFF]/10 to-[#00C2A8]/10" />
-            </div>
+            </Link>
           ))}
         </div>
       </div>

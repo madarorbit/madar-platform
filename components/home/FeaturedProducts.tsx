@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
+import { siteConfig } from '@/src/config/site';
 
 interface Product {
   id: number;
@@ -91,7 +93,7 @@ export default function FeaturedProducts() {
               onMouseLeave={() => setHoveredId(null)}
               className="group relative bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-[#6C3BFF]/20"
             >
-              {/* Product Image Placeholder */}
+              {/* Product Visual */}
               <div className="relative w-full h-48 bg-gradient-to-br from-[#F8FAFC] to-[#E2E8F0] flex items-center justify-center overflow-hidden">
                 <div className="text-6xl group-hover:scale-110 transition-transform duration-300">
                   {product.icon}
@@ -117,15 +119,16 @@ export default function FeaturedProducts() {
                   <div>
                     <span className="text-2xl font-bold text-[#6C3BFF]">{product.price}</span>
                   </div>
-                  <button
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                  <Link
+                    href={siteConfig.links.products}
+                    className={`rounded-lg px-4 py-2 font-semibold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2 ${
                       hoveredId === product.id
                         ? 'bg-gradient-to-r from-[#6C3BFF] to-[#00C2A8] text-white shadow-lg'
-                        : 'bg-[#F8FAFC] text-[#6C3BFF] border border-[#E2E8F0]'
+                        : 'border border-[#E2E8F0] bg-[#F8FAFC] text-[#6C3BFF] hover:border-[#6C3BFF]/30 hover:bg-white'
                     }`}
                   >
                     عرض
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -137,9 +140,9 @@ export default function FeaturedProducts() {
 
         {/* View All Button */}
         <div className="text-center mt-16">
-          <button className="px-8 py-4 border-2 border-[#E2E8F0] text-[#0F172A] rounded-lg font-semibold hover:bg-[#F8FAFC] transition-colors">
+          <Link href={siteConfig.links.products} className="rounded-xl border-2 border-[#E2E8F0] px-8 py-4 font-semibold text-[#0F172A] transition-colors hover:bg-[#F8FAFC] active:bg-[#E2E8F0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2">
             عرض جميع المنتجات
-          </button>
+          </Link>
         </div>
       </div>
     </section>

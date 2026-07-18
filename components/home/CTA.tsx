@@ -1,4 +1,5 @@
-'use client';
+import Link from 'next/link';
+import { siteConfig } from '@/src/config/site';
 
 export default function CTA() {
   return (
@@ -12,7 +13,7 @@ export default function CTA() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Headline */}
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-          ابدأ رحلتك مع مَدار اليوم
+          ابدأ رحلتك مع {siteConfig.shortName} اليوم
         </h2>
 
         {/* Subheadline */}
@@ -22,12 +23,12 @@ export default function CTA() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button className="px-8 py-4 bg-white text-[#6C3BFF] rounded-lg font-semibold hover:shadow-2xl transition-all transform hover:scale-105 w-full sm:w-auto">
+          <Link href={siteConfig.links.start} className="w-full rounded-xl bg-white px-8 py-4 font-semibold text-[#6C3BFF] transition-all hover:-translate-y-0.5 hover:shadow-2xl active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#6C3BFF] sm:w-auto">
             ابدأ الآن مجاناً
-          </button>
-          <button className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors w-full sm:w-auto">
+          </Link>
+          <Link href={siteConfig.links.learnMore} className="w-full rounded-xl border-2 border-white px-8 py-4 font-semibold text-white transition-colors hover:bg-white/10 active:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#6C3BFF] sm:w-auto">
             اعرف المزيد
-          </button>
+          </Link>
         </div>
 
         {/* Trust Section */}

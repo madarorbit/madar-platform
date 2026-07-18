@@ -1,86 +1,74 @@
-'use client';
-
+import Image from 'next/image';
 import Link from 'next/link';
+import { siteConfig } from '@/src/config/site';
+
+const footerGroups = [
+  { title: 'المنتجات', links: [
+    { label: 'أنظمة الذكاء الاصطناعي', href: siteConfig.links.products },
+    { label: 'قوالب Notion', href: siteConfig.links.categories },
+    { label: 'أتمتة الأعمال', href: siteConfig.links.categories },
+    { label: 'أنظمة Google Sheets', href: siteConfig.links.categories },
+  ] },
+  { title: 'الشركة', links: [
+    { label: 'عن مَدار', href: siteConfig.links.about },
+    { label: 'المدونة', href: siteConfig.links.blog },
+    { label: 'الوظائف', href: siteConfig.links.careers },
+    { label: 'اتصل بنا', href: siteConfig.links.contact },
+  ] },
+  { title: 'القانوني', links: [
+    { label: 'سياسة الخصوصية', href: siteConfig.links.privacy },
+    { label: 'شروط الاستخدام', href: siteConfig.links.terms },
+    { label: 'سياسة الاسترجاع', href: siteConfig.links.refund },
+    { label: 'اتفاقية الخدمة', href: siteConfig.links.serviceAgreement },
+  ] },
+  { title: 'الموارد', links: [
+    { label: 'مركز المساعدة', href: siteConfig.links.helpCenter },
+    { label: 'الوثائق', href: siteConfig.links.docs },
+    { label: 'البرامج التعليمية', href: siteConfig.links.tutorials },
+    { label: 'المجتمع', href: siteConfig.links.community },
+  ] },
+];
+
+const socialLinks = [
+  { name: 'X', icon: '𝕏', href: siteConfig.social.x },
+  { name: 'LinkedIn', icon: 'in', href: siteConfig.social.linkedin },
+  { name: 'Instagram', icon: '◎', href: siteConfig.social.instagram },
+  { name: 'YouTube', icon: '▶', href: siteConfig.social.youtube },
+];
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
-    المنتجات: [
-      { label: 'أنظمة الذكاء الاصطناعي', href: '#' },
-      { label: 'قوالب Notion', href: '#' },
-      { label: 'أتمتة الأعمال', href: '#' },
-      { label: 'أنظمة Google Sheets', href: '#' },
-    ],
-    الشركة: [
-      { label: 'عن مَدار', href: '#' },
-      { label: 'المدونة', href: '#' },
-      { label: 'الوظائف', href: '#' },
-      { label: 'اتصل بنا', href: '#' },
-    ],
-    القانوني: [
-      { label: 'سياسة الخصوصية', href: '#' },
-      { label: 'شروط الاستخدام', href: '#' },
-      { label: 'سياسة الاسترجاع', href: '#' },
-      { label: 'اتفاقية الخدمة', href: '#' },
-    ],
-    الموارد: [
-      { label: 'مركز المساعدة', href: '#' },
-      { label: 'الوثائق', href: '#' },
-      { label: 'البرامج التعليمية', href: '#' },
-      { label: 'المجتمع', href: '#' },
-    ],
-  };
-
-  const socialLinks = [
-    { name: 'Twitter', icon: '𝕏', href: '#' },
-    { name: 'LinkedIn', icon: 'in', href: '#' },
-    { name: 'Instagram', icon: '📷', href: '#' },
-    { name: 'YouTube', icon: '▶️', href: '#' },
-  ];
-
   return (
-    <footer className="bg-[#0F172A] text-white">
-      {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        {/* Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
-          {/* Brand Section */}
+    <footer id="contact" className="bg-[#0F172A] text-white">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5 lg:gap-12">
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#6C3BFF] to-[#00C2A8] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">م</span>
-              </div>
-              <span className="font-bold text-lg">مَدار | ORBIT</span>
-            </div>
-            <p className="text-white/60 text-sm leading-relaxed mb-6">
-              منصة رقمية متخصصة في المنتجات الرقمية وأنظمة الذكاء الاصطناعي والأتمتة
-            </p>
-            <div className="flex gap-4">
+            <Link href={siteConfig.links.home} className="mb-6 flex items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F172A]" aria-label={`${siteConfig.name} - الرئيسية`}>
+              <Image src={siteConfig.assets.logoWhite} alt="" width={36} height={36} className="h-9 w-9 rounded-xl" />
+              <span className="font-bold">{siteConfig.name}</span>
+            </Link>
+            <p className="mb-6 text-sm leading-7 text-white/70">{siteConfig.description}</p>
+            <address className="mb-6 space-y-2 not-italic text-sm text-white/70">
+              <p><a className="transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white" href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></p>
+              <p><a className="transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white" href={`tel:${siteConfig.phone}`}>{siteConfig.phone}</a></p>
+            </address>
+            <div className="flex gap-3" aria-label="روابط التواصل الاجتماعي">
               {socialLinks.map((social) => (
-                <Link
-                  key={social.name}
-                  href={social.href}
-                  className="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-sm font-semibold"
-                  title={social.name}
-                >
+                <Link key={social.name} href={social.href} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:bg-white/20 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white" aria-label={social.name}>
                   {social.icon}
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Links Sections */}
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h3 className="font-semibold text-white mb-6">{category}</h3>
-              <ul className="space-y-4">
-                {links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-white/60 hover:text-white transition-colors text-sm"
-                    >
+          {footerGroups.map((group) => (
+            <div key={group.title}>
+              <h2 className="mb-5 font-semibold text-white">{group.title}</h2>
+              <ul className="space-y-3">
+                {group.links.map((link) => (
+                  <li key={`${group.title}-${link.label}`}>
+                    <Link href={link.href} className="text-sm text-white/65 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
                       {link.label}
                     </Link>
                   </li>
@@ -90,27 +78,14 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-white/10 my-12" />
+        <div className="my-10 border-t border-white/10" />
 
-        {/* Bottom Footer */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* Copyright */}
-          <div className="text-white/60 text-sm">
-            <p>© {currentYear} مَدار | ORBIT. جميع الحقوق محفوظة.</p>
-          </div>
-
-          {/* Additional Links */}
-          <div className="flex gap-6 text-sm">
-            <Link href="#" className="text-white/60 hover:text-white transition-colors">
-              سياسة الخصوصية
-            </Link>
-            <Link href="#" className="text-white/60 hover:text-white transition-colors">
-              شروط الاستخدام
-            </Link>
-            <Link href="#" className="text-white/60 hover:text-white transition-colors">
-              اتصل بنا
-            </Link>
+        <div className="flex flex-col items-center justify-between gap-5 text-sm text-white/65 md:flex-row">
+          <p>© {currentYear} {siteConfig.name}. {siteConfig.copyright}</p>
+          <div className="flex flex-wrap justify-center gap-5">
+            <Link href={siteConfig.links.privacy} className="transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white">سياسة الخصوصية</Link>
+            <Link href={siteConfig.links.terms} className="transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white">شروط الاستخدام</Link>
+            <Link href={siteConfig.links.contact} className="transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white">اتصل بنا</Link>
           </div>
         </div>
       </div>
