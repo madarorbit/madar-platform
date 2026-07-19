@@ -19,11 +19,11 @@ export const siteConfig = {
   },
   links: {
     home: '/',
-    products: '#products',
+    products: '/products',
     categories: '#categories',
     about: '#about',
     contact: '#contact',
-    start: '#products',
+    start: '/products',
     learnMore: '#about',
     privacy: '/privacy',
     terms: '/terms',
@@ -43,7 +43,7 @@ export const siteConfig = {
     youtube: 'https://www.youtube.com/@madarstore',
   },
   nav: [
-    { label: 'المنتجات', href: '#products' },
+    { label: 'المنتجات', href: '/products' },
     { label: 'الفئات', href: '#categories' },
     { label: 'عن مَدار', href: '#about' },
     { label: 'التواصل', href: '#contact' },
