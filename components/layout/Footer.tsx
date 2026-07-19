@@ -31,9 +31,8 @@ const footerGroups = [
 
 const socialLinks = [
   { name: 'X', icon: '𝕏', href: siteConfig.social.x },
-  { name: 'LinkedIn', icon: 'in', href: siteConfig.social.linkedin },
   { name: 'Instagram', icon: '◎', href: siteConfig.social.instagram },
-  { name: 'YouTube', icon: '▶', href: siteConfig.social.youtube },
+  { name: 'واتساب', icon: '◌', href: siteConfig.social.whatsapp },
 ];
 
 export default function Footer() {
@@ -55,9 +54,9 @@ export default function Footer() {
             </address>
             <div className="flex gap-3" aria-label="روابط التواصل الاجتماعي">
               {socialLinks.map((social) => (
-                <Link key={social.name} href={social.href} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:bg-white/20 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white" aria-label={social.name}>
+                <a key={social.name} href={social.href} target="_blank" rel="noreferrer" className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:bg-white/20 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white" aria-label={social.name}>
                   {social.icon}
-                </Link>
+                </a>
               ))}
             </div>
           </div>

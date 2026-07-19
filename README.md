@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# مَدار | MADAR ORBIT
 
-## Getting Started
+واجهة مَدار العربية للمنتجات الرقمية وحلول الأتمتة والتجارة. المشروع مبني بـNext.js App Router وTypeScript وTailwind، مع أساس آمن لتوسعة التجارة إلى PostgreSQL وتخزين خاص وبريد معاملاتي.
 
-First, run the development server:
+> **حالة مهمة:** الواجهة والهوية والتوثيق الأمني جاهزة، لكن المصادقة وقاعدة البيانات والطلبات ورفع الإثباتات والتسليم الموقّع لم تُربط بعد. زر إنشاء الطلب معطل عمداً إلى أن تُنفذ طبقة الاستمرارية؛ لا تستخدم النسخة الحالية لاستلام مدفوعات.
+
+## التشغيل المحلي
 
 ```bash
+npm ci
+cp .env.example .env
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+افتح `http://localhost:3000`. افحص الجودة قبل أي دمج:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## متغيرات البيئة
 
-## Learn More
+راجع [توثيق المتغيرات](docs/environment-variables.md). لا ترفع `.env`. يجب أن يبقى `SUPER_ADMIN_EMAIL` مضبوطاً على بريد المالك الرسمي، ولا يحتوي المشروع على كلمة مرور للمالك.
 
-To learn more about Next.js, take a look at the following resources:
+## إعداد قاعدة البيانات والمالك (بعد تنفيذ طبقة الاستمرارية)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. جهز PostgreSQL واضبط `DATABASE_URL` و`AUTH_SECRET` عشوائياً.
+2. شغّل migrations الخاصة بالـORM الذي يُعتمد في مرحلة الاستمرارية.
+3. أنشئ حساب المالك عبر التسجيل والتحقق من البريد.
+4. شغّل seed إدارياً لمرة واحدة؛ لا يرقّي إلا البريد المطابق لـ`SUPER_ADMIN_EMAIL` والمتحقق منه.
+5. راجع سجلات التدقيق، ثم اختبر رفض المستخدم العادي لمسارات الإدارة.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+تفاصيل المخطط في [database-schema.md](docs/database-schema.md)، ودورة التحويل في [payment-workflow.md](docs/payment-workflow.md).
 
-## Deploy on Vercel
+## النشر
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+لا تنشر checkout كمسار مدفوع قبل ربط PostgreSQL والتخزين الخاص والبريد والمصادقة. خطوات النشر وخيارات الاستضافة في [deployment.md](docs/deployment.md)، وقائمة الاعتماد في [launch-checklist.md](docs/launch-checklist.md).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## التوثيق
+
+- [تدقيق المشروع](docs/current-project-audit.md)
+- [خارطة الطريق](docs/madar-platform-roadmap.md)
+- [المعمارية](docs/architecture.md)
+- [الوصول الإداري](docs/admin-access.md)
+- [الأمان](docs/security-checklist.md)
+- [النسخ والاستعادة](docs/backup-and-recovery.md)
