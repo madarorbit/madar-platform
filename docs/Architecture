@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADAR | ORBIT - مواصفات البنية</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm;
+            @top-center {
+                content: "MADAR | ORBIT - مواصفات البنية";
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 10pt;
+                color: #333;
+            }
+            @bottom-center {
+                content: counter(page);
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 10pt;
+                color: #333;
+            }
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: #1a1a1a; /* Matte Black */
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            color: #1a1a1a;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #6a0dad; /* Imperial Purple */
+        }
+
+        h2 {
+            font-size: 2em;
+            color: #6a0dad; /* Imperial Purple */
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-top: 2em;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            color: #008080; /* Emerald Green */
+            margin-top: 1.8em;
+        }
+
+        h4 {
+            font-size: 1.2em;
+            color: #333;
+            margin-top: 1.5em;
+        }
+
+        p {
+            margin-bottom: 1em;
+        }
+
+        ul {
+            list-style-type: disc;
+            margin-right: 20px;
+            margin-bottom: 1em;
+        }
+
+        ol {
+            list-style-type: decimal;
+            margin-right: 20px;
+            margin-bottom: 1em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #1a1a1a;
+        }
+
+        .cover-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background-color: #1a1a1a; /* Matte Black */
+            color: #fff;
+            page-break-after: always;
+        }
+
+        .cover-page h1 {
+            color: #fff;
+            border-bottom: none;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .cover-page p {
+            font-size: 1.2em;
+            color: #ccc;
+        }
+
+        .toc {
+            page-break-after: always;
+            margin-top: 50px;
+        }
+
+        .toc h2 {
+            text-align: center;
+            border-bottom: 2px solid #6a0dad;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc ul li {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .toc ul li a {
+            text-decoration: none;
+            color: #6a0dad;
+            display: block;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+
+        .toc ul li a:hover {
+            color: #008080;
+        }
+
+        /* Print specific styles */
+        @media print {
+            body {
+                background-color: #fff;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+            .cover-page {
+                height: auto;
+                min-height: 95vh;
+            }
+            h1, h2, h3, h4, h5, h6 {
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+            p, ul, ol, table {
+                page-break-inside: avoid;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cover-page">
+        <h1>MADAR | ORBIT</h1>
+        <p>مواصفات البنية</p>
+        <p>النسخة 1.0</p>
+        <p>تاريخ الإصدار: 19 يوليو 2026</p>
+        <p>المؤلف: Manus AI</p>
+    </div>
+
+    <div class="container">
+        <div class="toc">
+            <h2>جدول المحتويات</h2>
+            <ul>
+                <li><a href="#executive-summary">1. الملخص التنفيذي</a></li>
+                <li><a href="#vision">2. الرؤية</a></li>
+                <li><a href="#mission">3. الرسالة</a></li>
+                <li><a href="#core-principles">4. المبادئ الأساسية</a></li>
+                <li><a href="#project-philosophy">5. فلسفة المشروع</a></li>
+                <li><a href="#social-objectives">6. الأهداف الاجتماعية</a></li>
+                <li><a href="#brand-identity">7. الهوية التجارية</a></li>
+                <li><a href="#platform-scope">8. نطاق المنصة</a></li>
+                <li><a href="#business-model-overview">9. نظرة عامة على نموذج العمل</a></li>
+                <li><a href="#product-portfolio">10. حافظة المنتجات</a></li>
+                <li><a href="#folder-structure">11. هيكل المجلدات</a></li>
+                <li><a href="#high-level-architecture">12. البنية عالية المستوى</a></li>
+                <li><a href="#platform-modules">13. وحدات المنصة</a></li>
+                <li><a href="#pages">14. الصفحات</a></li>
+                <li><a href="#components">15. المكونات</a></li>
+                <li><a href="#user-roles">16. أدوار المستخدمين</a></li>
+                <li><a href="#permissions-matrix">17. مصفوفة الصلاحيات</a></li>
+                <li><a href="#user-flows">18. تدفقات المستخدمين</a></li>
+                <li><a href="#high-level-database-design">19. تصميم قاعدة البيانات عالية المستوى</a></li>
+                <li><a href="#design-system">20. نظام التصميم</a></li>
+                <li><a href="#naming-conventions">21. اتفاقيات التسمية</a></li>
+                <li><a href="#development-rules">22. قواعد التطوير</a></li>
+                <li><a href="#documentation-rules">23. قواعد التوثيق</a></li>
+                <li><a href="#security-principles">24. مبادئ الأمان</a></li>
+                <li><a href="#privacy-policy">25. سياسة الخصوصية (مسودة)</a></li>
+                <li><a href="#payment-policy">26. سياسة الدفع (مسودة)</a></li>
+                <li><a href="#refund-policy">27. سياسة الاسترجاع (مسودة)</a></li>
+                <li><a href="#future-expansion">28. التوسع المستقبلي</a></li>
+                <li><a href="#pending-decisions">29. القرارات المعلقة</a></li>
+            </ul>
+        </div>
+
+        <!-- Content Sections will be added here -->
+
+        <section id="executive-summary">
+            <h2>1. الملخص التنفيذي</h2>
+            <p><strong>الغرض:</strong> توفير نظرة عامة موجزة وعالية المستوى على مشروع MADAR | ORBIT، أهدافه، ومكوناته الرئيسية.</p>
+            <p><strong>الوصف:</strong> MADAR | ORBIT هي منصة عربية أولاً مخصصة لبناء وبيع وتشغيل المنتجات الرقمية، أنظمة التشغيل، أدوات الأعمال، وحلول الأتمتة. تستهدف المنصة الأفراد، التجار، والشركات الصغيرة والمتوسطة. تهدف إلى بناء منظومة عربية حديثة تجمع المنتجات الرقمية والأتمتة والأدوات التشغيلية ضمن منصة واحدة قابلة للنمو، مع التركيز على الجودة العالية والبساطة وقابلية التوسع.</p>
+            <p><strong>الجمهور:</strong> أصحاب المصلحة، المدراء التنفيذيون، فرق التطوير، والمستخدمون المحتملون.</p>
+            <p><strong>المدخلات:</strong> وثيقة استخلاص المعرفة (Knowledge Extraction Document).</p>
+            <p><strong>المخرجات:</strong> فهم واضح لأهداف المشروع ونطاقه.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم تحديث هذا الملخص مع تطور المشروع وتحديد المزيد من التفاصيل.</p>
+        </section>
+
+        <section id="vision">
+            <h2>2. الرؤية</h2>
+            <p><strong>الغرض:</strong> تحديد الاتجاه المستقبلي والطموح طويل الأمد لمشروع MADAR | ORBIT.</p>
+            <p><strong>الوصف:</strong> بناء منظومة عربية حديثة تجمع المنتجات الرقمية والأتمتة والأدوات التشغيلية ضمن منصة واحدة قابلة للنمو.</p>
+            <p><strong>الجمهور:</strong> جميع أصحاب المصلحة، فرق التطوير، والشركاء.</p>
+            <p><strong>المدخلات:</strong> رؤية المشروع المحددة في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> توجيه استراتيجي واضح للمشروع.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> لا يوجد.</p>
+        </section>
+
+        <section id="mission">
+            <h2>3. الرسالة</h2>
+            <p><strong>الغرض:</strong> توضيح الغرض الأساسي للمشروع وكيف يحقق الرؤية.</p>
+            <p><strong>الوصف:</strong> تطوير حلول عملية تساعد المستخدمين والتجار على تحسين أعمالهم باستخدام البرمجيات والذكاء الاصطناعي مع تجربة عربية احترافية.</p>
+            <p><strong>الجمهور:</strong> جميع أصحاب المصلحة، فرق التطوير، والعملاء.</p>
+            <p><strong>المدخلات:</strong> رسالة المشروع المحددة في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> بيان واضح بقيمة المشروع.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> لا يوجد.</p>
+        </section>
+
+        <section id="core-principles">
+            <h2>4. المبادئ الأساسية</h2>
+            <p><strong>الغرض:</strong> تحديد القيم والمبادئ التوجيهية التي تحكم تطوير وتشغيل MADAR | ORBIT.</p>
+            <p><strong>الوصف:</strong></p>
+            <ul>
+                <li><strong>Arabic First:</strong> التركيز على تقديم تجربة عربية أصيلة واحترافية.</li>
+                <li><strong>Premium Quality:</strong> الالتزام بأعلى معايير الجودة في جميع المنتجات والخدمات.</li>
+                <li><strong>Simplicity:</strong> تصميم حلول سهلة الاستخدام وواضحة.</li>
+                <li><strong>Scalability:</strong> بناء بنية تحتية ومنتجات قابلة للتوسع لتلبية النمو المستقبلي.</li>
+                <li><strong>Documentation Driven:</strong> التوثيق الشامل كجزء أساسي من عملية التطوير.</li>
+                <li><strong>AI Native:</strong> دمج الذكاء الاصطناعي بشكل أساسي في الحلول المقدمة.</li>
+                <li><strong>Modular Architecture:</strong> تصميم المنصة كوحدات مستقلة لسهولة التطوير والصيانة.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، مدراء المنتجات، وأصحاب المصلحة.</p>
+            <p><strong>المدخلات:</strong> المبادئ المحددة في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> مجموعة واضحة من المبادئ التوجيهية.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> لا يوجد.</p>
+        </section>
+
+        <section id="project-philosophy">
+            <h2>5. فلسفة المشروع</h2>
+            <p><strong>الغرض:</strong> شرح النهج العام والفلسفة وراء تطوير MADAR | ORBIT.</p>
+            <p><strong>الوصف:</strong> مدار ليست منتجاً واحداً، بل منصة تتوسع تدريجياً حول منتجات مستقلة تشترك في هوية واحدة ومعايير تطوير واحدة. أي إضافة جديدة يجب أن تحل مشكلة حقيقية، تكون قابلة للتوسع، تحافظ على البساطة، ولا تضر بتناسق المنصة.</p>
+            <p><strong>الجمهور:</strong> فرق التطوير، مدراء المنتجات، وأصحاب المصلحة.</p>
+            <p><strong>المدخلات:</strong> فلسفة المشروع المحددة في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> فهم عميق للتوجه الاستراتيجي للمشروع.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> لا يوجد.</p>
+        </section>
+
+        <section id="social-objectives">
+            <h2>6. الأهداف الاجتماعية</h2>
+            <p><strong>الغرض:</strong> تحديد الأهداف الاجتماعية التي يسعى المشروع لتحقيقها.</p>
+            <p><strong>الوصف:</strong> Pending Decision</p>
+            <p><strong>الجمهور:</strong> Pending Decision</p>
+            <p><strong>المدخلات:</strong> Pending Decision</p>
+            <p><strong>المخرجات:</strong> Pending Decision</p>
+            <p><strong>المكونات:</strong> Pending Decision</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision</p>
+            <p><strong>التبعيات:</strong> Pending Decision</p>
+            <p><strong>ملاحظات مستقبلية:</strong> Pending Decision</p>
+        </section>
+
+        <section id="brand-identity">
+            <h2>7. الهوية التجارية</h2>
+            <p><strong>الغرض:</strong> وصف العناصر المرئية وغير المرئية التي تحدد هوية MADAR | ORBIT.</p>
+            <p><strong>الوصف:</strong></p>
+            <ul>
+                <li><strong>الطابع:</strong> Premium SaaS</li>
+                <li><strong>الألوان:</strong> Matte Black, Imperial Purple, Emerald / Mint Green</li>
+                <li><strong>التصميم:</strong> Dark Mode, Minimal, Arabic RTL, بطاقات نظيفة, Glass-like accents عند الحاجة.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التصميم، التسويق، وتطوير المنتجات.</p>
+            <p><strong>المدخلات:</strong> الهوية البصرية المحددة في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> إرشادات واضحة لتطبيق الهوية التجارية.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> لا يوجد.</p>
+        </section>
+
+        <section id="platform-scope">
+            <h2>8. نطاق المنصة</h2>
+            <p><strong>الغرض:</strong> تحديد حدود ومكونات منصة MADAR | ORBIT.</p>
+            <p><strong>الوصف:</strong></p>
+            <p><strong>يشمل:</strong></p>
+            <ul>
+                <li>متجر المنتجات الرقمية.</li>
+                <li>صفحات المنتجات.</li>
+                <li>إدارة العملاء.</li>
+                <li>الأتمتة.</li>
+                <li>الخدمات الاحترافية.</li>
+                <li>المحتوى.</li>
+            </ul>
+            <p><strong>لا يشمل حالياً:</strong></p>
+            <ul>
+                <li>Marketplace.</li>
+                <li>تطبيقات الهاتف.</li>
+                <li>أنظمة ERP الكاملة.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> أصحاب المصلحة، مدراء المنتجات، فرق التطوير.</p>
+            <p><strong>المدخلات:</strong> نطاق المنصة المحدد في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> فهم واضح لما هو داخل وخارج نطاق المشروع.</p>
+            <p><strong>المكونات:</strong> متجر المنتجات الرقمية، صفحات المنتجات، إدارة العملاء، الأتمتة، الخدمات الاحترافية، المحتوى.</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> لا يوجد.</p>
+        </section>
+
+        <section id="business-model-overview">
+            <h2>9. نظرة عامة على نموذج العمل</h2>
+            <p><strong>الغرض:</strong> توفير ملخص لنموذج الإيرادات والقيمة المقترحة للمنصة.</p>
+            <p><strong>الوصف:</strong> Pending Decision</p>
+            <p><strong>الجمهور:</strong> Pending Decision</p>
+            <p><strong>المدخلات:</strong> Pending Decision</p>
+            <p><strong>المخرجات:</strong> Pending Decision</p>
+            <p><strong>المكونات:</strong> Pending Decision</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision</p>
+            <p><strong>التبعيات:</strong> Pending Decision</p>
+            <p><strong>ملاحظات مستقبلية:</strong> Pending Decision</p>
+        </section>
+
+        <section id="product-portfolio">
+            <h2>10. حافظة المنتجات</h2>
+            <p><strong>الغرض:</strong> قائمة بالمنتجات والخدمات التي تقدمها منصة MADAR | ORBIT أو تخطط لتقديمها، مصنفة بشكل هيكلي.</p>
+            <p><strong>الوصف:</strong> تتكون حافظة منتجات MADAR | ORBIT من مجموعة من المنتجات الرقمية والخدمات التي تستهدف شرائح مختلفة من المستخدمين، مع الالتزام بالهوية والمعايير الموحدة للمنصة. يمكن تصنيف المنتجات الحالية والمناقشة كالتالي:</p>
+            <h3>المنتجات الأساسية (Core Products)</h3>
+            <ul>
+                <li><strong>متجر MADAR:</strong> المنصة الرئيسية لعرض وبيع المنتجات الرقمية.</li>
+                <li><strong>منتجات رقمية:</strong> تشمل قوالب، أنظمة تشغيل، وأدوات رقمية متنوعة.</li>
+            </ul>
+            <h3>حلول الأعمال (Business Solutions)</h3>
+            <ul>
+                <li><strong>أنظمة واتساب للأعمال:</strong> حلول متكاملة لأتمتة وتسهيل التواصل التجاري عبر واتساب.</li>
+                <li><strong>أدوات الأتمتة:</strong> مجموعة من الأدوات المصممة لأتمتة المهام المتكررة وتحسين الكفاءة التشغيلية.</li>
+            </ul>
+            <h3>الخدمات الاحترافية (Professional Services)</h3>
+            <ul>
+                <li><strong>خدمات تطوير وأتمتة:</strong> خدمات مخصصة لتطوير حلول برمجية وأتمتة العمليات للعملاء.</li>
+            </ul>
+            <p>ملاحظة: بعض المنتجات المذكورة كانت أفكاراً أولية وقد تتغير أو تتطور بناءً على القرارات المستقبلية.</p>
+            <p><strong>الجمهور:</strong> مدراء المنتجات، فرق التسويق، فرق المبيعات، فرق التطوير.</p>
+            <p><strong>المدخلات:</strong> المنتجات والخدمات التي نوقشت في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> قائمة منظمة بالمنتجات والخدمات المحتملة.</p>
+            <p><strong>المكونات:</strong> متجر MADAR، أنظمة واتساب للأعمال، أدوات الأتمتة، قوالب وأنظمة تشغيل، منتجات رقمية، خدمات تطوير وأتمتة.</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision</p>
+            <p><strong>التبعيات:</strong> Pending Decision</p>
+            <p><strong>ملاحظات مستقبلية:</strong> القرارات النهائية بشأن المنتجات الأولى وهيكل الاشتراكات معلقة.</p>
+        </section>
+
+        <section id="folder-structure">
+            <h2>11. هيكل المجلدات</h2>
+            <p><strong>الغرض:</strong> تحديد تنظيم الملفات والمجلدات داخل مستودع المشروع لضمان الاتساق وسهولة الوصول.</p>
+            <p><strong>الوصف:</strong> يعتمد المشروع على GitHub كمستودع رئيسي، ويتبع هيكلاً منظماً للمجلدات لضمان سهولة إدارة الكود والوثائق والأصول. الهيكل المقترح هو:</p>
+            <ul>
+                <li><code>/</code> (الجذر الرئيسي للمشروع)</li>
+                <ul>
+                    <li><code>/docs</code>: يحتوي على جميع الوثائق الرسمية للمشروع، بما في ذلك مواصفات البنية (Architecture Specification) وغيرها من الوثائق الفنية.</li>
+                    <li><code>/src</code>: يحتوي على الكود المصدري للمنصة، مقسماً إلى وحدات ومكونات.</li>
+                    <li><code>/assets</code>: يحتوي على الأصول المرئية مثل الصور، الأيقونات، والخطوط.</li>
+                    <li><code>/config</code>: ملفات الإعدادات والتكوين للمشروع.</li>
+                    <li><code>/tests</code>: ملفات الاختبارات للوحدات والمكونات المختلفة.</li>
+                    <li><code>/scripts</code>: السكريبتات المساعدة لعمليات البناء والنشر.</li>
+                </ul>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، مهندسو DevOps.</p>
+            <p><strong>المدخلات:</strong> القرارات المتخذة بشأن هيكل المجلدات في وثيقة استخلاص المعرفة (الوثائق داخل <code>docs/</code>، GitHub هو المستودع الرئيسي).</p>
+            <p><strong>المخرجات:</strong> إرشادات واضحة لتنظيم الملفات والمجلدات.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> GitHub كمستودع رئيسي.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> يمكن توسيع هذا الهيكل ليشمل مجلدات فرعية للمنتجات أو الوحدات الكبيرة عند الحاجة.</p>
+        </section>
+
+        <section id="high-level-architecture">
+            <h2>12. البنية عالية المستوى</h2>
+            <p><strong>الغرض:</strong> تقديم نظرة عامة على المكونات الرئيسية للمنصة وكيفية تفاعلها، مع التركيز على الطبقات الأساسية.</p>
+            <p><strong>الوصف:</strong> تعتمد منصة MADAR | ORBIT على بنية معيارية (Modular Architecture) وقابلة للتوسع، مصممة لدعم المنتجات الرقمية المتعددة وحلول الأتمتة. تتكون البنية من الطبقات الرئيسية التالية:</p>
+            <h3>الواجهة الأمامية (Frontend)</h3>
+            <p>تمثل واجهة المستخدم التي يتفاعل معها المستخدمون مباشرة. تتميز بتصميم Arabic First و RTL، مع التركيز على تجربة المستخدم (UX) السلسة. ستكون الواجهة الأمامية سريعة الاستجابة (Responsive) وتدعم الوضع الداكن (Dark Mode) وتستخدم مكونات قابلة لإعادة الاستخدام.</p>
+            <h3>الواجهة الخلفية (Backend)</h3>
+            <p>الطبقة المسؤولة عن منطق الأعمال، إدارة البيانات، ومعالجة الطلبات من الواجهة الأمامية. ستكون مصممة لتكون قابلة للتوسع ومرنة لدعم نمو المنتجات والخدمات. تعتمد على بنية Clean Architecture لضمان سهولة الصيانة والتوسع.</p>
+            <h3>الخدمات (Services)</h3>
+            <p>مجموعة من الخدمات المصغرة (Microservices) أو الخدمات المحددة التي تؤدي وظائف معينة، مثل خدمات الأتمتة، خدمات إدارة العملاء، وخدمات معالجة المنتجات الرقمية. هذه الخدمات تتفاعل مع الواجهة الخلفية وطبقة البيانات.</p>
+            <h3>طبقة البيانات (Data Layer)</h3>
+            <p>المسؤولة عن تخزين واسترجاع وإدارة جميع بيانات المنصة. ستدعم كيانات متعددة وعلاقات معقدة لخدمة المنتجات المختلفة. (قاعدة البيانات النهائية: Pending Decision).</p>
+            <h3>التكاملات (Integrations)</h3>
+            <p>تتضمن تكاملات مع خدمات خارجية مثل بوابات الدفع (مزود الدفع: Pending Decision)، أنظمة الرسائل (مثل واتساب للأعمال)، وأدوات الذكاء الاصطناعي (AI Native).</p>
+            <h3>التوسع المستقبلي (Future Expansion)</h3>
+            <p>تم تصميم البنية لتكون قابلة للتوسع لدعم الأهداف متوسطة وطويلة المدى، مثل إضافة لوحة تحكم متكاملة، حسابات مستخدمين، ومنتجات متعددة، وصولاً إلى منصة أعمال متكاملة وتوسع إقليمي.</p>
+            <p><strong>الجمهور:</strong> أصحاب المصلحة التقنيون، فرق التطوير، مهندسو البنية.</p>
+            <p><strong>المدخلات:</strong> المبادئ الأساسية، نطاق المنصة، فلسفة المشروع، الأهداف متوسطة وطويلة المدى من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> مخطط عالي المستوى للبنية التقنية للمنصة.</p>
+            <p><strong>المكونات:</strong> الواجهة الأمامية، الواجهة الخلفية، الخدمات، طبقة البيانات، التكاملات.</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision</p>
+            <p><strong>التبعيات:</strong> Pending Decision (البنية الخلفية النهائية، الاستضافة النهائية).</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم تفصيل كل طبقة ومكون في وثائق تصميم مفصلة لاحقاً.</p>
+        </section>
+
+        <section id="platform-modules">
+            <h2>13. وحدات المنصة</h2>
+            <p><strong>الغرض:</strong> تفصيل الوحدات المستقلة التي تشكل منصة MADAR | ORBIT، مما يضمن قابلية التوسع والصيانة.</p>
+            <p><strong>الوصف:</strong> تعتمد منصة MADAR | ORBIT على بنية معيارية، حيث تتكون من وحدات مستقلة يمكن تطويرها ونشرها بشكل منفصل. هذا النهج يدعم مبدأ "Modular Architecture" المذكور في المبادئ الأساسية. بناءً على نطاق المنصة والمنتجات التي نوقشت، يمكن استنتاج الوحدات التالية:</p>
+            <ul>
+                <li><strong>وحدة إدارة المنتجات (Product Management Module):</strong> مسؤولة عن إضافة، تعديل، عرض، وإدارة المنتجات الرقمية المعروضة في متجر MADAR.</li>
+                <li><strong>وحدة متجر المنتجات (Product Store Module):</strong> الواجهة الأمامية للمتجر حيث يتصفح العملاء المنتجات ويقومون بعمليات الشراء.</li>
+                <li><strong>وحدة إدارة العملاء (Customer Management Module):</strong> تتعامل مع بيانات العملاء، سجلات الشراء، والتفاعلات.</li>
+                <li><strong>وحدة الأتمتة (Automation Module):</strong> توفر أدوات وحلول الأتمتة المختلفة، مثل أتمتة واتساب للأعمال.</li>
+                <li><strong>وحدة إدارة المحتوى (Content Management Module):</strong> لإدارة المحتوى النصي والمرئي للمنصة، مثل صفحات المنتجات والمقالات.</li>
+                <li><strong>وحدة الخدمات الاحترافية (Professional Services Module):</strong> لإدارة طلبات وعمليات تقديم خدمات التطوير والأتمتة المخصصة.</li>
+                <li><strong>وحدة الدفع (Payment Module):</strong> تتعامل مع عمليات الدفع المختلفة وتكامل بوابات الدفع. (مزود الدفع: Pending Decision).</li>
+                <li><strong>وحدة الصلاحيات والأدوار (Roles & Permissions Module):</strong> لإدارة أدوار المستخدمين وصلاحياتهم داخل المنصة.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، مهندسو البنية، مدراء المنتجات.</p>
+            <p><strong>المدخلات:</strong> نطاق المنصة، المنتجات والخدمات التي نوقشت، مبدأ Modular Architecture من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> قائمة منظمة بالوحدات الأساسية للمنصة.</p>
+            <p><strong>المكونات:</strong> وحدة إدارة المنتجات، وحدة متجر المنتجات، وحدة إدارة العملاء، وحدة الأتمتة، وحدة إدارة المحتوى، وحدة الخدمات الاحترافية، وحدة الدفع، وحدة الصلاحيات والأدوار.</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision</p>
+            <p><strong>التبعيات:</strong> تعتمد الوحدات على بعضها البعض وعلى طبقة البيانات والواجهة الخلفية.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> يمكن إضافة وحدات جديدة مع توسع المنصة، مثل وحدة التحليلات أو وحدة التسويق.</p>
+        </section>
+
+        <section id="pages">
+            <h2>14. الصفحات</h2>
+            <p><strong>الغرض:</strong> تحديد الصفحات الرئيسية داخل المنصة ووظائفها الأساسية.</p>
+            <p><strong>الوصف:</strong> بناءً على نطاق المنصة والمنتجات، يمكن استنتاج الصفحات الرئيسية التالية:</p>
+            <ul>
+                <li><strong>الصفحة الرئيسية (Homepage):</strong> نقطة الدخول الرئيسية للمنصة، تعرض أبرز المنتجات والخدمات، ومعلومات عامة عن MADAR | ORBIT.</li>
+                <li><strong>صفحة متجر المنتجات (Product Store Page):</strong> تعرض جميع المنتجات الرقمية المتاحة للبيع، مع خيارات التصفية والبحث.</li>
+                <li><strong>صفحة تفاصيل المنتج (Product Detail Page):</strong> تعرض معلومات مفصلة عن منتج معين، بما في ذلك الوصف، السعر، الميزات، والمراجعات.</li>
+                <li><strong>صفحة سلة التسوق (Shopping Cart Page):</strong> تسمح للمستخدمين بمراجعة المنتجات المضافة إلى سلة التسوق قبل الشراء.</li>
+                <li><strong>صفحة الدفع (Checkout Page):</strong> لإتمام عملية الشراء، تتضمن معلومات الشحن والدفع.</li>
+                <li><strong>صفحة لوحة التحكم (Dashboard Page):</strong> (هدف متوسط المدى) للمستخدمين المسجلين، تعرض ملخصاً لحساباتهم، مشترياتهم، وإعداداتهم.</li>
+                <li><strong>صفحة إدارة العملاء (Customer Management Page):</strong> (للمدراء) لإدارة بيانات العملاء والتفاعلات.</li>
+                <li><strong>صفحة إدارة المنتجات (Product Management Page):</strong> (للمدراء) لإضافة وتعديل وحذف المنتجات.</li>
+                <li><strong>صفحات الخدمات الاحترافية (Professional Services Pages):</strong> لعرض الخدمات المخصصة وتقديم طلبات الخدمة.</li>
+                <li><strong>صفحات المحتوى (Content Pages):</strong> مثل المدونة، الأسئلة الشائعة، صفحات الدعم.</li>
+                <li><strong>صفحة تسجيل الدخول/التسجيل (Login/Registration Page):</strong> لإدارة حسابات المستخدمين.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التصميم، فرق التطوير، مدراء المنتجات.</p>
+            <p><strong>المدخلات:</strong> نطاق المنصة، المنتجات والخدمات التي نوقشت، الأهداف متوسطة المدى من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> قائمة بالصفحات الرئيسية مع وصف لوظائفها.</p>
+            <p><strong>المكونات:</strong> كل صفحة تتكون من مجموعة من المكونات (Components).</p>
+            <p><strong>الصلاحيات:</strong> تختلف الصلاحيات المطلوبة للوصول إلى الصفحات المختلفة (Pending Decision).</p>
+            <p><strong>التبعيات:</strong> تعتمد الصفحات على وحدات المنصة المختلفة لتقديم وظائفها.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> يمكن إضافة صفحات جديدة مع تطور المنصة وتوسعها.</p>
+        </section>
+
+        <section id="components">
+            <h2>15. المكونات</h2>
+            <p><strong>الغرض:</strong> تحديد المكونات القابلة لإعادة الاستخدام داخل المنصة لضمان الاتساق في التصميم والتطوير.</p>
+            <p><strong>الوصف:</strong> بناءً على مبادئ التصميم (Reusable UI) والهوية البصرية، يمكن استنتاج المكونات الأساسية التالية:</p>
+            <ul>
+                <li><strong>أزرار (Buttons):</strong> بأنواعها وأحجامها المختلفة (أساسي، ثانوي، أيقونة فقط).</li>
+                <li><strong>حقول الإدخال (Input Fields):</strong> للنصوص، الأرقام، التواريخ، وغيرها.</li>
+                <li><strong>بطاقات (Cards):</strong> لعرض المنتجات، الخدمات، أو المعلومات بشكل منظم.</li>
+                <li><strong>قوائم التنقل (Navigation Menus):</strong> للرأس، التذييل، والقوائم الجانبية.</li>
+                <li><strong>الأيقونات (Icons):</strong> مجموعة أيقونات متسقة تعكس الهوية البصرية.</li>
+                <li><strong>المودال (Modals) والنوافذ المنبثقة (Popups):</strong> لعرض المعلومات أو طلب الإجراءات.</li>
+                <li><strong>الجداول (Tables):</strong> لعرض البيانات المنظمة.</li>
+                <li><strong>الشعارات (Logos):</strong> شعار MADAR | ORBIT.</li>
+                <li><strong>الخطوط (Typography Elements):</strong> مكونات لعرض النصوص بأنماط وأحجام مختلفة.</li>
+                <li><strong>مكونات التحميل (Loading Indicators):</strong> لإظهار حالة التحميل.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التصميم، فرق التطوير.</p>
+            <p><strong>المدخلات:</strong> مبادئ التصميم (Reusable UI)، الهوية البصرية من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> قائمة بالمكونات الأساسية القابلة لإعادة الاستخدام.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> تعتمد المكونات على نظام التصميم (Design System) لضمان الاتساق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم توثيق كل مكون بتفاصيل أكثر في نظام التصميم.</p>
+        </section>
+
+        <section id="user-roles">
+            <h2>16. أدوار المستخدمين</h2>
+            <p><strong>الغرض:</strong> تحديد الأدوار المختلفة للمستخدمين داخل منصة MADAR | ORBIT وتوضيح مسؤولياتهم العامة.</p>
+            <p><strong>الوصف:</strong> يتم تعريف الأدوار التالية لتمثيل مستويات مختلفة من الوصول والتفاعل مع المنصة:</p>
+            <ul>
+                <li><strong>الزائر (Guest):</strong> مستخدم غير مسجل يمكنه تصفح المتجر، عرض المنتجات، وقراءة المحتوى العام. لا يمتلك صلاحيات لإجراء عمليات شراء أو الوصول إلى لوحة التحكم.</li>
+                <li><strong>العميل (Customer):</strong> مستخدم مسجل يمكنه إجراء عمليات شراء، إدارة ملفه الشخصي، عرض سجل الطلبات، والتفاعل مع المنتجات والخدمات التي اشتراها.</li>
+                <li><strong>المدير (Admin):</strong> يمتلك صلاحيات إدارية كاملة أو جزئية لإدارة المنتجات، العملاء، الطلبات، المحتوى، وإعدادات المنصة.</li>
+                <li><strong>الفريق (Team Member):</strong> (مستقبلاً) دور مخصص لأعضاء فريق MADAR | ORBIT، قد يمتلك صلاحيات محددة لإدارة جوانب معينة من المنصة أو تقديم الخدمات الاحترافية.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، إدارة المنتجات، فريق الدعم، فريق المبيعات.</p>
+            <p><strong>المدخلات:</strong> المستخدمون المحددين في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> قائمة بأدوار المستخدمين مع وصف لمسؤولياتهم.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision (تفاصيل الصلاحيات الدقيقة لكل دور).</p>
+            <p><strong>التبعيات:</strong> تعتمد مصفوفة الصلاحيات (Permissions Matrix) على هذه الأدوار.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> قد يتم إضافة أدوار فرعية أو تعديل الأدوار الحالية بناءً على متطلبات العمل المستقبلية.</p>
+        </section>
+
+        <section id="permissions-matrix">
+            <h2>17. مصفوفة الصلاحيات</h2>
+            <p><strong>الغرض:</strong> تفصيل الصلاحيات الممنوحة لكل دور من أدوار المستخدمين، لتحديد ما يمكن لكل دور القيام به داخل المنصة.</p>
+            <p><strong>الوصف:</strong> سيتم تحديد مصفوفة الصلاحيات بشكل دقيق لضمان أمان وسلامة البيانات والوظائف. الجدول التالي يوضح مثالاً على كيفية تحديد الصلاحيات، مع الإشارة إلى أن التفاصيل الدقيقة هي "Pending Decision":</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الميزة/الوظيفة</th>
+                        <th>الزائر</th>
+                        <th>العميل</th>
+                        <th>المدير</th>
+                        <th>الفريق (مستقبلاً)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>تصفح المنتجات</td>
+                        <td>✓</td>
+                        <td>✓</td>
+                        <td>✓</td>
+                        <td>✓</td>
+                    </tr>
+                    <tr>
+                        <td>إجراء عمليات شراء</td>
+                        <td>✗</td>
+                        <td>✓</td>
+                        <td>✓</td>
+                        <td>✗</td>
+                    </tr>
+                    <tr>
+                        <td>إدارة الملف الشخصي</td>
+                        <td>✗</td>
+                        <td>✓</td>
+                        <td>✓</td>
+                        <td>✗</td>
+                    </tr>
+                    <tr>
+                        <td>عرض سجل الطلبات</td>
+                        <td>✗</td>
+                        <td>✓</td>
+                        <td>✓</td>
+                        <td>✗</td>
+                    </tr>
+                    <tr>
+                        <td>إدارة المنتجات</td>
+                        <td>✗</td>
+                        <td>✗</td>
+                        <td>✓</td>
+                        <td>Pending Decision</td>
+                    </tr>
+                    <tr>
+                        <td>إدارة العملاء</td>
+                        <td>✗</td>
+                        <td>✗</td>
+                        <td>✓</td>
+                        <td>Pending Decision</td>
+                    </tr>
+                    <tr>
+                        <td>إدارة المحتوى</td>
+                        <td>✗</td>
+                        <td>✗</td>
+                        <td>✓</td>
+                        <td>Pending Decision</td>
+                    </tr>
+                    <tr>
+                        <td>الوصول إلى لوحة التحكم</td>
+                        <td>✗</td>
+                        <td>✗</td>
+                        <td>✓</td>
+                        <td>Pending Decision</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>الجمهور:</strong> فرق التطوير، إدارة المنتجات، فرق الأمان.</p>
+            <p><strong>المدخلات:</strong> أدوار المستخدمين المحددة في وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> هيكل لمصفوفة الصلاحيات.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> Pending Decision (تفاصيل الصلاحيات الدقيقة).</p>
+            <p><strong>التبعيات:</strong> تعتمد على تعريف أدوار المستخدمين.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم تحديد الصلاحيات بشكل أكثر تفصيلاً لكل ميزة ووظيفة مع تطور المشروع.</p>
+        </section>
+
+        <section id="user-flows">
+            <h2>18. تدفقات المستخدمين</h2>
+            <p><strong>الغرض:</strong> وصف المسارات الرئيسية التي يتخذها المستخدمون لإنجاز مهام محددة داخل المنصة، مما يوضح التفاعلات بين المستخدم والنظام.</p>
+            <p><strong>الوصف:</strong> بناءً على أدوار المستخدمين ونطاق المنصة، يمكن استنتاج تدفقات المستخدمين عالية المستوى التالية:</p>
+            <h3>تدفق الزائر (Guest User Flow)</h3>
+            <ol>
+                <li><strong>تصفح المنتجات:</strong> الزائر يدخل إلى المتجر، يتصفح المنتجات، ويشاهد تفاصيلها.</li>
+                <li><strong>البحث عن منتج:</strong> الزائر يستخدم وظيفة البحث للعثور على منتجات معينة.</li>
+                <li><strong>قراءة المحتوى:</strong> الزائر يقرأ المقالات، الأسئلة الشائعة، أو صفحات الدعم.</li>
+            </ol>
+            <h3>تدفق العميل (Customer User Flow)</h3>
+            <ol>
+                <li><strong>التسجيل/تسجيل الدخول:</strong> العميل ينشئ حساباً جديداً أو يسجل الدخول إلى حسابه الحالي.</li>
+                <li><strong>إضافة منتج إلى سلة التسوق:</strong> العميل يختار منتجاً ويضيفه إلى سلة التسوق.</li>
+                <li><strong>إتمام عملية الشراء:</strong> العميل يراجع سلة التسوق، يختار طريقة الدفع، ويكمل عملية الشراء.</li>
+                <li><strong>إدارة الملف الشخصي:</strong> العميل يقوم بتحديث معلوماته الشخصية أو تغيير كلمة المرور.</li>
+                <li><strong>عرض سجل الطلبات:</strong> العميل يتتبع حالة طلباته السابقة.</li>
+            </ol>
+            <h3>تدفق المدير (Admin User Flow)</h3>
+            <ol>
+                <li><strong>تسجيل الدخول إلى لوحة التحكم:</strong> المدير يسجل الدخول إلى واجهة الإدارة.</li>
+                <li><strong>إدارة المنتجات:</strong> المدير يضيف، يعدل، أو يحذف المنتجات من المتجر.</li>
+                <li><strong>إدارة العملاء:</strong> المدير يعرض معلومات العملاء، يدير حساباتهم، أو يتتبع تفاعلاتهم.</li>
+                <li><strong>إدارة المحتوى:</strong> المدير ينشر، يعدل، أو يحذف المحتوى على المنصة.</li>
+                <li><strong>مراجعة الطلبات:</strong> المدير يراجع الطلبات الجديدة، يعالجها، أو يغير حالتها.</li>
+            </ol>
+            <p><strong>الجمهور:</strong> فرق التصميم، فرق التطوير، مدراء المنتجات، فرق ضمان الجودة.</p>
+            <p><strong>المدخلات:</strong> أدوار المستخدمين، نطاق المنصة، الأهداف من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> وصف لتدفقات المستخدمين الرئيسية.</p>
+            <p><strong>المكونات:</strong> تعتمد تدفقات المستخدمين على الصفحات والمكونات المختلفة للمنصة.</p>
+            <p><strong>الصلاحيات:</strong> تختلف الصلاحيات المطلوبة لكل خطوة في التدفق.</p>
+            <p><strong>التبعيات:</strong> تعتمد على تصميم الواجهة الأمامية والواجهة الخلفية.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> يمكن إنشاء رسوم بيانية لتدفقات المستخدمين (User Flow Diagrams) لتوضيحها بشكل مرئي.</p>
+        </section>
+
+        <section id="high-level-database-design">
+            <h2>19. تصميم قاعدة البيانات عالية المستوى</h2>
+            <p><strong>الغرض:</strong> تقديم نظرة عامة على الكيانات الرئيسية والعلاقات في قاعدة البيانات، مع التركيز على الغرض التجاري لكل منها.</p>
+            <p><strong>الوصف:</strong> سيتم تصميم قاعدة البيانات لدعم مرونة وقابلية توسع منصة MADAR | ORBIT، مع الالتزام بمبادئ Clean Architecture. سيتم التركيز على الكيانات الأساسية التي تدعم وظائف المنصة. (قاعدة البيانات النهائية: Pending Decision).</p>
+            <h3>الكيانات الرئيسية (Core Entities)</h3>
+            <ul>
+                <li><strong>المستخدمون (Users):</strong> يخزن معلومات الزوار، العملاء، المدراء، وأعضاء الفريق. الغرض التجاري: إدارة الوصول، التخصيص، وتتبع الأنشطة.</li>
+                <li><strong>المنتجات (Products):</strong> يخزن تفاصيل المنتجات الرقمية المعروضة للبيع. الغرض التجاري: عرض المنتجات، إدارة المخزون، وتتبع المبيعات.</li>
+                <li><strong>الطلبات (Orders):</strong> يخزن معلومات عمليات الشراء التي يقوم بها العملاء. الغرض التجاري: تتبع المبيعات، إدارة الشحن (للمنتجات الرقمية، قد يكون التسليم الفوري)، ودعم العملاء.</li>
+                <li><strong>العملاء (Customers):</strong> يخزن معلومات العملاء المسجلين. الغرض التجاري: إدارة علاقات العملاء، التسويق، وتقديم الدعم.</li>
+                <li><strong>الصلاحيات (Permissions):</strong> يخزن تعريفات الصلاحيات المختلفة. الغرض التجاري: التحكم في الوصول إلى الميزات والبيانات.</li>
+                <li><strong>الأدوار (Roles):</strong> يخزن تعريفات أدوار المستخدمين. الغرض التجاري: تجميع الصلاحيات وتسهيل إدارتها.</li>
+                <li><strong>المحتوى (Content):</strong> يخزن المقالات، صفحات الدعم، وغيرها من المحتوى الثابت. الغرض التجاري: دعم المعلومات والتسويق.</li>
+            </ul>
+            <h3>العلاقات (Relationships)</h3>
+            <ul>
+                <li><strong>المستخدمون - الأدوار:</strong> علاقة متعدد لمتعدد (Many-to-Many) حيث يمكن للمستخدم أن يكون له عدة أدوار، والدور يمكن أن يضم عدة مستخدمين.</li>
+                <li><strong>الأدوار - الصلاحيات:</strong> علاقة متعدد لمتعدد (Many-to-Many) حيث يمكن للدور أن يمتلك عدة صلاحيات، والصلاحية يمكن أن تُمنح لعدة أدوار.</li>
+                <li><strong>العملاء - الطلبات:</strong> علاقة واحد لمتعدد (One-to-Many) حيث يمكن للعميل الواحد أن يقوم بعدة طلبات.</li>
+                <li><strong>الطلبات - المنتجات:</strong> علاقة متعدد لمتعدد (Many-to-Many) حيث يمكن للطلب أن يحتوي على عدة منتجات، والمنتج يمكن أن يكون جزءاً من عدة طلبات (عبر جدول وسيط لـ Order_Items).</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، مهندسو البيانات، مدراء المنتجات.</p>
+            <p><strong>المدخلات:</strong> إرشادات قسم قاعدة البيانات، أدوار المستخدمين، المنتجات، نطاق المنصة من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> فهم عالي المستوى لتصميم قاعدة البيانات مع الكيانات والعلاقات الأساسية.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> Pending Decision (قاعدة البيانات النهائية).</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم إنشاء مخططات ERD (Entity-Relationship Diagram) مفصلة عند تحديد قاعدة البيانات النهائية.</p>
+        </section>
+
+        <section id="design-system">
+            <h2>20. نظام التصميم</h2>
+            <p><strong>الغرض:</strong> توثيق المبادئ والمكونات والأنماط المرئية المستخدمة في تصميم واجهة المستخدم لضمان الاتساق، الكفاءة، وتجربة مستخدم ممتازة.</p>
+            <p><strong>الوصف:</strong> يعكس نظام التصميم الخاص بـ MADAR | ORBIT الهوية البصرية "Premium SaaS" مع التركيز على البساطة، الأناقة، والتجربة العربية الأصيلة (Arabic RTL). يهدف إلى توفير إرشادات ومكونات موحدة لفرق التصميم والتطوير.</p>
+            <h3>المبادئ الأساسية للتصميم</h3>
+            <ul>
+                <li><strong>RTL Native:</strong> دعم كامل للغة العربية من اليمين إلى اليسار.</li>
+                <li><strong>Responsive:</strong> تصميم يستجيب ويتكيف مع مختلف أحجام الشاشات والأجهزة.</li>
+                <li><strong>Accessible:</strong> ضمان إمكانية الوصول للمستخدمين ذوي الاحتياجات الخاصة.</li>
+                <li><strong>High Contrast:</strong> استخدام تباين عالٍ لسهولة القراءة والوضوح.</li>
+                <li><strong>Minimal Motion:</strong> استخدام الحد الأدنى من الحركات والانتقالات للحفاظ على تجربة سلسة وغير مشتتة.</li>
+                <li><strong>Consistent Spacing:</strong> تطبيق مسافات متسقة بين العناصر لإنشاء تصميم نظيف ومنظم.</li>
+                <li><strong>Dark Mode:</strong> دعم الوضع الداكن كخيار أساسي.</li>
+            </ul>
+            <h3>العناصر المرئية (Visual Elements)</h3>
+            <ul>
+                <li><strong>الألوان (Colors):</strong>
+                    <ul>
+                        <li><strong>الأساسي:</strong> Matte Black (#1a1a1a) - للخلفيات الداكنة والنصوص الرئيسية.</li>
+                        <li><strong>التمييز 1:</strong> Imperial Purple (#6a0dad) - للعناصر التفاعلية، العناوين، والأيقونات الهامة.</li>
+                        <li><strong>التمييز 2:</strong> Emerald / Mint Green (#008080 أو ما يعادله) - للعناصر الثانوية، حالات النجاح، أو الأيقونات التكميلية.</li>
+                        <li><strong>النصوص:</strong> أبيض أو رمادي فاتح على الخلفيات الداكنة، ورمادي داكن على الخلفيات الفاتحة.</li>
+                    </ul>
+                </li>
+                <li><strong>الخطوط (Typography):</strong>
+                    <ul>
+                        <li><strong>العائلة:</strong> "Segoe UI", Tahoma, Geneva, Verdana, sans-serif (أو خط عربي مناسب يدعم هذه الجمالية).</li>
+                        <li><strong>الأحجام:</strong> نظام متدرج للأحجام لضمان التسلسل الهرمي الواضح للنصوص (H1, H2, H3, Body, Caption).</li>
+                        <li><strong>الأوزان:</strong> استخدام أوزان الخطوط (عادي، متوسط، غامق) للتمييز.</li>
+                    </ul>
+                </li>
+                <li><strong>الشبكة والتخطيط (Grid & Layout):</strong>
+                    <ul>
+                        <li>نظام شبكي مرن (Flexible Grid System) لضمان التوافقية عبر الأجهزة.</li>
+                        <li>تخطيطات موحدة للصفحات الرئيسية (مثل تخطيط المتجر، تخطيط لوحة التحكم).</li>
+                    </ul>
+                </li>
+                <li><strong>المسافات (Spacing):</strong>
+                    <ul>
+                        <li>نظام مسافات قائم على مضاعفات قيمة أساسية (مثل 8px أو 16px) لضمان الاتساق.</li>
+                        <li>مسافات داخلية (Padding) وخارجية (Margin) موحدة.</li>
+                    </ul>
+                </li>
+                <li><strong>نصف القطر (Radius):</strong>
+                    <ul>
+                        <li>استخدام نصف قطر خفيف للعناصر (مثل الأزرار والبطاقات) لإضفاء لمسة عصرية وناعمة.</li>
+                    </ul>
+                </li>
+                <li><strong>الظلال (Shadows):</strong>
+                    <ul>
+                        <li>استخدام ظلال خفيفة ومعتدلة لإضافة عمق وتمييز العناصر دون إثقال التصميم.</li>
+                    </ul>
+                </li>
+            </ul>
+            <h3>المكونات (Components)</h3>
+            <p>سيتم توثيق كل مكون من المكونات المذكورة في القسم 15 (المكونات) بتفاصيل تصميمه وسلوكه هنا، بما في ذلك حالاته المختلفة (مثل: زر نشط، زر معطل، حقل إدخال بخطأ).</p>
+            <ul>
+                <li><strong>البطاقات (Cards):</strong> تصميم بطاقات نظيفة، مع إمكانية إضافة Glass-like accents عند الحاجة.</li>
+                <li><strong>الأزرار (Buttons):</strong> أنماط موحدة للأزرار الأساسية والثانوية، مع حالات التفاعل (hover, active, disabled).</li>
+                <li><strong>النماذج (Forms):</strong> تصميم موحد لحقول الإدخال، مربعات الاختيار، أزرار الراديو، مع رسائل التحقق من الصحة.</li>
+                <li><strong>الأيقونات (Icons):</strong> مكتبة أيقونات متسقة مع الهوية البصرية.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التصميم، فرق التطوير، مدراء المنتجات.</p>
+            <p><strong>المدخلات:</strong> الهوية البصرية، مبادئ التصميم، قائمة المكونات من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> نظام تصميم شامل يضمن الاتساق البصري والوظيفي.</p>
+            <p><strong>المكونات:</strong> الألوان، الخطوط، الشبكة، التخطيط، المسافات، نصف القطر، الظلال، الأزرار، حقول الإدخال، البطاقات، قوائم التنقل، الأيقونات، المودال، الجداول، الشعارات، مكونات التحميل.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم إنشاء مكتبة مكونات (Component Library) لتسهيل عملية التطوير.</p>
+        </section>
+
+        <section id="naming-conventions">
+            <h2>21. اتفاقيات التسمية</h2>
+            <p><strong>الغرض:</strong> تحديد القواعد والمعايير لتسمية الملفات، المتغيرات، الفئات، الوظائف، وغيرها من عناصر المشروع لضمان الوضوح، الاتساق، وسهولة الصيانة.</p>
+            <p><strong>الوصف:</strong> الاتساق في التسمية أمر بالغ الأهمية لمشروع يعتمد على التوثيق أولاً وبنية معيارية. ستتبع MADAR | ORBIT اتفاقيات تسمية واضحة في جميع جوانب المشروع:</p>
+            <h3>تسمية الملفات والمجلدات (File and Folder Naming)</h3>
+            <ul>
+                <li>استخدام <code>kebab-case</code> للملفات والمجلدات (مثال: <code>product-details.html</code>, <code>customer-management/</code>).</li>
+                <li>أسماء المجلدات يجب أن تكون وصفية وتعكس محتواها.</li>
+            </ul>
+            <h3>تسمية المتغيرات والثوابت (Variable and Constant Naming)</h3>
+            <ul>
+                <li>استخدام <code>camelCase</code> للمتغيرات (مثال: <code>userName</code>, <code>productPrice</code>).</li>
+                <li>استخدام <code>UPPER_SNAKE_CASE</code> للثوابت (مثال: <code>API_KEY</code>, <code>MAX_ITEMS</code>).</li>
+            </ul>
+            <h3>تسمية الفئات والواجهات (Class and Interface Naming)</h3>
+            <ul>
+                <li>استخدام <code>PascalCase</code> للفئات والواجهات (مثال: <code>ProductService</code>, <code>IUserRepository</code>).</li>
+            </ul>
+            <h3>تسمية الوظائف والطرق (Function and Method Naming)</h3>
+            <ul>
+                <li>استخدام <code>camelCase</code> للوظائف والطرق، ويجب أن تكون الأسماء فعلية وتصف الإجراء الذي تقوم به (مثال: <code>getProductById()</code>, <code>saveUser()</code>).</li>
+            </ul>
+            <h3>تسمية قواعد البيانات والجداول والحقول (Database, Table, and Field Naming)</h3>
+            <ul>
+                <li>استخدام <code>snake_case</code> للجداول والحقول (مثال: <code>user_id</code>, <code>product_name</code>).</li>
+                <li>أسماء الجداول يجب أن تكون بصيغة الجمع (مثال: <code>users</code>, <code>products</code>).</li>
+            </ul>
+            <h3>تسمية المكونات في الواجهة الأمامية (Frontend Component Naming)</h3>
+            <ul>
+                <li>استخدام <code>PascalCase</code> لمكونات الواجهة الأمامية (مثال: <code>ProductCard</code>, <code>NavigationBar</code>).</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، مهندسو البنية.</p>
+            <p><strong>المدخلات:</strong> مبدأ Naming Consistency من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> مجموعة واضحة من اتفاقيات التسمية.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم توفير وثيقة مفصلة لاتفاقيات التسمية لكل لغة برمجة أو إطار عمل مستخدم.</p>
+        </section>
+
+        <section id="development-rules">
+            <h2>22. قواعد التطوير</h2>
+            <p><strong>الغرض:</strong> تحديد المبادئ التوجيهية والممارسات التي يجب اتباعها أثناء عملية التطوير لضمان جودة الكود، قابليته للصيانة، واتساقه.</p>
+            <p><strong>الوصف:</strong> تلتزم فرق تطوير MADAR | ORBIT بمجموعة من القواعد والمبادئ لضمان بيئة تطوير فعالة ومنتجة:</p>
+            <h3>مبادئ التطوير (Development Principles)</h3>
+            <ul>
+                <li><strong>Clean Architecture:</strong> فصل الاهتمامات لضمان كود نظيف، قابل للاختبار، وسهل الصيانة.</li>
+                <li><strong>Modular Components:</strong> بناء مكونات مستقلة وقابلة لإعادة الاستخدام لتعزيز المرونة وقابلية التوسع.</li>
+                <li><strong>Reusable UI:</strong> تصميم وتطوير مكونات واجهة المستخدم بحيث يمكن إعادة استخدامها عبر المنصة.</li>
+                <li><strong>Naming Consistency:</strong> الالتزام باتفاقيات تسمية موحدة عبر المشروع.</li>
+                <li><strong>Documentation First:</strong> البدء بالتوثيق قبل البدء في كتابة الكود لضمان فهم واضح للمتطلبات والتصميم.</li>
+                <li><strong>AI Friendly:</strong> تصميم الأنظمة لتكون متوافقة مع حلول الذكاء الاصطناعي المستقبلية وتكاملها.</li>
+            </ul>
+            <h3>قواعد العمل (Operational Rules)</h3>
+            <ul>
+                <li><strong>لا تُبنى ميزة بلا حاجة واضحة:</strong> يجب أن تكون كل ميزة مدفوعة بمتطلب عمل واضح ومبرر.</li>
+                <li><strong>التوثيق يسبق التوسع:</strong> يجب توثيق الميزات والأنظمة بشكل كامل قبل التوسع فيها.</li>
+                <li><strong>إعادة استخدام المكونات:</strong> يجب تفضيل إعادة استخدام المكونات الموجودة بدلاً من إنشاء مكونات جديدة.</li>
+                <li><strong>الالتزام بالهوية:</strong> يجب أن يلتزم التطوير بالهوية البصرية والتجارية للمنصة.</li>
+                <li><strong>عدم كسر التوافق مع الوثائق:</strong> يجب أن يعكس الكود والأنظمة الوثائق الرسمية، وأي تغيير يجب أن يتم توثيقه.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، مدراء المشاريع، مهندسو ضمان الجودة.</p>
+            <p><strong>المدخلات:</strong> مبادئ التطوير وقواعد العمل من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> مجموعة واضحة من قواعد ومبادئ التطوير.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم تطوير دليل أسلوب الكود (Code Style Guide) مفصل لكل لغة برمجة مستخدمة.</p>
+        </section>
+
+        <section id="documentation-rules">
+            <h2>23. قواعد التوثيق</h2>
+            <p><strong>الغرض:</strong> تحديد المعايير والممارسات لإنشاء وصيانة وثائق المشروع لضمان جودتها، اتساقها، وسهولة الوصول إليها.</p>
+            <p><strong>الوصف:</strong> التوثيق هو حجر الزاوية في مشروع MADAR | ORBIT، حيث يتم اعتباره مرجعاً دائماً لفرق التطوير المستقبلية (خاصة Codex). تتبع قواعد التوثيق التالية:</p>
+            <h3>مبادئ التوثيق</h3>
+            <ul>
+                <li><strong>التوثيق أولاً (Documentation First):</strong> يجب أن يسبق التوثيق أي عملية تطوير أو تصميم.</li>
+                <li><strong>Architecture Specification ستكون المرجع:</strong> هذا المستند هو المرجع الأساسي للبنية.</li>
+                <li><strong>HTML هو المصدر القابل للتعديل للوثائق:</strong> يتم الحفاظ على النسخة HTML كنسخة رئيسية قابلة للتحرير.</li>
+                <li><strong>PDF نسخة للنشر والطباعة:</strong> يتم إنشاء نسخة PDF من HTML لأغراض النشر والطباعة.</li>
+                <li><strong>الوثائق داخل مجلد <code>docs/</code>:</strong> جميع الوثائق الرسمية يجب أن تكون موجودة في هذا المجلد.</li>
+            </ul>
+            <h3>قواعد الجودة (Quality Rules)</h3>
+            <ul>
+                <li><strong>توثيق احترافي:</strong> يجب أن تكون جميع الوثائق مكتوبة بأسلوب احترافي وعالي الجودة.</li>
+                <li><strong>لا لغة تسويقية:</strong> تجنب استخدام لغة تسويقية أو ترويجية؛ التركيز على الحقائق والمعلومات التقنية.</li>
+                <li><strong>لا حشو:</strong> يجب أن تكون الوثائق موجزة ومباشرة، وتجنب المعلومات غير الضرورية.</li>
+                <li><strong>لا محتوى مكرر:</strong> تجنب تكرار المعلومات عبر الوثائق المختلفة.</li>
+                <li><strong>مصطلحات متسقة:</strong> استخدام مصطلحات موحدة عبر جميع الوثائق.</li>
+                <li><strong>تسلسل هرمي واضح:</strong> تنظيم المحتوى بتسلسل هرمي منطقي وواضح باستخدام العناوين والقوائم.</li>
+                <li><strong>التركيز على البنية:</strong> يجب أن تركز الوثائق على الجوانب المعمارية والتقنية للمشروع.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> جميع فرق المشروع، أصحاب المصلحة، وكلاء الذكاء الاصطناعي (مثل Codex).</p>
+            <p><strong>المدخلات:</strong> القرارات المتخذة وقواعد الجودة من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> إرشادات واضحة لإنشاء وصيانة وثائق المشروع.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> GitHub كمستودع رئيسي لتخزين الوثائق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم استخدام أدوات توثيق آلية لضمان الامتثال لهذه القواعد.</p>
+        </section>
+
+        <section id="security-principles">
+            <h2>24. مبادئ الأمان</h2>
+            <p><strong>الغرض:</strong> تحديد المبادئ الأساسية التي توجه تصميم وتنفيذ ميزات الأمان في منصة MADAR | ORBIT لضمان حماية البيانات والمستخدمين.</p>
+            <p><strong>الوصف:</strong> الأمان هو جانب حاسم في تطوير MADAR | ORBIT. ستتبع المنصة مبادئ أمان قوية لحماية المعلومات الحساسة وضمان سلامة النظام:</p>
+            <ul>
+                <li><strong>الأمان حسب التصميم (Security by Design):</strong> دمج اعتبارات الأمان في كل مرحلة من مراحل دورة حياة التطوير.</li>
+                <li><strong>مبدأ الامتياز الأقل (Principle of Least Privilege):</strong> منح المستخدمين والأنظمة الحد الأدنى من الصلاحيات اللازمة لأداء وظائفهم.</li>
+                <li><strong>حماية البيانات (Data Protection):</strong> تشفير البيانات الحساسة في حالة السكون وأثناء النقل.</li>
+                <li><strong>المصادقة والتفويض (Authentication and Authorization):</strong> تنفيذ آليات مصادقة قوية وتفويض دقيق للتحكم في الوصول.</li>
+                <li><strong>مراجعة الكود الأمني (Security Code Review):</strong> إجراء مراجعات دورية للكود لتحديد ومعالجة الثغرات الأمنية.</li>
+                <li><strong>التحديثات الأمنية المنتظمة (Regular Security Updates):</strong> تحديث جميع المكتبات والأطر والأنظمة بانتظام لمعالجة الثغرات المعروفة.</li>
+                <li><strong>التعامل مع الثغرات (Vulnerability Management):</strong> وجود عملية واضحة لتحديد الثغرات الأمنية والإبلاغ عنها ومعالجتها.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> فرق التطوير، مهندسو الأمان، مدراء الأنظمة.</p>
+            <p><strong>المدخلات:</strong> لا يوجد معلومات محددة في وثيقة استخلاص المعرفة، ولكن يمكن استنتاج هذه المبادئ كأفضل ممارسات.</p>
+            <p><strong>المخرجات:</strong> مجموعة من المبادئ التوجيهية للأمان.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> Pending Decision (البنية الخلفية النهائية، الاستضافة النهائية).</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم تطوير سياسة أمان مفصلة (Security Policy) لاحقاً.</p>
+        </section>
+
+        <section id="privacy-policy">
+            <h2>25. سياسة الخصوصية (مسودة)</h2>
+            <p><strong>الغرض:</strong> تحديد كيفية جمع البيانات الشخصية للمستخدمين واستخدامها وحمايتها، والالتزام باللوائح ذات الصلة.</p>
+            <p><strong>الوصف:</strong> سياسة الخصوصية هي وثيقة أساسية تحدد التزام MADAR | ORBIT بحماية بيانات المستخدمين. التفاصيل النهائية لهذه السياسة هي "Pending Decision"، ولكنها ستغطي الجوانب التالية:</p>
+            <ul>
+                <li><strong>جمع البيانات:</strong> أنواع البيانات التي يتم جمعها (مثل الاسم، البريد الإلكتروني، معلومات الدفع).</li>
+                <li><strong>استخدام البيانات:</strong> كيفية استخدام هذه البيانات (مثل تحسين الخدمات، معالجة الطلبات، التواصل).</li>
+                <li><strong>مشاركة البيانات:</strong> الظروف التي قد يتم فيها مشاركة البيانات مع أطراف ثالثة (مثل مزودي خدمة الدفع).</li>
+                <li><strong>حقوق المستخدم:</strong> حقوق المستخدمين فيما يتعلق ببياناتهم (مثل الوصول، التعديل، الحذف).</li>
+                <li><strong>الأمان:</strong> الإجراءات المتخذة لحماية البيانات من الوصول غير المصرح به.</li>
+                <li><strong>الامتثال:</strong> الالتزام باللوائح المحلية والدولية لحماية البيانات.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> المستخدمون، فرق الدعم القانوني، فرق التطوير.</p>
+            <p><strong>المدخلات:</strong> Pending Decision (سياسة الخصوصية النهائية) من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> مسودة لسياسة الخصوصية.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> Pending Decision (سياسة الخصوصية النهائية).</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم تطوير هذه المسودة إلى سياسة نهائية بعد مراجعة قانونية شاملة.</p>
+        </section>
+
+        <section id="payment-policy">
+            <h2>26. سياسة الدفع (مسودة)</h2>
+            <p><strong>الغرض:</strong> تحديد الشروط والأحكام المتعلقة بالمدفوعات داخل المنصة، بما في ذلك طرق الدفع، الأسعار، والفوترة.</p>
+            <p><strong>الوصف:</strong> سياسة الدفع ستوضح جميع الجوانب المتعلقة بالمعاملات المالية على منصة MADAR | ORBIT. التفاصيل النهائية لهذه السياسة هي "Pending Decision"، ولكنها ستشمل:</p>
+            <ul>
+                <li><strong>طرق الدفع المقبولة:</strong> البطاقات الائتمانية، التحويلات البنكية، المحافظ الإلكترونية، إلخ.</li>
+                <li><strong>عمليات الدفع:</strong> كيفية معالجة المدفوعات، تأكيد الطلبات، وإصدار الفواتير.</li>
+                <li><strong>الأسعار:</strong> كيفية عرض الأسعار، الضرائب، والرسوم الإضافية.</li>
+                <li><strong>الاشتراكات:</strong> (Pending Decision) تفاصيل هيكل الاشتراكات، التجديد، والإلغاء.</li>
+                <li><strong>الأمان:</strong> الإجراءات المتخذة لضمان أمان معلومات الدفع.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> المستخدمون، فرق الدعم، فرق المحاسبة، فرق التطوير.</p>
+            <p><strong>المدخلات:</strong> Pending Decision (مزود الدفع، هيكل الاشتراكات) من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> مسودة لسياسة الدفع.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> Pending Decision (مزود الدفع).</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم تحديد مزود الدفع وهيكل الاشتراكات قبل الانتهاء من هذه السياسة.</p>
+        </section>
+
+        <section id="refund-policy">
+            <h2>27. سياسة الاسترجاع (مسودة)</h2>
+            <p><strong>الغرض:</strong> تحديد الشروط والإجراءات لاسترجاع المنتجات أو الخدمات الرقمية، بما يضمن الشفافية وحقوق العملاء.</p>
+            <p><strong>الوصف:</strong> سياسة الاسترجاع ستوفر إرشادات واضحة للعملاء حول كيفية طلب استرجاع أو استبدال المنتجات الرقمية. التفاصيل النهائية لهذه السياسة هي "Pending Decision"، ولكنها ستتضمن:</p>
+            <ul>
+                <li><strong>شروط الاسترجاع:</strong> المعايير التي يجب أن تستوفيها المنتجات الرقمية لتكون مؤهلة للاسترجاع (مثل عيوب فنية، عدم تطابق مع الوصف).</li>
+                <li><strong>فترة الاسترجاع:</strong> الإطار الزمني المسموح به لتقديم طلب الاسترجاع.</li>
+                <li><strong>إجراءات الاسترجاع:</strong> الخطوات التي يجب على العميل اتباعها لتقديم طلب الاسترجاع.</li>
+                <li><strong>معالجة الاسترجاع:</strong> كيفية مراجعة الطلبات، الموافقة عليها، ومعالجة المبالغ المستردة.</li>
+                <li><strong>الاستثناءات:</strong> المنتجات أو الخدمات التي لا يمكن استرجاعها.</li>
+            </ul>
+            <p><strong>الجمهور:</strong> المستخدمون، فرق الدعم، فرق المحاسبة.</p>
+            <p><strong>المدخلات:</strong> Pending Decision (سياسة الاسترجاع النهائية) من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> مسودة لسياسة الاسترجاع.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> Pending Decision (سياسة الاسترجاع النهائية).</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم الانتهاء من هذه السياسة بعد تحديد جميع الجوانب المتعلقة بالمنتجات الرقمية وعمليات البيع.</p>
+        </section>
+
+        <section id="future-expansion">
+            <h2>28. التوسع المستقبلي</h2>
+            <p><strong>الغرض:</strong> تحديد المجالات المحتملة للنمو والتوسع في المستقبل، بما يتماشى مع الرؤية طويلة الأمد للمنصة.</p>
+            <p><strong>الوصف:</strong> تم تصميم MADAR | ORBIT لتكون منصة قابلة للنمو والتوسع. تشمل خطط التوسع المستقبلية الأهداف التالية:</p>
+            <h3>الأهداف قصيرة المدى (Short-Term Goals)</h3>
+            <ul>
+                <li>بناء متجر مدار.</li>
+                <li>بيع منتجات رقمية.</li>
+                <li>إنشاء أساس تقني قوي.</li>
+            </ul>
+            <h3>الأهداف متوسطة المدى (Mid-Term Goals)</h3>
+            <ul>
+                <li>إضافة لوحة تحكم متكاملة للمستخدمين والمدراء.</li>
+                <li>تطوير نظام حسابات مستخدمين متقدم.</li>
+                <li>تكامل قاعدة بيانات قوية لدعم المنتجات المتعددة.</li>
+                <li>توسيع حافظة المنتجات لتشمل أنواعاً متعددة من المنتجات الرقمية.</li>
+            </ul>
+            <h3>الأهداف طويلة المدى (Long-Term Goals)</h3>
+            <ul>
+                <li>تطوير منصة أعمال متكاملة توفر حلولاً شاملة للشركات.</li>
+                <li>التوسع الإقليمي ليشمل أسواقاً جديدة في المنطقة العربية.</li>
+                <li>تعزيز التكامل مع الذكاء الاصطناعي لتقديم حلول أكثر ذكاءً وأتمتة.</li>
+                <li>استكشاف إمكانية إضافة Marketplace لدعم بائعين آخرين (لا يشمل حالياً).</li>
+                <li>دراسة تطوير تطبيقات الهاتف (لا يشمل حالياً).</li>
+            </ul>
+            <p><strong>الجمهور:</strong> أصحاب المصلحة، مدراء المنتجات، فرق التخطيط الاستراتيجي.</p>
+            <p><strong>المدخلات:</strong> الأهداف قصيرة، متوسطة، وطويلة المدى، ونطاق المنصة (ما لا يشمله حالياً) من وثيقة استخلاص المعرفة.</p>
+            <p><strong>المخرجات:</strong> خارطة طريق محتملة للنمو والتوسع.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> Pending Decision</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم مراجعة هذه الأهداف وتحديثها بشكل دوري بناءً على تطورات السوق واحتياجات العمل.</p>
+        </section>
+
+        <section id="pending-decisions">
+            <h2>29. القرارات المعلقة</h2>
+            <p><strong>الغرض:</strong> توثيق جميع القرارات التي لم يتم حسمها بعد وتتطلب مزيدًا من الدراسة أو المدخلات من أصحاب المصلحة.</p>
+            <p><strong>الوصف:</strong> هذه القائمة تتضمن البنود التي لا تزال تتطلب اتخاذ قرار نهائي قبل المضي قدماً في جوانب معينة من المشروع. سيتم تحديث هذه القائمة باستمرار مع اتخاذ القرارات.</p>
+            <ul>
+                <li>قاعدة البيانات النهائية.</li>
+                <li>مزود الدفع.</li>
+                <li>سياسة الاسترجاع النهائية.</li>
+                <li>سياسة الخصوصية النهائية.</li>
+                <li>هيكل الاشتراكات.</li>
+                <li>المنتجات الأولى النهائية.</li>
+                <li>الصلاحيات التفصيلية لكل دور.</li>
+                <li>البنية الخلفية النهائية.</li>
+                <li>الاستضافة النهائية.</li>
+                <li>الأهداف الاجتماعية المحددة للمشروع.</li>
+                <li>نظرة عامة على نموذج العمل (Business Model Overview).</li>
+            </ul>
+            <p><strong>الجمهور:</strong> أصحاب المصلحة، فرق التطوير، مدراء المنتجات، فرق الإدارة.</p>
+            <p><strong>المدخلات:</strong> القرارات المؤجلة من وثيقة استخلاص المعرفة، بالإضافة إلى البنود التي لم يتم توفير معلومات كافية عنها.</p>
+            <p><strong>المخرجات:</strong> قائمة واضحة بالبنود التي تتطلب اتخاذ قرار.</p>
+            <p><strong>المكونات:</strong> لا ينطبق.</p>
+            <p><strong>الصلاحيات:</strong> لا ينطبق.</p>
+            <p><strong>التبعيات:</strong> لا ينطبق.</p>
+            <p><strong>ملاحظات مستقبلية:</strong> سيتم عقد اجتماعات دورية لمراجعة هذه القرارات واتخاذ الإجراءات اللازمة.</p>
+        </section>
+
+    </div>
+</body>
+</html>
