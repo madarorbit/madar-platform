@@ -1,0 +1,1 @@
+'use client';export default function Error({reset}:{reset:()=>void}){return <main className="min-h-screen bg-[#0B1020] p-10 text-center text-white"><h1 className="text-3xl font-bold">حدث خطأ غير متوقع</h1><button className="mt-6 rounded-xl bg-white px-6 py-3 text-[#111827]" onClick={reset}>إعادة المحاولة</button></main>}

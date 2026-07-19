@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export function Breadcrumbs({items}:{items:{label:string;href?:string}[]}){return <nav aria-label="مسار الصفحة" className="mb-8 text-sm text-slate-300"><ol className="flex flex-wrap gap-2"><li><Link href="/" className="hover:text-white">الرئيسية</Link></li>{items.map((item)=><li key={item.label} className="flex gap-2"><span>/</span>{item.href?<Link className="hover:text-white" href={item.href}>{item.label}</Link>:<span className="text-white">{item.label}</span>}</li>)}</ol></nav>}

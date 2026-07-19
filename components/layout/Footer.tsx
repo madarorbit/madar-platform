@@ -5,27 +5,27 @@ import { siteConfig } from '@/src/config/site';
 const footerGroups = [
   { title: 'المنتجات', links: [
     { label: 'أنظمة الذكاء الاصطناعي', href: siteConfig.links.products },
-    { label: 'قوالب Notion', href: siteConfig.links.categories },
-    { label: 'أتمتة الأعمال', href: siteConfig.links.categories },
-    { label: 'أنظمة Google Sheets', href: siteConfig.links.categories },
+    { label: 'قوالب Notion', href: siteConfig.links.products },
+    { label: 'أتمتة الأعمال', href: siteConfig.links.products },
+    { label: 'أنظمة Google Sheets', href: siteConfig.links.products },
   ] },
   { title: 'الشركة', links: [
     { label: 'عن مَدار', href: siteConfig.links.about },
-    { label: 'المدونة', href: siteConfig.links.blog },
-    { label: 'الوظائف', href: siteConfig.links.careers },
+    { label: 'المدونة', href: siteConfig.links.about },
+    { label: 'الوظائف', href: siteConfig.links.contact },
     { label: 'اتصل بنا', href: siteConfig.links.contact },
   ] },
   { title: 'القانوني', links: [
     { label: 'سياسة الخصوصية', href: siteConfig.links.privacy },
     { label: 'شروط الاستخدام', href: siteConfig.links.terms },
-    { label: 'سياسة الاسترجاع', href: siteConfig.links.refund },
-    { label: 'اتفاقية الخدمة', href: siteConfig.links.serviceAgreement },
+    { label: 'سياسة الاسترجاع', href: siteConfig.links.terms },
+    { label: 'اتفاقية الخدمة', href: siteConfig.links.terms },
   ] },
   { title: 'الموارد', links: [
-    { label: 'مركز المساعدة', href: siteConfig.links.helpCenter },
-    { label: 'الوثائق', href: siteConfig.links.docs },
-    { label: 'البرامج التعليمية', href: siteConfig.links.tutorials },
-    { label: 'المجتمع', href: siteConfig.links.community },
+    { label: 'مركز المساعدة', href: siteConfig.links.faq },
+    { label: 'الوثائق', href: siteConfig.links.faq },
+    { label: 'البرامج التعليمية', href: siteConfig.links.services },
+    { label: 'المجتمع', href: siteConfig.links.contact },
   ] },
 ];
 
@@ -45,7 +45,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5 lg:gap-12">
           <div className="lg:col-span-1">
             <Link href={siteConfig.links.home} className="mb-6 flex items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F172A]" aria-label={`${siteConfig.name} - الرئيسية`}>
-              <Image src={siteConfig.assets.logoWhite} alt="" width={36} height={36} className="h-9 w-9 rounded-xl" />
+              <Image src={siteConfig.assets.logoWhite} alt="" width={120} height={40} className="h-10 w-auto" />
               <span className="font-bold">{siteConfig.name}</span>
             </Link>
             <p className="mb-6 text-sm leading-7 text-white/70">{siteConfig.description}</p>

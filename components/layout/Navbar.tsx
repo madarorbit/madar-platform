@@ -11,14 +11,14 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const isActive = (href: string) =>
-    href === siteConfig.links.home ? pathname === href : false;
+    href === siteConfig.links.home ? pathname === href : pathname?.startsWith(href);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-[#E2E8F0]/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85" aria-label="التنقل الرئيسي">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href={siteConfig.links.home} className="flex min-w-0 items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2" aria-label={`${siteConfig.name} - الرئيسية`}>
-            <Image src={siteConfig.assets.logo} alt="" width={36} height={36} priority className="h-9 w-9 rounded-xl" />
+            <Image src={siteConfig.assets.logo} alt="" width={120} height={40} priority className="h-10 w-auto" />
             <span className="truncate text-base font-bold text-[#0F172A] sm:text-lg">{siteConfig.name}</span>
           </Link>
 
@@ -36,8 +36,8 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:block">
-            <Link href={siteConfig.links.start} className="inline-flex rounded-xl bg-gradient-to-r from-[#6C3BFF] to-[#00C2A8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2">
-              ابدأ الآن
+            <Link href={siteConfig.links.checkout} className="inline-flex rounded-xl bg-gradient-to-r from-[#6C3BFF] to-[#00C2A8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2">
+              شراء الآن
             </Link>
           </div>
 
@@ -63,8 +63,8 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Link href={siteConfig.links.start} className="mt-2 rounded-xl bg-gradient-to-r from-[#6C3BFF] to-[#00C2A8] px-6 py-3 text-center font-semibold text-white shadow-sm transition-all hover:shadow-lg active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF]" onClick={() => setIsOpen(false)}>
-                ابدأ الآن
+              <Link href={siteConfig.links.checkout} className="mt-2 rounded-xl bg-gradient-to-r from-[#6C3BFF] to-[#00C2A8] px-6 py-3 text-center font-semibold text-white shadow-sm transition-all hover:shadow-lg active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF]" onClick={() => setIsOpen(false)}>
+                شراء الآن
               </Link>
             </div>
           </div>
