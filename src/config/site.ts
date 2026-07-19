@@ -11,11 +11,11 @@ export const siteConfig = {
   themeColor: '#6C3BFF',
   copyright: 'جميع الحقوق محفوظة.',
   assets: {
-    logo: '/logo.svg',
-    logoWhite: '/logo-white.svg',
-    favicon: '/logo.svg',
-    appleTouchIcon: '/logo.svg',
-    ogImage: '/logo.svg',
+    logo: '/symbol.png',
+    logoWhite: '/logo-white.png',
+    favicon: '/favicon.ico',
+    appleTouchIcon: '/symbol-180x180.png',
+    ogImage: '/logo.png',
   },
   links: {
     home: '/',
