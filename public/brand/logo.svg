@@ -1,0 +1,37 @@
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1000" height="1000" fill="#0a0b0f" rx="80" ry="80"/>
+  
+  <!-- Orbit Icon -->
+  <g transform="translate(500, 420)">
+    <!-- Left Green Arc -->
+    <!-- Adjusted starting/ending X position to create a wider gap -->
+    <path d="M -55, -170 A 170 170 0 0 0 -55, 170" 
+          fill="none" 
+          stroke="#00b28a" 
+          stroke-width="75" 
+          stroke-linecap="round"/>
+    
+    <!-- Right Purple Arc -->
+    <!-- Adjusted starting/ending X position to create a wider gap -->
+    <path d="M 55, -170 A 170 170 0 0 1 55, 170" 
+          fill="none" 
+          stroke="#5d17eb" 
+          stroke-width="75" 
+          stroke-linecap="round"/>
+  </g>
+  
+  <!-- Main Text: ORBIT | مَدَار -->
+  <g transform="translate(500, 760)">
+    <text text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="80" fill="#FFFFFF">
+      ORBIT | مَدَار
+    </text>
+  </g>
+  
+  <!-- Subtitle: E-COMMERCE OPERATIONS -->
+  <g transform="translate(500, 840)">
+    <text text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="26" letter-spacing="14" fill="#94a3b8">
+      E-COMMERCE OPERATIONS
+    </text>
+  </g>
+</svg>
