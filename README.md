@@ -1,10 +1,26 @@
-# MADAR Store
+# مَدار | ORBIT
 
-## Supabase phase 1
-Copy `.env.example` to `.env.local`, set the anonymous key and (only for CLI scripts) the service-role key. Apply `supabase/migrations/20260719000000_phase_one.sql` with `supabase db push` after linking the intended project, then run `npm run db:seed` if legacy catalog data is desired.
+منصة عربية (RTL) للمنتجات الرقمية والخدمات، مع فصل صريح بين **لوحة العميل** (`/dashboard`) ومساحة إدارة منصة مَدار (`/admin`). امتلاك العميل لمساحة عمل لا يمنحه وصولاً إلى الإدارة.
 
-Register `SUPER_ADMIN_EMAIL` through `/register`, confirm the email, then run `npm run promote:super-admin`. It refuses any other email, unconfirmed user, or disabled account.
+## التشغيل المحلي
 
-In **Supabase Dashboard → Authentication → URL Configuration**, add `http://localhost:3000`, `http://localhost:3000/auth/callback`, and `http://localhost:3000/reset-password`; add the equivalent production URLs based on `NEXT_PUBLIC_SITE_URL`.
+1. انسخ `.env.example` إلى `.env.local` وأدخل القيم من مشروع Supabase المقصود؛ لا تضع الأسرار في Git.
+2. شغّل `npm install` ثم `npm run dev`.
+3. في **Authentication → URL Configuration** أضف `${NEXT_PUBLIC_SITE_URL}/auth/callback` و`${NEXT_PUBLIC_SITE_URL}/reset-password` (ومكافئات الإنتاج). روابط البريد تستخدم callback للتحقق ثم تحفظ جلسة httpOnly.
 
-Run `npm run dev`, `npm run lint`, `npx tsc --noEmit`, and `npm run build`. The migration creates the public `catalog-images` bucket and private `digital-products` and `avatars` buckets with RLS policies. Orders, checkout and customer download delivery are deliberately outside phase 1.
+## قاعدة البيانات
+
+لا تعدّل migration المرحلة الأولى بعد تطبيقها. افحصها أولاً بالاستعلام read-only في `supabase/verification/phase_one_read_only.sql`. بعد ربط المشروع بالـSupabase CLI وتحقق آثار المرحلة الأولى، استخدم `supabase migration list` ثم أصلح السجل رسمياً فقط إن كانت كل الآثار موجودة، وبعدها طبّق migration المرحلة الثانية:
+
+- `supabase/migrations/20260719000000_phase_one.sql`
+- `supabase/migrations/20260720000000_phase_two_workspaces.sql`
+
+Migration المرحلة الثانية تضيف `organizations` و`organization_members` وRLS وRPC ذرية تنشئ المساحة وعضوية OWNER معاً. لا تشغّل `db reset` على قاعدة بعيدة.
+
+## مالك المنصة
+
+سجّل البريد المطابق تماماً لـ`SUPER_ADMIN_EMAIL` وأكّده، ثم شغّل `npm run promote:super-admin` في بيئة خادمية فيها `SUPABASE_SERVICE_ROLE_KEY`. السكربت idempotent ولا يطبع الأسرار.
+
+## الفحوصات
+
+`npm run lint`، `npx tsc --noEmit`، `npm run build`، و`npm test`.
