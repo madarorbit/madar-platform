@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:seed": "tsx scripts/seed.ts",
     "promote:super-admin": "tsx scripts/promote-super-admin.ts",
-    "test": "vitest run"
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
