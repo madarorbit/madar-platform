@@ -1,0 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export {};
+/** One-time owner promotion; only runs with a server-side service-role key. */
+const url=process.env.NEXT_PUBLIC_SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY, email=process.env.SUPER_ADMIN_EMAIL;
+if(!url||!key||!email) throw new Error('NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SUPER_ADMIN_EMAIL are required.');
+const baseUrl=url!; const serviceKey=key!;
+async function request(path:string,init:RequestInit={}){const r=await fetch(`${baseUrl.replace(/\/$/,'')}${path}`,{...init,headers:{apikey:serviceKey,Authorization:`Bearer ${serviceKey}`,'Content-Type':'application/json',...(init.headers||{})}});if(!r.ok)throw new Error('Promotion request failed.');return r.status===204?null:r.json();}
+const users=await request('/auth/v1/admin/users?per_page=1000');const user=users.users.find((u:any)=>u.email?.toLowerCase()===email.toLowerCase());if(!user)throw new Error('The configured owner has not registered yet.');if(!user.email_confirmed_at)throw new Error('The owner email must be confirmed first.');if(user.banned_until)throw new Error('The owner account is blocked.');const profile=(await request(`/rest/v1/profiles?id=eq.${user.id}&select=status`))[0];if(profile?.status==='disabled')throw new Error('The owner profile is disabled.');await request(`/rest/v1/profiles?id=eq.${user.id}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({role:'SUPER_ADMIN'})});await request('/rest/v1/audit_logs',{method:'POST',body:JSON.stringify({actor_id:user.id,action:'owner.promoted',entity_type:'profile',entity_id:user.id,metadata:{source:'promote-super-admin'}})});console.log('SUPER_ADMIN promotion completed.');

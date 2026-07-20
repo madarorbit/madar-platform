@@ -1,48 +1,10 @@
-# مَدار | MADAR ORBIT
+# MADAR Store
 
-واجهة مَدار العربية للمنتجات الرقمية وحلول الأتمتة والتجارة. المشروع مبني بـNext.js App Router وTypeScript وTailwind، مع أساس آمن لتوسعة التجارة إلى PostgreSQL وتخزين خاص وبريد معاملاتي.
+## Supabase phase 1
+Copy `.env.example` to `.env.local`, set the anonymous key and (only for CLI scripts) the service-role key. Apply `supabase/migrations/20260719000000_phase_one.sql` with `supabase db push` after linking the intended project, then run `npm run db:seed` if legacy catalog data is desired.
 
-> **حالة مهمة:** الواجهة والهوية والتوثيق الأمني جاهزة، لكن المصادقة وقاعدة البيانات والطلبات ورفع الإثباتات والتسليم الموقّع لم تُربط بعد. زر إنشاء الطلب معطل عمداً إلى أن تُنفذ طبقة الاستمرارية؛ لا تستخدم النسخة الحالية لاستلام مدفوعات.
+Register `SUPER_ADMIN_EMAIL` through `/register`, confirm the email, then run `npm run promote:super-admin`. It refuses any other email, unconfirmed user, or disabled account.
 
-## التشغيل المحلي
+In **Supabase Dashboard → Authentication → URL Configuration**, add `http://localhost:3000`, `http://localhost:3000/auth/callback`, and `http://localhost:3000/reset-password`; add the equivalent production URLs based on `NEXT_PUBLIC_SITE_URL`.
 
-```bash
-npm ci
-cp .env.example .env
-npm run dev
-```
-
-افتح `http://localhost:3000`. افحص الجودة قبل أي دمج:
-
-```bash
-npm run lint
-npx tsc --noEmit
-npm run build
-```
-
-## متغيرات البيئة
-
-راجع [توثيق المتغيرات](docs/environment-variables.md). لا ترفع `.env`. يجب أن يبقى `SUPER_ADMIN_EMAIL` مضبوطاً على بريد المالك الرسمي، ولا يحتوي المشروع على كلمة مرور للمالك.
-
-## إعداد قاعدة البيانات والمالك (بعد تنفيذ طبقة الاستمرارية)
-
-1. جهز PostgreSQL واضبط `DATABASE_URL` و`AUTH_SECRET` عشوائياً.
-2. شغّل migrations الخاصة بالـORM الذي يُعتمد في مرحلة الاستمرارية.
-3. أنشئ حساب المالك عبر التسجيل والتحقق من البريد.
-4. شغّل seed إدارياً لمرة واحدة؛ لا يرقّي إلا البريد المطابق لـ`SUPER_ADMIN_EMAIL` والمتحقق منه.
-5. راجع سجلات التدقيق، ثم اختبر رفض المستخدم العادي لمسارات الإدارة.
-
-تفاصيل المخطط في [database-schema.md](docs/database-schema.md)، ودورة التحويل في [payment-workflow.md](docs/payment-workflow.md).
-
-## النشر
-
-لا تنشر checkout كمسار مدفوع قبل ربط PostgreSQL والتخزين الخاص والبريد والمصادقة. خطوات النشر وخيارات الاستضافة في [deployment.md](docs/deployment.md)، وقائمة الاعتماد في [launch-checklist.md](docs/launch-checklist.md).
-
-## التوثيق
-
-- [تدقيق المشروع](docs/current-project-audit.md)
-- [خارطة الطريق](docs/madar-platform-roadmap.md)
-- [المعمارية](docs/architecture.md)
-- [الوصول الإداري](docs/admin-access.md)
-- [الأمان](docs/security-checklist.md)
-- [النسخ والاستعادة](docs/backup-and-recovery.md)
+Run `npm run dev`, `npm run lint`, `npx tsc --noEmit`, and `npm run build`. The migration creates the public `catalog-images` bucket and private `digital-products` and `avatars` buckets with RLS policies. Orders, checkout and customer download delivery are deliberately outside phase 1.

@@ -1,0 +1,1 @@
+import PageShell from '@/components/ui/PageShell';import { PageHero,Section } from '@/components/ui/Section';import { AuthForm } from '@/components/auth/AuthForm';export default function Page(){return <PageShell><PageHero eyebrow="حساب مَدار" title="إنشاء حساب" description="أنشئ حسابك ثم أكد بريدك الإلكتروني."/><Section><AuthForm kind="register"/></Section></PageShell>}

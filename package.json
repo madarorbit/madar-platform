@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "tsx scripts/seed.ts",
+    "promote:super-admin": "tsx scripts/promote-super-admin.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "16.2.10",

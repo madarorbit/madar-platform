@@ -1,0 +1,1 @@
+import { requireAdmin } from '@/src/lib/auth';import { EntityForm } from '@/components/admin/EntityForm';export default async function Page(){await requireAdmin();return <main className="mx-auto max-w-3xl p-6"><h1>إضافة منتج</h1><EntityForm kind="product"/></main>}
