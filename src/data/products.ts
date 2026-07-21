@@ -12,6 +12,7 @@ export type Product = {
   delivery: string;
   features: string[];
   includes: string[];
+  thumbnailUrl?: string | null;
 };
 
 export const products: Product[] = [

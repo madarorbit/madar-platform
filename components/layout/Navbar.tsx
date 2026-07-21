@@ -5,71 +5,24 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { siteConfig } from '@/src/config/site';
+import { Icon } from '@/components/ui/Icons';
 
-export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
+const focus='focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2';
 
-  const isActive = (href: string) =>
-    href === siteConfig.links.home ? pathname === href : pathname?.startsWith(href);
-
-  return (
-    <nav className="sticky top-0 z-50 border-b border-[#E2E8F0]/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85" aria-label="التنقل الرئيسي">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
-          <Link href={siteConfig.links.home} className="flex min-w-0 items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2" aria-label={`${siteConfig.name} - الرئيسية`}>
-            <Image src={siteConfig.assets.logo} alt="" width={120} height={40} priority className="h-10 w-auto" />
-            <span className="truncate text-base font-bold text-[#0F172A] sm:text-lg">{siteConfig.name}</span>
-          </Link>
-
-          <div className="hidden items-center gap-2 md:flex">
-            {siteConfig.nav.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={isActive(link.href) ? 'page' : undefined}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-[#475569] transition-colors hover:bg-[#F8FAFC] hover:text-[#6C3BFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2 aria-[current=page]:text-[#6C3BFF]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="hidden md:block">
-            <Link href={siteConfig.links.checkout} className="inline-flex rounded-xl bg-gradient-to-r from-[#6C3BFF] to-[#00C2A8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2">
-              شراء الآن
-            </Link>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsOpen((value) => !value)}
-            className="rounded-xl p-2 text-[#0F172A] transition-colors hover:bg-[#F8FAFC] active:bg-[#E2E8F0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF] focus-visible:ring-offset-2 md:hidden"
-            aria-label={isOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
-            aria-expanded={isOpen}
-            aria-controls="mobile-navigation"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              {isOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-            </svg>
-          </button>
-        </div>
-
-        {isOpen && (
-          <div id="mobile-navigation" className="border-t border-[#E2E8F0] py-4 md:hidden">
-            <div className="flex flex-col gap-2">
-              {siteConfig.nav.map((link) => (
-                <Link key={link.href} href={link.href} className="rounded-lg px-3 py-3 font-medium text-[#475569] transition-colors hover:bg-[#F8FAFC] hover:text-[#6C3BFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF]" onClick={() => setIsOpen(false)}>
-                  {link.label}
-                </Link>
-              ))}
-              <Link href={siteConfig.links.checkout} className="mt-2 rounded-xl bg-gradient-to-r from-[#6C3BFF] to-[#00C2A8] px-6 py-3 text-center font-semibold text-white shadow-sm transition-all hover:shadow-lg active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C3BFF]" onClick={() => setIsOpen(false)}>
-                شراء الآن
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
-  );
+export default function Navbar(){
+ const [open,setOpen]=useState(false);const pathname=usePathname();
+ const active=(href:string)=>href==='/'?pathname==='/':pathname?.startsWith(href);
+ return <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl" aria-label="التنقل الرئيسي">
+  <div className="mx-auto flex min-h-18 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+   <Link href="/" className={`flex shrink-0 items-center gap-2 rounded-xl ${focus}`} aria-label="مَدار — الرئيسية"><Image src={siteConfig.assets.logo} alt="" width={112} height={38} priority className="h-9 w-auto"/><span className="hidden text-sm font-black text-slate-950 sm:inline">مَدار</span></Link>
+   <div className="hidden flex-1 items-center justify-center gap-1 lg:flex">{siteConfig.nav.map(link=><Link key={link.href} href={link.href} aria-current={active(link.href)?'page':undefined} className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${focus} ${active(link.href)?'bg-violet-50 text-[#5B2AE8]':'text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`}>{link.label}</Link>)}</div>
+   <div className="mr-auto hidden items-center gap-2 md:flex">
+    <Link href="/search" className={`grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-[#5B2AE8] ${focus}`} aria-label="البحث"><Icon name="search"/></Link>
+    <Link href="/login" className={`rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100 ${focus}`}>تسجيل الدخول</Link>
+    <Link href="/register" className={`rounded-xl bg-gradient-to-l from-[#6C3BFF] to-[#00A98F] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/15 transition hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 ${focus}`}>ابدأ مع مَدار</Link>
+   </div>
+   <button type="button" onClick={()=>setOpen(v=>!v)} className={`mr-auto rounded-xl p-2.5 text-slate-900 hover:bg-slate-100 md:hidden ${focus}`} aria-expanded={open} aria-controls="mobile-nav" aria-label={open?'إغلاق القائمة':'فتح القائمة'}><span className="block h-5 w-6 space-y-1.5">{[0,1,2].map(i=><span key={i} className={`block h-0.5 rounded bg-current transition ${open&&i===0?'translate-y-2 rotate-45':''} ${open&&i===1?'opacity-0':''} ${open&&i===2?'-translate-y-2 -rotate-45':''}`}/>)}</span></button>
+  </div>
+  {open&&<div id="mobile-nav" className="border-t border-slate-200 bg-white px-4 py-4 md:hidden"><div className="mx-auto grid max-w-7xl gap-2">{siteConfig.nav.map(link=><Link key={link.href} href={link.href} onClick={()=>setOpen(false)} className={`flex items-center justify-between rounded-xl px-4 py-3 font-semibold ${active(link.href)?'bg-violet-50 text-[#5B2AE8]':'text-slate-700 hover:bg-slate-50'}`}><span>{link.label}</span>{link.href==='/'?<Icon name="home"/>:link.href==='/store'?<Icon name="store"/>:null}</Link>)}<Link href="/search" onClick={()=>setOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50"><Icon name="search"/> البحث في مَدار</Link><div className="mt-2 grid grid-cols-2 gap-2"><Link href="/login" onClick={()=>setOpen(false)} className="rounded-xl border border-slate-200 px-4 py-3 text-center font-bold text-slate-800">تسجيل الدخول</Link><Link href="/register" onClick={()=>setOpen(false)} className="rounded-xl bg-[#5B2AE8] px-4 py-3 text-center font-bold text-white">ابدأ مع مَدار</Link></div></div></div>}
+ </nav>;
 }
