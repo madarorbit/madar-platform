@@ -10,12 +10,18 @@
 
 ## قاعدة البيانات
 
-لا تعدّل migration المرحلة الأولى بعد تطبيقها. افحصها أولاً بالاستعلام read-only في `supabase/verification/phase_one_read_only.sql`. بعد ربط المشروع بالـSupabase CLI وتحقق آثار المرحلة الأولى، استخدم `supabase migration list` ثم أصلح السجل رسمياً فقط إن كانت كل الآثار موجودة، وبعدها طبّق migration المرحلة الثانية:
+لا تعدّل migration المرحلة الأولى بعد تطبيقها. افحصها أولاً بالاستعلام read-only في `supabase/verification/phase_one_read_only.sql`. لا تستخدم `db reset` على قاعدة بعيدة. ترتيب migrations الكامل:
 
 - `supabase/migrations/20260719000000_phase_one.sql`
 - `supabase/migrations/20260720000000_phase_two_workspaces.sql`
+- `supabase/migrations/20260720010000_member_management.sql`
+- `supabase/migrations/20260721000000_phase_one_two_hardening.sql`
+- `supabase/migrations/20260721010000_seed_initial_catalog.sql`
+- `supabase/migrations/20260721020000_rpc_and_policy_cleanup.sql`
 
-Migration المرحلة الثانية تضيف `organizations` و`organization_members` وRLS وRPC ذرية تنشئ المساحة وعضوية OWNER معاً. لا تشغّل `db reset` على قاعدة بعيدة.
+تضيف المرحلة الثانية `organizations` و`organization_members` وعزل RLS وRPC ذرية تنشئ المساحة وعضوية OWNER معاً. تنقل migrations التقوية دوال الامتياز إلى schema خاصة، وتضبط منح Data API وحدود Storage صراحةً.
+
+طُبقت migrations المرحلة الثانية والتقوية وبيانات الكتالوج على مشروع Supabase الإنتاجي في 2026-07-21. سجل المرحلة الأولى كان قد طُبق يدوياً قبل إنشاء سجل migrations؛ ملف التحقق read-only هو مرجع baseline. لا تعِد تطبيق ملف المرحلة الأولى على المشروع الحالي.
 
 ## مالك المنصة
 
