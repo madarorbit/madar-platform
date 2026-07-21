@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: 'مَدار | MADAR ORBIT', shortName: 'مَدار', companyName: 'MADAR | ORBIT',
   description: 'مَدار: منتجات رقمية وأنظمة تشغيل وأتمتة وحلول عملية للتجارة والأعمال العربية.',
-  baseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://orbit-ops-digital.netlify.app', email: 'orbit.ops.digital@gmail.com', phone: '+967 735509366', locale: 'ar_YE', themeColor: '#0B0B0C', copyright: 'جميع الحقوق محفوظة لمَدار.',
+  baseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://madar-store-ten.vercel.app'), email: 'orbit.ops.digital@gmail.com', phone: '+967 735509366', locale: 'ar_YE', themeColor: '#0B0B0C', copyright: 'جميع الحقوق محفوظة لمَدار.',
   assets: { logo: '/brand/logo.svg', logoWhite: '/brand/logo.svg', favicon: '/brand/favicon.ico', appleTouchIcon: '/brand/symbol-180x180.png', ogImage: '/brand/logo.png' },
   links: { home: '/', products: '/products', services: '/services', about: '/about', contact: '/contact', faq: '/faq', privacy: '/privacy', terms: '/terms', checkout: '/checkout', admin: '/admin', search: '/search', start: '/checkout', learnMore: '/about', categories: '/products', refund: '/terms', serviceAgreement: '/terms', blog: '/about', careers: '/contact', helpCenter: '/faq', docs: '/faq', tutorials: '/services', community: '/contact' },
   social: { x: 'https://x.com/ORBITewrt', instagram: 'https://www.instagram.com/orbit.ops.digital/?hl=ar', whatsapp: 'https://wa.me/message/C65GHDBXUOIYP1' },
