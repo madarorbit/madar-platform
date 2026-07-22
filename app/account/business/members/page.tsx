@@ -1,2 +1,14 @@
-import Link from 'next/link';import { redirect } from 'next/navigation';import { requireUser } from '@/src/lib/auth';import { supabaseFetch } from '@/src/lib/supabase/server';import MemberManager from './manager';
-export const dynamic='force-dynamic';export default async function Page(){const user=await requireUser();const rows=await supabaseFetch(`/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name)`);const membership=rows?.[0];if(!membership?.organizations)redirect('/onboarding');const members=await supabaseFetch('/rest/v1/rpc/list_organization_members',{method:'POST',body:JSON.stringify({target_organization:membership.organizations.id})});return <main className="mx-auto max-w-2xl p-6"><Link href="/account/business">← إعدادات التجارة</Link><h1 className="mt-5 text-3xl font-bold">أعضاء {membership.organizations.name}</h1><p className="mt-2 text-slate-300">المالك يدير الأدوار، وADMIN يضيف أو يزيل أعضاء MEMBER فقط.</p><MemberManager organizationId={membership.organizations.id} role={membership.role} members={members||[]}/></main>}
+import Link from 'next/link';
+import {redirect} from 'next/navigation';
+import {requireUser} from '@/src/lib/auth';
+import {supabaseFetch} from '@/src/lib/supabase/server';
+import MemberManager from './manager';
+export const dynamic='force-dynamic';
+export default async function Page(){
+ const user=await requireUser();
+ const rows=await supabaseFetch(`/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name,type)`);
+ const membership=rows?.find((x:{organizations?:{type?:string}})=>x.organizations?.type!=='STUDENT');
+ if(!membership?.organizations)redirect('/onboarding');
+ const members=await supabaseFetch('/rest/v1/rpc/list_organization_members',{method:'POST',body:JSON.stringify({target_organization:membership.organizations.id})});
+ return <main className="mx-auto max-w-2xl p-6"><Link href="/account/business">← إعدادات التجارة</Link><h1 className="mt-5 text-3xl font-bold">أعضاء {membership.organizations.name}</h1><p className="mt-2 text-slate-300">المالك يدير الأدوار، وADMIN يضيف أو يزيل أعضاء MEMBER فقط.</p><MemberManager organizationId={membership.organizations.id} role={membership.role} members={members||[]}/></main>;
+}
