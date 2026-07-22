@@ -27,4 +27,4 @@ export async function proxy(request:NextRequest) {
  return result;
 }
 
-export const config={matcher:['/admin/:path*','/account/:path*','/dashboard','/onboarding']};
+export const config={matcher:['/admin/:path*','/account/:path*','/dashboard','/onboarding','/student/:path*','/workspace-payment/:path*']};

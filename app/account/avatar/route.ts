@@ -1,0 +1,3 @@
+import{NextResponse}from'next/server';import{currentProfile,serverToken}from'@/src/lib/supabase/server';import{supabaseConfig}from'@/src/lib/env';
+export const dynamic='force-dynamic';
+export async function GET(){const profile=await currentProfile();if(!profile?.avatar_url)return new NextResponse(null,{status:404});const{url,key}=supabaseConfig(),token=await serverToken();const response=await fetch(`${url}/storage/v1/object/authenticated/avatars/${profile.avatar_url}`,{headers:{apikey:key,Authorization:`Bearer ${token}`},cache:'no-store'});if(!response.ok)return new NextResponse(null,{status:404});return new NextResponse(response.body,{headers:{'Content-Type':response.headers.get('Content-Type')||'image/jpeg','Cache-Control':'private, max-age=300'}});}
