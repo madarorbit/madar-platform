@@ -49,7 +49,7 @@ test('analytics range is timezone-aware and bounded',()=>{
 });
 
 test('dashboard supports comparisons charts CSV and printable PDF workflow',()=>{
- assert.match(page,/المقارنة بالفترة السابقة/);
+ assert.match(page,/مقارنة تلقائية بالفترة السابقة/);
  assert.match(page,/AnalyticsBars/);
  assert.match(page,/تصدير CSV/);
  assert.match(page,/تقرير للطباعة \/ PDF/);
