@@ -3,6 +3,7 @@
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {autoMap,importFields,parseCsv,validateMapping,type ImportEntity} from '@/src/lib/csv';
+import {validateImportRows} from '@/src/lib/import-validation';
 import {requireBusinessWorkspace} from '@/src/lib/business';
 import {supabaseFetch} from '@/src/lib/supabase/server';
 import {required} from '@/src/lib/validation';
@@ -36,12 +37,13 @@ export async function commitBusinessImport(form:FormData){
  let errorMessage:string|undefined;
  try{
   const{workspace}=await requireBusinessWorkspace();
-  const record=(await supabaseFetch(`/rest/v1/business_imports?id=eq.${encodeURIComponent(importId)}&organization_id=eq.${encodeURIComponent(workspace.id)}&select=id,entity_type,headers,status`))?.[0];
+  const record=(await supabaseFetch(`/rest/v1/business_imports?id=eq.${encodeURIComponent(importId)}&organization_id=eq.${encodeURIComponent(workspace.id)}&select=id,entity_type,headers,rows,status`))?.[0];
   if(!record)throw new Error('عملية الاستيراد غير موجودة.');
   if(record.status!=='uploaded')throw new Error('تمت معالجة هذه العملية مسبقًا.');
   const entity=record.entity_type as ImportEntity;
   const mapping=Object.fromEntries(importFields[entity].map(field=>[field.key,String(form.get(`map_${field.key}`)||'')]));
   const validated=validateMapping(entity,mapping,record.headers);
+  validateImportRows(entity,record.rows,validated);
   await supabaseFetch('/rest/v1/rpc/commit_business_import',{method:'POST',body:JSON.stringify({target_import:importId,column_mapping:validated})});
   revalidatePath('/workspace/imports');revalidatePath(`/workspace/imports/${importId}`);revalidatePath('/workspace');revalidatePath('/workspace/products');revalidatePath('/workspace/customers');revalidatePath('/workspace/suppliers');revalidatePath('/workspace/expenses');revalidatePath('/workspace/sales');
  }catch(error){errorMessage=error instanceof Error?error.message:'تعذر تنفيذ الاستيراد.'}
