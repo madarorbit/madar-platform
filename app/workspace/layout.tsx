@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type {ReactNode} from 'react';
 import {requireBusinessWorkspace} from '@/src/lib/business';
 
-const links=[['/workspace','نظرة عامة'],['/workspace/products','المنتجات'],['/workspace/inventory','المخزون'],['/workspace/customers','العملاء'],['/workspace/sales','المبيعات'],['/workspace/expenses','المصروفات'],['/workspace/suppliers','الموردون'],['/workspace/tasks','المهام']];
+const links=[['/workspace','نظرة عامة'],['/workspace/setup','الإعداد'],['/workspace/imports','الاستيراد'],['/workspace/products','المنتجات'],['/workspace/inventory','المخزون'],['/workspace/customers','العملاء'],['/workspace/sales','المبيعات'],['/workspace/expenses','المصروفات'],['/workspace/suppliers','الموردون'],['/workspace/tasks','المهام']];
 
 export default async function WorkspaceLayout({children}:{children:ReactNode}){
  const{workspace,membership}=await requireBusinessWorkspace();
