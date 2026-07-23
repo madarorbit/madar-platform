@@ -3,15 +3,19 @@ import {redirect} from 'next/navigation';
 import {requireUser} from '@/src/lib/auth';
 import {supabaseFetch} from '@/src/lib/supabase/server';
 
-export type BusinessWorkspace={id:string;name:string;slug:string;type:'INDIVIDUAL'|'MERCHANT'|'COMPANY';status:string;currency:'YER'|'SAR'|'USD'};
-export type BusinessMembership={role:'OWNER'|'ADMIN'|'MEMBER';organizations:BusinessWorkspace};
+export type WorkspaceType='INDIVIDUAL'|'MERCHANT'|'COMPANY'|'STUDENT';
+export type WorkspaceRecord={id:string;name:string;slug:string;type:WorkspaceType;status:string;currency:'YER'|'SAR'|'USD'};
+export type BusinessWorkspace=WorkspaceRecord&{type:Exclude<WorkspaceType,'STUDENT'>};
+export type WorkspaceMembership={role:'OWNER'|'ADMIN'|'MEMBER';organizations:WorkspaceRecord};
+export type BusinessMembership=Omit<WorkspaceMembership,'organizations'>&{organizations:BusinessWorkspace};
 
 export async function requireBusinessWorkspace(){
  const user=await requireUser();
  const rows=await supabaseFetch(`/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name,slug,type,status,currency)`);
- const membership=(rows||[]).find((row:BusinessMembership)=>row.organizations&&row.organizations.type!=='STUDENT') as BusinessMembership|undefined;
- if(!membership?.organizations)redirect('/onboarding');
- if(membership.organizations.status!=='active')redirect('/dashboard');
+ const candidate=(rows||[]).find((row:WorkspaceMembership)=>row.organizations&&row.organizations.type!=='STUDENT') as WorkspaceMembership|undefined;
+ if(!candidate?.organizations)redirect('/onboarding');
+ if(candidate.organizations.status!=='active')redirect('/dashboard');
+ const membership=candidate as BusinessMembership;
  return{user,membership,workspace:membership.organizations};
 }
 
