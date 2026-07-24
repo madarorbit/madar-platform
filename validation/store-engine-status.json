@@ -1,9 +1,9 @@
 {
   "result": "failure",
-  "commit": "b66d49ea59ec781f1603b954670b5eed559f51b9",
+  "commit": "98260c540a5e62d101d993c7076e34115640ff58",
   "install": 0,
   "test": 0,
-  "lint": 1,
+  "lint": 0,
   "typegen": 0,
   "typecheck": 2,
   "build": 1
