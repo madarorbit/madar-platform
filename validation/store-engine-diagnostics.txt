@@ -2,7 +2,7 @@ MADAR Store Engine validation: failure
 
 ===== install =====
 
-added 375 packages, and audited 376 packages in 13s
+added 375 packages, and audited 376 packages in 12s
 
 149 packages are looking for funding
   run `npm fund` for details
@@ -129,7 +129,7 @@ npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to revi
   }
 
 test at tests/store-engine.test.mjs:14:1
-✖ all requested seed data starts hidden, inactive and draft (5.265149ms)
+✖ all requested seed data starts hidden, inactive and draft (3.96868ms)
   AssertionError [ERR_ASSERTION]: missing seed: نظام إدارة واتساب للأعمال Lite
       at TestContext.<anonymous> (file:///home/runner/work/madar-platform/madar-platform/tests/store-engine.test.mjs:16:172)
       at async Test.run (node:internal/test_runner/test:1332:7)
