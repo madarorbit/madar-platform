@@ -1,0 +1,3 @@
+MADAR Store Engine validation passed.
+Source commit: cb9a78ba2ed931ca6a0e0be2e86b30caad34e3cb
+Checks: npm ci, tests, lint, Next typegen, TypeScript, Next build.
