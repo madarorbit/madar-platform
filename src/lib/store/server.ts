@@ -5,6 +5,7 @@ import type {StoreCategory,StoreEntityType,StoreItem,StoreSearchFilters,StoreSea
 
 type RawCategory={id:string;name:string;slug:string;description:string|null;image_url:string|null;sort_order:number};
 type RawItem=Record<string,unknown>&{categories?:RawCategory|null;subcategories?:RawCategory|null};
+export type StoreOffer={id:string;name:string;slug:string;description:string;discountType:'percentage'|'fixed'|'override_price';discountValue:number;startsAt:string|null;endsAt:string|null};
 
 const publicPredicate={status:'published',visibility:'visible',is_active:'true',show_in_store:'true',deleted_at:'is.null'} as const;
 const commonSelect='id,name,slug,short_description,long_description,currency,status,visibility,availability,is_featured,show_on_home,rating_average,rating_count,sales_count,view_count,thumbnail_url,video_url,external_url,purchase_url,delivery_duration,delivery_type,requires_approval,is_free,features,includes,keywords,published_at,created_at,categories(id,name,slug,description,image_url,sort_order),subcategories(id,name,slug,description,image_url,sort_order)';
@@ -93,6 +94,13 @@ export async function getStoreCategories(){
  const params=new URLSearchParams({select:'id,name,slug,description,image_url,sort_order',is_active:'eq.true',visibility:'eq.visible',deleted_at:'is.null',order:'sort_order.asc,name.asc'});
  const {data}=await publicFetch(`/rest/v1/categories?${params.toString()}`,{revalidate:300});
  return (data as RawCategory[]).map(category);
+}
+
+export async function getActiveOffers():Promise<StoreOffer[]>{
+ const now=new Date().toISOString();
+ const params=new URLSearchParams({select:'id,name,slug,description,discount_type,discount_value,starts_at,ends_at',status:'eq.published',visibility:'eq.visible',is_active:'eq.true',deleted_at:'is.null',or:`(starts_at.is.null,starts_at.lte.${now})`,order:'created_at.desc'});
+ const {data}=await publicFetch(`/rest/v1/offers?${params.toString()}`,{revalidate:60});
+ return (data as RawItem[]).filter(row=>!row.ends_at||new Date(String(row.ends_at))>=new Date()).map(row=>({id:String(row.id),name:String(row.name),slug:String(row.slug),description:String(row.description||''),discountType:String(row.discount_type) as StoreOffer['discountType'],discountValue:number(row.discount_value),startsAt:row.starts_at?String(row.starts_at):null,endsAt:row.ends_at?String(row.ends_at):null}));
 }
 
 export async function getStoreSettings(){
