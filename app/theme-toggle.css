@@ -1,0 +1,4 @@
+.md-theme-icon-sun { display: none; }
+.md-theme-icon-moon { display: block; }
+:root[data-theme="light"] .md-theme-icon-sun { display: block; }
+:root[data-theme="light"] .md-theme-icon-moon { display: none; }
