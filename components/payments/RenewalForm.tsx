@@ -1,0 +1,10 @@
+'use client';
+
+import {useState} from 'react';
+import {submitSubscriptionRenewal} from '@/app/actions/local-payments';
+
+type Method={id:string;name:string;account_name:string;account_identifier:string;instructions:string|null};
+export default function RenewalForm({methods}:{methods:Method[]}){
+ const[selected,setSelected]=useState(methods[0]?.id||''),method=methods.find(item=>item.id===selected);
+ return <form action={submitSubscriptionRenewal} encType="multipart/form-data" className="grid gap-4 rounded-3xl border border-white/10 bg-white/[.04] p-6"><h2 className="text-xl font-black">طلب تجديد الاشتراك</h2><label className="grid gap-2 text-sm font-bold">طريقة الدفع<select name="payment_method_id" value={selected} onChange={event=>setSelected(event.target.value)} required className="field rounded-xl p-3"><option value="">اختر طريقة الدفع</option>{methods.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label>{method&&<div className="rounded-2xl border border-[#70E4D4]/20 bg-[#70E4D4]/5 p-4"><p className="text-xs text-slate-400">اسم الحساب</p><strong>{method.account_name}</strong><p className="mt-3 text-xs text-slate-400">رقم الحساب أو المحفظة</p><strong dir="ltr" className="block text-xl">{method.account_identifier}</strong>{method.instructions&&<p className="mt-3 text-sm leading-7 text-slate-300">{method.instructions}</p>}</div>}<label className="grid gap-2 text-sm font-bold">رقم عملية التحويل<input name="payment_reference" required minLength={3} maxLength={120} className="field rounded-xl p-3"/></label><label className="grid gap-2 text-sm font-bold">إثبات التحويل<input name="proof" type="file" required accept="image/jpeg,image/png,image/webp,application/pdf" className="field rounded-xl p-3 file:ml-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:font-bold file:text-slate-950"/></label><button disabled={!selected} className="rounded-xl bg-gradient-to-l from-violet-500 to-emerald-400 p-3 font-black disabled:opacity-50">إرسال طلب التجديد</button><p className="text-xs leading-6 text-slate-500">لن يتغير تاريخ الاشتراك إلا بعد مراجعة الإدارة واعتماد التحويل.</p></form>;
+}
