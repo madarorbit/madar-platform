@@ -21,7 +21,7 @@ function mapItem(raw:RawItem,entityType:StoreEntityType):StoreItem{
  return {
   id:String(raw.id),entityType,name:String(raw.name||''),slug:String(raw.slug||''),shortDescription:String(raw.short_description||''),longDescription:String(raw.long_description||raw.short_description||''),
   price,compareAtPrice:nullableNumber(raw.compare_at_price),currency:String(raw.currency||'SAR'),status:String(raw.status||'draft') as StoreItem['status'],visibility:String(raw.visibility||'hidden') as StoreItem['visibility'],availability:String(raw.availability||'available') as StoreItem['availability'],
-  itemType:String(raw.product_type||raw.service_type||(entityType==='plan'?'subscription':entityType)),category:category(raw.categories),subcategory:category(raw.subcategories),thumbnailUrl:catalogImageUrl(raw.thumbnail_url),
+  itemType:String(raw.product_type||raw.service_type||raw.plan_type||(entityType==='plan'?'subscription':entityType)),category:category(raw.categories),subcategory:category(raw.subcategories),thumbnailUrl:catalogImageUrl(raw.thumbnail_url),
   videoUrl:raw.video_url?String(raw.video_url):null,externalUrl:raw.external_url?String(raw.external_url):null,purchaseUrl:raw.purchase_url?String(raw.purchase_url):null,
   deliveryType:raw.delivery_type?String(raw.delivery_type):null,deliveryDuration:raw.delivery_duration?String(raw.delivery_duration):null,requiresApproval:Boolean(raw.requires_approval),isFree:Boolean(raw.is_free)||price===0,
   isFeatured:Boolean(raw.is_featured),showOnHome:Boolean(raw.show_on_home),ratingAverage:number(raw.rating_average),ratingCount:number(raw.rating_count),salesCount:number(raw.sales_count),viewCount:number(raw.view_count),
@@ -56,7 +56,7 @@ function appendFilters(params:URLSearchParams,filters:StoreSearchFilters,entityT
  params.set('order',`${order},sort_order.asc`);
 }
 
-function typeFields(entityType:StoreEntityType){return entityType==='product'?',price,compare_at_price,product_type':entityType==='service'?',price_from,service_type':',price,compare_at_price,billing_interval,trial_days'}
+function typeFields(entityType:StoreEntityType){return entityType==='product'?',price,compare_at_price,product_type':entityType==='service'?',price_from,compare_at_price,service_type':',price,compare_at_price,plan_type,billing_interval,trial_days'}
 function table(entityType:StoreEntityType){return entityType==='product'?'products':entityType==='service'?'services':'plans'}
 
 async function queryEntity(entityType:StoreEntityType,filters:StoreSearchFilters){
