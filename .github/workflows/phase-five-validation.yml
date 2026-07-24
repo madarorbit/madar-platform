@@ -3,6 +3,8 @@ name: التحقق من التحول المؤسسي
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [agent/madar-store-engine]
   workflow_dispatch:
 
 permissions:
