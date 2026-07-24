@@ -1,6 +1,7 @@
 export type StoreEntityType='product'|'service'|'plan';
 export type StoreCatalogStatus='draft'|'published'|'archived'|'coming_soon'|'sold_out'|'disabled';
 export type StoreVisibility='visible'|'hidden';
+export type StoreAvailability='available'|'coming_soon'|'sold_out'|'disabled';
 
 export type StoreCategory={
  id:string;
@@ -23,6 +24,7 @@ export type StoreItem={
  currency:string;
  status:StoreCatalogStatus;
  visibility:StoreVisibility;
+ availability:StoreAvailability;
  itemType:string;
  category:StoreCategory|null;
  subcategory:StoreCategory|null;
