@@ -40,6 +40,13 @@ jobs:
       - name: توليد تعريفات المسارات
         run: npx next typegen
       - name: التحقق من الأنواع
-        run: npm run typecheck
+        run: npm run typecheck 2>&1 | tee typecheck-output.txt
+      - name: حفظ تشخيص الأنواع عند الفشل
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-diagnostics
+          path: typecheck-output.txt
+          retention-days: 3
       - name: بناء المنصة
         run: npm run build
