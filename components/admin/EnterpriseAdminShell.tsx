@@ -12,11 +12,12 @@ import NavigationControls from '@/components/navigation/NavigationControls';
 
 const common:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin',label:'نظرة الإدارة',icon:'home'},
+ {href:'/admin/store',label:'إدارة المتجر',icon:'store'},
  {href:'/admin/orders',label:'طلبات المتجر',icon:'store'},
  {href:'/admin/reports',label:'التقارير والإيرادات',icon:'chart'},
- {href:'/admin/products',label:'المنتجات',icon:'layers'},
- {href:'/admin/services',label:'الخدمات',icon:'briefcase'},
- {href:'/admin/categories',label:'التصنيفات',icon:'document'},
+ {href:'/admin/products',label:'المنتجات القديمة',icon:'layers'},
+ {href:'/admin/services',label:'الخدمات القديمة',icon:'briefcase'},
+ {href:'/admin/categories',label:'التصنيفات القديمة',icon:'document'},
  {href:'/admin/coupons',label:'القسائم',icon:'megaphone'},
  {href:'/admin/users',label:'المستخدمون',icon:'community'},
  {href:'/admin/workspace-requests',label:'طلبات المساحات',icon:'automation'},
