@@ -1,14 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import Link from 'next/link';
-import PageShell from '@/components/ui/PageShell';
-import {PageHero,Section,EmptyState} from '@/components/ui/Section';
-import {Card,Notice} from '@/components/ui/Enterprise';
-import {supabaseFetch} from '@/src/lib/supabase/server';
-import {catalogImageUrl} from '@/src/lib/catalog-media';
-import {arabicDisplay,arabicList,arabicMoney} from '@/src/lib/arabic-display';
-import {Icon} from '@/components/ui/Icons';
-export const dynamic='force-dynamic';export const metadata={title:'خدمات مَدار'};
+import StoreListingPage from '@/components/store/StoreListingPage';
 
-export default async function Page(){
- let services:any[]=[];let error=false;try{services=await supabaseFetch('/rest/v1/services?status=eq.published&select=name,slug,short_description,price_from,currency,features,thumbnail_url&order=published_at.desc')}catch{error=true}
- return <PageShell><PageHero eyebrow="متجر مَدار · الخدمات" title="تنفيذ عملي لأنظمة رقمية قابلة للنمو" description="نحلل احتياج العمل، ونحدد نطاقًا واضحًا، ونبني حلًا يمكن تشغيله وقياسه وتطويره."/><Section>{error?<Notice title="تعذر تحميل الخدمات" variant="danger">حاول مجددًا بعد قليل.</Notice>:services.length?<div className="grid gap-7 lg:grid-cols-3">{services.map((service:any,index:number)=>{const name=arabicDisplay(service.name),description=arabicDisplay(service.short_description),features=arabicList(service.features),image=catalogImageUrl(service.thumbnail_url);return <Card interactive className="group overflow-hidden p-0" key={service.slug}><div className="relative aspect-[16/9] overflow-hidden bg-[#11182B]">{image?<div className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{backgroundImage:`url("${image.replace(/["\\]/g,'')}")`}} role="img" aria-label={`صورة خدمة ${name}`}/>:<div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_25%_20%,rgba(124,77,255,.48),transparent_33%),radial-gradient(circle_at_75%_75%,rgba(50,214,189,.34),transparent_35%)]"><Icon name={index%2?'sparkles':'automation'} className="h-14 w-14 text-white"/></div>}</div><div className="p-6"><p className="text-sm font-bold text-emerald-300">خدمة مخصصة</p><h2 className="mt-2 text-2xl font-black"><Link href={`/services/${service.slug}`}>{name}</Link></h2><p className="mt-4 min-h-20 leading-7 text-slate-400">{description}</p><ul className="mt-5 space-y-2 text-sm text-slate-300">{features.slice(0,3).map(feature=><li key={feature} className="flex gap-2"><Icon name="check" className="h-5 w-5 shrink-0 text-emerald-300"/>{feature}</li>)}</ul><div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-5"><p className="font-black">تبدأ من {arabicMoney(service.price_from,service.currency)}</p><Link href={`/services/${service.slug}`} aria-label={`تفاصيل ${name}`} className="md-button md-button-secondary md-button-sm"><Icon name="arrow"/></Link></div></div></Card>})}</div>:<EmptyState title="لا توجد خدمات منشورة حاليًا" description="يمكنك التواصل معنا لمناقشة احتياجك."/>}</Section></PageShell>}
+export const metadata={title:'جميع الخدمات | متجر مَدار | ORBIT',description:'خدمات مَدار البرمجية والتقنية والإبداعية المنشورة والمتاحة للطلب.'};
+
+export default function ServicesPage(){return <StoreListingPage eyebrow="متجر مَدار | ORBIT · الخدمات" title="خدمات تُبنى حول احتياج العمل" description="خدمات البرمجة والذكاء الاصطناعي والتصميم والتسويق والتجارة والاستشارات، مع تحكم كامل من لوحة الإدارة." filters={{entityType:'service'}} catalogTitle="الخدمات المنشورة"/>}
