@@ -40,6 +40,12 @@ async function syncTags(kind:StoreKind,entityId:string,tagIds:string[]){
  if(tagIds.length)await supabaseFetch(`/rest/v1/${relation}`,{method:'POST',body:JSON.stringify(tagIds.map(tagId=>({[foreignKey]:entityId,tag_id:tagId})))});
 }
 
+function legacyProductDelivery(value:string){
+ if(value==='instant_download')return'instant';
+ if(value==='external_link')return'external';
+ return'manual';
+}
+
 export async function saveStoreEntity(_previous:StoreActionState,form:FormData):Promise<StoreActionState>{
  try{
   const actor=await requireAdmin();
@@ -52,16 +58,16 @@ export async function saveStoreEntity(_previous:StoreActionState,form:FormData):
    visibility:values.visibility,availability:values.availability,sort_order:values.sort_order,thumbnail_url:values.thumbnail_url,
    video_url:values.video_url,external_url:values.external_url,purchase_url:values.purchase_url,keywords:values.keywords,
    features:values.features,seo_title:values.seo_title||null,seo_description:values.seo_description||null,
-   delivery_duration:values.delivery_duration||null,delivery_type:values.delivery_type,requires_approval:values.requires_approval,
-   is_free:values.is_free,is_active:values.is_active,is_featured:values.is_featured,show_in_store:values.show_in_store,
-   show_on_home:values.show_on_home,allow_reviews:values.allow_reviews,allow_comments:values.allow_comments,
-   published_at:values.status==='published'?new Date().toISOString():null,updated_by:actor.id,...(!id?{created_by:actor.id}:{})
+   delivery_duration:values.delivery_duration||null,requires_approval:values.requires_approval,is_free:values.is_free,
+   is_active:values.is_active,is_featured:values.is_featured,show_in_store:values.show_in_store,show_on_home:values.show_on_home,
+   allow_reviews:values.allow_reviews,allow_comments:values.allow_comments,published_at:values.status==='published'?new Date().toISOString():null,
+   updated_by:actor.id,...(!id?{created_by:actor.id}:{})
   };
   const payload=values.kind==='product'
-   ?{...common,price:values.price,compare_at_price:values.compare_at_price,product_type:values.item_type,includes:values.includes}
+   ?{...common,price:values.price,compare_at_price:values.compare_at_price,product_type:values.item_type,delivery_type:legacyProductDelivery(values.delivery_type),includes:values.includes}
    :values.kind==='service'
-    ?{...common,price_from:values.price,compare_at_price:values.compare_at_price,service_type:values.item_type}
-    :{...common,price:values.price,compare_at_price:values.compare_at_price,billing_interval:values.billing_interval,trial_days:values.trial_days,includes:values.includes};
+    ?{...common,price_from:values.price,compare_at_price:values.compare_at_price,service_type:values.item_type,delivery_type:values.delivery_type,includes:values.includes}
+    :{...common,price:values.price,compare_at_price:values.compare_at_price,plan_type:values.item_type,delivery_type:values.delivery_type,billing_interval:values.billing_interval,trial_days:values.trial_days,includes:values.includes};
   const entityId=await upsert(entityTable(values.kind),id,payload);
   if(!entityId)throw new Error('تعذر تحديد معرف العنصر بعد الحفظ.');
   await syncTags(values.kind,entityId,tagIds);
