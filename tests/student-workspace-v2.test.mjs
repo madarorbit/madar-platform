@@ -14,7 +14,7 @@ test('every authenticated account can own one isolated free student workspace',(
 });
 
 test('student hub includes private library filters, planning and learning tools',()=>{
- for(const value of ['مكتبة الطالب','حسب الاسم','الحجم: الأكبر','التركيز والأهداف','مساعد مَدار الذكي'])assert.ok(page.includes(value));
+ for(const value of ['مكتبة الطالب','حسب الاسم','الحجم: الأكبر','التركيز والأهداف','مساعد مَدار | ORBIT الذكي'])assert.ok(page.includes(value));
  assert.match(migration,/student_events/);
  assert.match(migration,/student_study_sessions/);
  assert.match(migration,/student_goals/);

@@ -21,17 +21,17 @@ test('legacy pages inherit the enterprise system without business changes',async
  assert.doesNotMatch(bridge,/fetch\(|supabase|server action/i);
 });
 
-test('ORBY is present in the main and workspace navigation',async()=>{
- const[navbar,workspace,student,config]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('app/student/layout.tsx'),read('src/config/site.ts')]);
+test('ORBY is present in the main, workspace and student navigation',async()=>{
+ const[navbar,workspace,student,config]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('components/student/EnterpriseStudentShell.tsx'),read('src/config/site.ts')]);
  for(const source of [navbar,workspace,student]){assert.match(source,/أوربي/);assert.match(source,/orby-assistant\.svg|siteConfig\.assets\.orby/)}
  assert.match(config,/orby:'\/brand\/orby-assistant\.svg'/);
 });
 
-test('root presentation remains Arabic and right-to-left',async()=>{
+test('root presentation remains Arabic, right-to-left and officially named',async()=>{
  const[root,config]=await Promise.all([read('app/layout.tsx'),read('src/config/site.ts')]);
  assert.match(root,/lang="ar"/);
  assert.match(root,/dir="rtl"/);
- assert.match(config,/name: 'مَدار'/);
+ assert.match(config,/name: 'مَدار \| ORBIT'/);
 });
 
 test('enterprise transformation does not introduce database or server action files',async()=>{

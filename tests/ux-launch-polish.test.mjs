@@ -1,0 +1,52 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+
+const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
+
+test('valid sessions refresh automatically and resume the last protected page',async()=>{
+ const[proxy,auth,navigation]=await Promise.all([read('proxy.ts'),read('app/actions/auth.ts'),read('components/navigation/NavigationExperience.tsx')]);
+ assert.match(proxy,/grant_type=refresh_token/);
+ assert.match(proxy,/madar-refresh-token/);
+ assert.match(proxy,/madar-last-path/);
+ assert.match(proxy,/loginRedirect\(request\)/);
+ assert.match(auth,/SESSION_MAX_AGE/);
+ assert.match(auth,/rememberedPath/);
+ assert.match(auth,/safeReturnTo\(String\(form\.get\('next'\)\|\|last/);
+ assert.match(navigation,/localStorage\.setItem\('madar-last-path'/);
+});
+
+test('enterprise navigation exposes history controls, breadcrumbs, progress and scroll restoration',async()=>{
+ const[controls,experience,css]=await Promise.all([read('components/navigation/NavigationControls.tsx'),read('components/navigation/NavigationExperience.tsx'),read('app/ux-launch-polish.css')]);
+ assert.match(controls,/router\.back\(\)/);
+ assert.match(controls,/window\.history\.forward\(\)/);
+ assert.match(controls,/مسار الصفحة/);
+ assert.match(experience,/sessionStorage\.setItem/);
+ assert.match(experience,/scrollTo/);
+ assert.match(css,/\.md-route-progress/);
+ assert.match(css,/md-page-enter/);
+});
+
+test('student and business spaces open on focused dashboards with separate navigation',async()=>{
+ const[studentShell,studentPage,workspaceShell,workspacePage]=await Promise.all([read('components/student/EnterpriseStudentShell.tsx'),read('app/student/page.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('app/workspace/page.tsx')]);
+ assert.match(studentShell,/view:'dashboard'/);
+ assert.match(studentShell,/لوحة المعلومات/);
+ for(const view of ['courses','tasks','library','calendar','notes','focus','ai'])assert.match(studentPage,new RegExp(`view==='${view}'`));
+ assert.match(workspaceShell,/لوحة المعلومات/);
+ assert.match(workspacePage,/ملخص مباشر/);
+ assert.doesNotMatch(studentPage,/href={`#\$\{item\[0\]\}`}/);
+});
+
+test('official identity and supplied ORBY artwork are used without a boxed logo placeholder',async()=>{
+ const[config,logo,orby,css]=await Promise.all([read('src/config/site.ts'),read('public/brand/logo.svg'),read('public/brand/orby-assistant.svg'),read('app/ux-launch-polish.css')]);
+ assert.match(config,/name: 'مَدار \| ORBIT'/);
+ assert.match(config,/titleTemplate: '%s \| مَدار \| ORBIT'/);
+ assert.doesNotMatch(logo,/<rect width="1000" height="1000"/);
+ assert.match(logo,/مَدار/);
+ assert.match(logo,/ORBIT/);
+ assert.match(orby,/data:image\/webp;base64/);
+ assert.match(orby,/width="256" height="256"/);
+ assert.match(css,/md-orby-idle/);
+ assert.match(css,/md-orby-breathe/);
+ assert.match(css,/prefers-reduced-motion/);
+});

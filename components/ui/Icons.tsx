@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-export type IconName = 'home'|'store'|'search'|'user'|'arrow'|'sparkles'|'automation'|'chart'|'layers'|'shield'|'document'|'help'|'community'|'briefcase'|'code'|'megaphone'|'x'|'instagram'|'whatsapp'|'github'|'mail'|'check';
+export type IconName = 'home'|'store'|'search'|'user'|'arrow'|'back'|'forward'|'sparkles'|'automation'|'chart'|'layers'|'shield'|'document'|'help'|'community'|'briefcase'|'code'|'megaphone'|'x'|'instagram'|'whatsapp'|'github'|'mail'|'check'|'calendar'|'book'|'note'|'clock'|'settings'|'bell';
 
 const paths: Record<IconName, React.ReactNode> = {
   home:<><path d="M3 10.8 12 3l9 7.8"/><path d="M5.5 9.5V21h13V9.5M9 21v-7h6v7"/></>,
@@ -8,6 +8,8 @@ const paths: Record<IconName, React.ReactNode> = {
   search:<><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
   user:<><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,
   arrow:<path d="m9 18 6-6-6-6"/>,
+  back:<><path d="m15 18-6-6 6-6"/><path d="M9 12h11"/></>,
+  forward:<><path d="m9 18 6-6-6-6"/><path d="M15 12H4"/></>,
   sparkles:<><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></>,
   automation:<><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/><circle cx="12" cy="12" r="4"/></>,
   chart:<><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></>,
@@ -25,6 +27,12 @@ const paths: Record<IconName, React.ReactNode> = {
   github:<><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3.3-.4 6.8-1.6 6.8-7.4A5.7 5.7 0 0 0 19.3 3 5.4 5.4 0 0 0 19.1.9S17.9.5 15 2.4a14 14 0 0 0-6 0C6.1.5 4.9.9 4.9.9A5.4 5.4 0 0 0 4.7 3a5.7 5.7 0 0 0-1.5 4.1c0 5.8 3.5 7 6.8 7.4A4.8 4.8 0 0 0 9 18v4"/><path d="M9 19c-3 .9-3-1.5-4.2-2"/></>,
   mail:<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>,
   check:<path d="m5 12 4 4L19 6"/>,
+  calendar:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></>,
+  book:<><path d="M4 4.5A3.5 3.5 0 0 1 7.5 1H12v19H7.5A3.5 3.5 0 0 0 4 23V4.5Z"/><path d="M20 4.5A3.5 3.5 0 0 0 16.5 1H12v19h4.5A3.5 3.5 0 0 1 20 23V4.5Z"/></>,
+  note:<><path d="M5 3h14v18H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></>,
+  clock:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
+  settings:<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21v4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></>,
+  bell:<><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></>,
 };
 
 export function Icon({name,className='h-5 w-5',...props}:{name:IconName;className?:string}&SVGProps<SVGSVGElement>){return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name]}</svg>}
