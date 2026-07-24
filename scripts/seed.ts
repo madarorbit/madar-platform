@@ -1,6 +1,6 @@
 import {readFile} from 'node:fs/promises';
 
-const migrationUrl=new URL('../supabase/migrations/20260724223000_madar_store_engine.sql',import.meta.url);
+const migrationUrl=new URL('../supabase/migrations/20260724223300_store_seed_data.sql',import.meta.url);
 const migration=await readFile(migrationUrl,'utf8');
 
 const requiredSections=[
@@ -16,4 +16,4 @@ const missing=requiredSections.filter(section=>!migration.includes(section));
 if(missing.length)throw new Error(`Store Engine seed migration is incomplete: ${missing.join(', ')}`);
 if(!migration.includes("'draft','hidden',false,false,false"))throw new Error('Store Engine defaults must remain draft, hidden and inactive.');
 
-console.log('MADAR Store Engine seed data is versioned inside the Supabase migration. Apply migrations to seed the database safely.');
+console.log('MADAR Store Engine seed data is versioned inside the dedicated Supabase seed migration. Apply migrations to seed the database safely.');
