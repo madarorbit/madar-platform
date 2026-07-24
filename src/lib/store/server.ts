@@ -90,10 +90,10 @@ export async function getStoreItem(entityType:StoreEntityType,slug:string){
  return (data as RawItem[])[0]?mapItem((data as RawItem[])[0],entityType):null;
 }
 
-export async function getStoreCategories(){
+export async function getStoreCategories():Promise<StoreCategory[]>{
  const params=new URLSearchParams({select:'id,name,slug,description,image_url,sort_order',is_active:'eq.true',visibility:'eq.visible',deleted_at:'is.null',order:'sort_order.asc,name.asc'});
  const {data}=await publicFetch(`/rest/v1/categories?${params.toString()}`,{revalidate:300});
- return (data as RawCategory[]).map(category);
+ return (data as RawCategory[]).map(row=>category(row)).filter((item):item is StoreCategory=>item!==null);
 }
 
 export async function getActiveOffers():Promise<StoreOffer[]>{

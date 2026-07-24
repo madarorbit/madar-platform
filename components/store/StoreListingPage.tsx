@@ -2,7 +2,7 @@ import PageShell from '@/components/ui/PageShell';
 import {PageHero,Section} from '@/components/ui/Section';
 import StoreCatalog from './StoreCatalog';
 import {getStoreCategories,searchStore} from '@/src/lib/store/server';
-import type {StoreSearchFilters} from '@/src/lib/store/types';
+import type {StoreCategory,StoreSearchFilters,StoreSearchResponse} from '@/src/lib/store/types';
 
 type Props={
  eyebrow:string;
@@ -13,8 +13,8 @@ type Props={
 };
 
 export default async function StoreListingPage({eyebrow,title,description,filters={},catalogTitle}:Props){
- let initial;let categories=[];
- try{[initial,categories]=await Promise.all([searchStore({...filters,page:1,pageSize:12}),getStoreCategories()])}
- catch{initial={items:[],total:0,page:1,pageSize:12,hasMore:false}}
+ let initial:StoreSearchResponse={items:[],total:0,page:1,pageSize:12,hasMore:false};
+ let categories:StoreCategory[]=[];
+ try{[initial,categories]=await Promise.all([searchStore({...filters,page:1,pageSize:12}),getStoreCategories()])}catch{}
  return <PageShell><PageHero eyebrow={eyebrow} title={title} description={description}/><Section><StoreCatalog initial={initial} categories={categories} fixed={filters} title={catalogTitle||title}/></Section></PageShell>;
 }

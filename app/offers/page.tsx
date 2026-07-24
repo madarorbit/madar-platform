@@ -1,8 +1,12 @@
 import PageShell from '@/components/ui/PageShell';
 import {PageHero,Section,EmptyState} from '@/components/ui/Section';
 import {Icon} from '@/components/ui/Icons';
-import {getActiveOffers} from '@/src/lib/store/server';
+import {getActiveOffers,type StoreOffer} from '@/src/lib/store/server';
 
 export const metadata={title:'عروض متجر مَدار | ORBIT',description:'العروض النشطة والمنشورة في متجر مَدار.'};
 
-export default async function Page(){let offers=[];try{offers=await getActiveOffers()}catch{}return <PageShell><PageHero eyebrow="متجر مَدار · العروض" title="العروض النشطة" description="لا يظهر أي عرض إلا بعد نشره وجعله مرئيًا وتفعيله من لوحة إدارة المتجر."/><Section>{offers.length?<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{offers.map(offer=><article key={offer.id} className="md-card md-card-interactive"><span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-300/10 text-emerald-200"><Icon name="megaphone"/></span><p className="mt-5 text-sm font-bold text-emerald-300">{offer.discountType==='percentage'?`خصم ${offer.discountValue}%`:offer.discountType==='fixed'?`خصم ${offer.discountValue}`:`سعر خاص ${offer.discountValue}`}</p><h2 className="mt-2 text-2xl font-black">{offer.name}</h2><p className="mt-3 leading-7 text-slate-400">{offer.description}</p>{offer.endsAt&&<p className="mt-5 text-xs text-slate-500">ينتهي في {new Date(offer.endsAt).toLocaleDateString('ar-YE')}</p>}</article>)}</div>:<EmptyState title="لا توجد عروض نشطة حاليًا" description="يمكن إنشاء العروض وجدولتها ونشرها من إدارة المتجر."/>}</Section></PageShell>}
+export default async function Page(){
+ let offers:StoreOffer[]=[];
+ try{offers=await getActiveOffers()}catch{}
+ return <PageShell><PageHero eyebrow="متجر مَدار · العروض" title="العروض النشطة" description="لا يظهر أي عرض إلا بعد نشره وجعله مرئيًا وتفعيله من لوحة إدارة المتجر."/><Section>{offers.length?<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{offers.map(offer=><article key={offer.id} className="md-card md-card-interactive"><span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-300/10 text-emerald-200"><Icon name="megaphone"/></span><p className="mt-5 text-sm font-bold text-emerald-300">{offer.discountType==='percentage'?`خصم ${offer.discountValue}%`:offer.discountType==='fixed'?`خصم ${offer.discountValue}`:`سعر خاص ${offer.discountValue}`}</p><h2 className="mt-2 text-2xl font-black">{offer.name}</h2><p className="mt-3 leading-7 text-slate-400">{offer.description}</p>{offer.endsAt&&<p className="mt-5 text-xs text-slate-500">ينتهي في {new Date(offer.endsAt).toLocaleDateString('ar-YE')}</p>}</article>)}</div>:<EmptyState title="لا توجد عروض نشطة حاليًا" description="يمكن إنشاء العروض وجدولتها ونشرها من إدارة المتجر."/>}</Section></PageShell>;
+}

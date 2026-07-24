@@ -1,0 +1,51 @@
+name: MADAR Store Engine Final Validation
+
+on:
+  push:
+    branches: [agent/madar-store-engine]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: store-engine-final-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SITE_URL: https://madar-platform-ten.vercel.app
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.signature
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.signature
+      SUPER_ADMIN_EMAIL: orbit.ops.digital@gmail.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npx next typegen
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Record successful validation
+        run: |
+          mkdir -p validation
+          cat > validation/store-engine-final-success.txt <<EOF
+          MADAR Store Engine validation passed.
+          Source commit: ${GITHUB_SHA}
+          Checks: npm ci, tests, lint, Next typegen, TypeScript, Next build.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add validation/store-engine-final-success.txt
+          git commit -m "chore: certify Store Engine build [skip ci]" || true
+          git push origin HEAD:agent/madar-store-engine
