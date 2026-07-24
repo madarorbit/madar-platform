@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect,useState} from 'react';
+import {useSyncExternalStore} from 'react';
 
 type Theme='light'|'dark';
 
@@ -9,6 +9,12 @@ const STORAGE_KEY='madar-theme';
 function readTheme():Theme{
  if(typeof document==='undefined')return 'dark';
  return document.documentElement.dataset.theme==='light'?'light':'dark';
+}
+
+function subscribe(callback:()=>void){
+ window.addEventListener('madar-theme-change',callback);
+ window.addEventListener('storage',callback);
+ return()=>{window.removeEventListener('madar-theme-change',callback);window.removeEventListener('storage',callback)};
 }
 
 function applyTheme(theme:Theme){
@@ -22,22 +28,13 @@ function applyTheme(theme:Theme){
 }
 
 export default function ThemeToggle({compact=false}:{compact?:boolean}){
- const[theme,setTheme]=useState<Theme>('dark');
-
- useEffect(()=>{
-  setTheme(readTheme());
-  const sync=()=>setTheme(readTheme());
-  window.addEventListener('madar-theme-change',sync);
-  window.addEventListener('storage',sync);
-  return()=>{window.removeEventListener('madar-theme-change',sync);window.removeEventListener('storage',sync)};
- },[]);
+ const theme=useSyncExternalStore(subscribe,readTheme,()=> 'dark');
 
  const toggle=()=>{
   const next:Theme=readTheme()==='light'?'dark':'light';
   const root=document.documentElement;
   root.classList.add('md-theme-transitioning');
   applyTheme(next);
-  setTheme(next);
   window.setTimeout(()=>root.classList.remove('md-theme-transitioning'),340);
  };
 
