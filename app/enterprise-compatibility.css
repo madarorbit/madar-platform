@@ -1,0 +1,107 @@
+/*
+ * طبقة التوافق المؤسسي
+ * تجعل الصفحات التي تحتفظ ببنيتها الوظيفية القديمة تستخدم رموز نظام مَدار
+ * دون تعديل مساراتها أو منطقها أو إجراءاتها.
+ */
+
+.md-shell :where(div,section,article,aside,form,nav).bg-white,
+.md-shell :where(div,section,article,aside,form,nav).bg-slate-50,
+.md-shell :where(div,section,article,aside,form,nav).bg-slate-100,
+.md-shell :where(div,section,article,aside,form,nav).bg-gray-50,
+.md-shell :where(div,section,article,aside,form,nav).bg-gray-100 {
+  background-color: var(--md-color-surface) !important;
+  color: var(--md-color-text);
+}
+
+.md-shell :where(div,section,article,aside,form).bg-slate-900,
+.md-shell :where(div,section,article,aside,form).bg-gray-900,
+.md-shell :where(div,section,article,aside,form).bg-black {
+  background-color: var(--md-color-bg-soft) !important;
+}
+
+.md-shell :where(h1,h2,h3,h4,h5,h6,p,span,li,dt,dd,td,th,label,legend).text-slate-950,
+.md-shell :where(h1,h2,h3,h4,h5,h6,p,span,li,dt,dd,td,th,label,legend).text-slate-900,
+.md-shell :where(h1,h2,h3,h4,h5,h6,p,span,li,dt,dd,td,th,label,legend).text-gray-950,
+.md-shell :where(h1,h2,h3,h4,h5,h6,p,span,li,dt,dd,td,th,label,legend).text-gray-900 {
+  color: var(--md-color-text) !important;
+}
+
+.md-shell :where(p,span,li,dt,dd,label).text-slate-700,
+.md-shell :where(p,span,li,dt,dd,label).text-slate-600,
+.md-shell :where(p,span,li,dt,dd,label).text-gray-700,
+.md-shell :where(p,span,li,dt,dd,label).text-gray-600 {
+  color: var(--md-color-text-soft) !important;
+}
+
+.md-shell a.text-slate-950:not(.bg-white),
+.md-shell a.text-slate-900:not(.bg-white),
+.md-shell a.text-gray-950:not(.bg-white),
+.md-shell a.text-gray-900:not(.bg-white) {
+  color: var(--md-color-text) !important;
+}
+
+.md-shell :where(div,section,article,aside,form,table).border-slate-200,
+.md-shell :where(div,section,article,aside,form,table).border-slate-300,
+.md-shell :where(div,section,article,aside,form,table).border-gray-200,
+.md-shell :where(div,section,article,aside,form,table).border-gray-300 {
+  border-color: var(--md-color-border) !important;
+}
+
+.md-shell :where(div,section,article,aside,form).shadow,
+.md-shell :where(div,section,article,aside,form).shadow-sm,
+.md-shell :where(div,section,article,aside,form).shadow-md,
+.md-shell :where(div,section,article,aside,form).shadow-lg,
+.md-shell :where(div,section,article,aside,form).shadow-xl,
+.md-shell :where(div,section,article,aside,form).shadow-2xl {
+  box-shadow: var(--md-shadow-md) !important;
+}
+
+.md-shell :where(article,section,aside,form).rounded-xl,
+.md-shell :where(article,section,aside,form).rounded-2xl,
+.md-shell :where(article,section,aside,form).rounded-3xl {
+  border-color: var(--md-color-border);
+}
+
+.md-shell :where(button,a).bg-slate-900,
+.md-shell :where(button,a).bg-gray-900,
+.md-shell :where(button,a).bg-black {
+  border: 1px solid var(--md-color-border-strong);
+  background: var(--md-color-surface-raised) !important;
+  color: var(--md-color-text) !important;
+}
+
+.md-shell :where(button,a).bg-slate-900:hover,
+.md-shell :where(button,a).bg-gray-900:hover,
+.md-shell :where(button,a).bg-black:hover {
+  border-color: rgba(124, 77, 255, .4);
+  background: var(--md-color-brand-soft) !important;
+}
+
+.md-shell :where(button,a).bg-emerald-500,
+.md-shell :where(button,a).bg-emerald-600,
+.md-shell :where(button,a).bg-violet-500,
+.md-shell :where(button,a).bg-violet-600 {
+  color: white !important;
+  box-shadow: var(--md-shadow-brand);
+}
+
+.md-shell :where(hr).border-slate-200,
+.md-shell :where(hr).border-gray-200 {
+  border-color: var(--md-color-border) !important;
+}
+
+.md-shell :where(code,kbd) {
+  border: 1px solid var(--md-color-border);
+  border-radius: var(--md-radius-sm);
+  background: rgba(255, 255, 255, .055);
+  color: #cbbdff;
+  padding: .15rem .4rem;
+  font-family: var(--md-font-sans);
+}
+
+@media (max-width: 640px) {
+  .md-shell :where(.grid).grid-cols-2:has(> .md-button),
+  .md-shell :where(.flex).items-center:has(> .md-button) {
+    align-items: stretch;
+  }
+}

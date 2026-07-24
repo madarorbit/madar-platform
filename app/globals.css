@@ -1,4 +1,5 @@
 @import "tailwindcss";
 @import "./design-system.css";
+@import "./enterprise-compatibility.css";
 
 .prose p{margin-bottom:1rem}

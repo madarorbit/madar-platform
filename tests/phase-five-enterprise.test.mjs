@@ -12,6 +12,15 @@ test('enterprise design system exposes required foundations',async()=>{
  assert.match(css,/\[dir="rtl"\]/);
 });
 
+test('legacy pages inherit the enterprise system without business changes',async()=>{
+ const[globals,bridge]=await Promise.all([read('app/globals.css'),read('app/enterprise-compatibility.css')]);
+ assert.match(globals,/enterprise-compatibility\.css/);
+ assert.match(bridge,/\.md-shell/);
+ assert.match(bridge,/--md-color-surface/);
+ assert.match(bridge,/--md-color-border/);
+ assert.doesNotMatch(bridge,/fetch\(|supabase|server action/i);
+});
+
 test('ORBY is present in the main and workspace navigation',async()=>{
  const[navbar,workspace,student,config]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('app/student/layout.tsx'),read('src/config/site.ts')]);
  for(const source of [navbar,workspace,student]){assert.match(source,/أوربي/);assert.match(source,/orby-assistant\.svg|siteConfig\.assets\.orby/)}
