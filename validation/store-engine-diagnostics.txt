@@ -1,4 +1,4 @@
-MADAR Store Engine validation: success
+MADAR Store Engine validation: failure
 
 ===== install =====
 
@@ -21,98 +21,126 @@ npm warn allow-scripts
 npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
 
 ===== test =====
+    '  tag_id uuid not null references public.tags(id) on delete cascade,\n' +
+    '  created_at timestamptz not null default now(),\n' +
+    '  primary key(product_id,tag_id)\n' +
+    ');\n' +
+    '\n' +
+    'create table if not exists public.service_tags (\n' +
+    '  service_id uuid not null references public.services(id) on delete cascade,\n' +
+    '  tag_id uuid not null references public.tags(id) on delete cascade,\n' +
+    '  created_at timestamptz not null default now(),\n' +
+    '  primary key(service_id,tag_id)\n' +
+    ');\n' +
+    '\n' +
+    'create table if not exists public.product_gallery (\n' +
+    '  id uuid primary key default gen_random_uuid(),\n' +
+    '  product_id uuid not null references public.products(id) on delete cascade,\n' +
+    "  media_type text not null default 'image' check(media_type in ('image','video')),\n" +
+    '  storage_path text,\n' +
+    '  external_url text,\n' +
+    '  alt_text text,\n' +
+    '  caption text,\n' +
+    '  sort_order integer not null default 0,\n' +
+    '  is_cover boolean not null default false,\n' +
+    '  deleted_at timestamptz,\n' +
+    '  created_at timestamptz not null default now(),\n' +
+    '  updated_at timestamptz not null default now(),\n' +
+    '  check(storage_path is not null or external_url is not null)\n' +
+    ');\n' +
+    '\n' +
+    'create table if not exists public.plans (\n' +
+    '  id uuid primary key default gen_random_uuid(),\n' +
+    '  name text not null,\n' +
+    '  slug text not null unique,\n' +
+    '  short_description text,\n' +
+    '  long_description text,\n' +
+    '  price numeric(12,2) not null default 0 check(price>=0),\n' +
+    '  compare_at_price numeric(12,2) check(compare_at_price is null or compare_at_price>=0),\n' +
+    "  currency text not null default 'SAR',\n" +
+    "  billing_interval text not null default 'monthly' check(billing_interval in ('one_time','monthly','quarterly','yearly')),\n" +
+    '  trial_days integer not null default 0 check(trial_days>=0),\n' +
+    "  status public.catalog_status not null default 'draft',\n" +
+    "  visibility public.store_visibility not null default 'hidden',\n" +
+    '  is_active boolean not null default false,\n' +
+    '  is_featured boolean not null default false,\n' +
+    '  show_in_store boolean not null default false,\n' +
+    '  show_on_home boolean not null default false,\n' +
+    '  requires_approval boolean not null default true,\n' +
+    '  sort_order integer not null default 0,\n' +
+    '  max_workspaces integer,\n' +
+    '  max_users integer,\n' +
+    '  seo_title text,\n' +
+    '  seo_description text,\n' +
+    "  keywords text[] not null default '{}',\n" +
+    '  purchase_url text,\n' +
+    '  published_at timestamptz,\n' +
+    '  deleted_at timestamptz,\n' +
+    '  created_by uuid references public.profiles(id) on delete set null,\n' +
+    '  updated_by uuid references public.profiles(id) on delete set null,\n' +
+    '  created_at timestamptz not null default now(),\n' +
+    '  updated_at timestamptz not null default now()\n' +
+    ');\n' +
+    '\n' +
+    'create table if not exists public.plan_features (\n' +
+    '  id uuid primary key default gen_random_uuid(),\n' +
+    '  plan_id uuid not null references public.plans(id) on delete cascade,\n' +
+    '  name text not null,\n' +
+    '  description text,\n' +
+    '  feature_key text,\n' +
+    "  value jsonb not null default 'true'::jsonb,\n" +
+    '  is_highlighted boolean not null default false,\n' +
+    '  sort_order integer not null default 0,\n' +
+    '  deleted_at timestamptz,\n' +
+    '  created_at timestamptz not null default now(),\n' +
+    '  updated_at timestamptz not null default now()\n' +
+    ');\n' +
+    '\n' +
+    'create table if not exists public.offers (\n' +
+    '  id uuid primary key default gen_random_uuid(),\n' +
+    '  name text not null,\n' +
+    '  slug text not null unique,\n' +
+    '  description text,\n' +
+    "  discount_type text not null default 'percentage' check(discount_type in ('percentage','fixed','override_price')),\n" +
+    '  discount_value numeric(12,2) not null default 0 check(discount_value>=0),\n' +
+    '  starts_at timestamptz,\n' +
+    '  ends_at timestamptz,\n' +
+    "  status public.catalog_status not null default 'draft',\n" +
+    "  visibility public.store_visibility not null default 'hidden',\n" +
+    '  is_active boolean not null default false,\n' +
+    '  deleted_at timestamptz,\n' +
+    '  created_at timestamptz not null default now(),\n' +
+    '  updated_at timestamptz not null default now()\n' +
+    ');\n' +
+    '\n' +
+    'create table if not exists public.offer_items (\n' +
+    '  offer_id uuid not null references public.offers(id) on delete cascade,\n' +
+    '  entity_type text '... 3859 more characters
+  
+      at TestContext.<anonymous> (file:///home/runner/work/madar-platform/madar-platform/tests/store-engine.test.mjs:10:9)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "-- MADAR Store Engine core schema.\n-- Seed data, policies and production hardening are versioned in subsequent migrations.\nbegin;\n\ncreate extension if not exists pgcrypto;\ncreate extension if not exists pg_trgm;\n\ndo $$ begin\n  create type public.store_visibility as enum ('visible','hidden');\nexception when duplicate_object then null; end $$;\n\ndo $$ begin\n  create type public.store_item_type as enum ('digital_product','ready_system','service','subscription','bundle','template','student_resource');\nexception when duplicate_object then null; end $$;\n\ndo $$ begin\n  create type public.store_delivery_type as enum ('instant_download','manual_delivery','external_link','account_activation','scheduled_service');\nexception when duplicate_object then null; end $$;\n\ndo $$ begin\n  alter type public.catalog_status add value if not exists 'coming_soon';\n  alter type public.catalog_status add value if not exists 'sold_out';\n  alter type public.catalog_status add value if not exists 'disabled';\nexception when duplicate_object then null; end $$;\n\nalter table public.categories\n  add column if not exists seo_title text,\n  add column if not exists seo_description text,\n  add column if not exists visibility public.store_visibility not null default 'hidden',\n  add column if not exists deleted_at timestamptz;\n\ncreate table if not exists public.subcategories (\n  id uuid primary key default gen_random_uuid(),\n  category_id uuid not null references public.categories(id) on delete restrict,\n  name text not null,\n  slug text not null unique,\n  description text,\n  image_url text,\n  seo_title text,\n  seo_description text,\n  visibility public.store_visibility not null default 'hidden',\n  is_active boolean not null default false,\n  sort_order integer not null default 0,\n  deleted_at timestamptz,\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now(),\n  unique(category_id,name)\n);\n\ncreate table if not exists public.tags (\n  id uuid primary key default gen_random_uuid(),\n  name text not null,\n  slug text not null unique,\n  description text,\n  is_active boolean not null default false,\n  deleted_at timestamptz,\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now()\n);\n\nalter table public.products\n  add column if not exists subcategory_id uuid references public.subcategories(id) on delete set null,\n  add column if not exists product_type public.store_item_type not null default 'digital_product',\n  add column if not exists visibility public.store_visibility not null default 'hidden',\n  add column if not exists is_active boolean not null default false,\n  add column if not exists sort_order integer not null default 0,\n  add column if not exists view_count bigint not null default 0,\n  add column if not exists sales_count bigint not null default 0,\n  add column if not exists rating_average numeric(3,2) not null default 0,\n  add column if not exists rating_count integer not null default 0,\n  add column if not exists video_url text,\n  add column if not exists external_url text,\n  add column if not exists purchase_url text,\n  add column if not exists keywords text[] not null default '{}',\n  add column if not exists delivery_duration text,\n  add column if not exists requires_approval boolean not null default false,\n  add column if not exists is_free boolean not null default false,\n  add column if not exists show_in_store boolean not null default false,\n  add column if not exists show_on_home boolean not null default false,\n  add column if not exists allow_reviews boolean not null default true,\n  add column if not exists allow_comments boolean not null default false,\n  add column if not exists deleted_at timestamptz;\n\nalter table public.services\n  add column if not exists category_id uuid references public.categories(id) on delete set null,\n  add column if not exists subcategory_id uuid references public.subcategories(id) on delete set null,\n  add column if not exists service_type public.store_item_type not null default 'service',\n  add column if not exists visibility public.store_visibility not null default 'hidden',\n  add column if not exists is_active boolean not null default false,\n  add column if not exists sort_order integer not null default 0,\n  add column if not exists view_count bigint not null default 0,\n  add column if not exists sales_count bigint not null default 0,\n  add column if not exists rating_average numeric(3,2) not null default 0,\n  add column if not exists rating_count integer not null default 0,\n  add column if not exists video_url text,\n  add column if not exists external_url text,\n  add column if not exists purchase_url text,\n  add column if not exists keywords text[] not null default '{}',\n  add column if not exists delivery_duration text,\n  add column if not exists delivery_type public.store_delivery_type not null default 'scheduled_service',\n  add column if not exists requires_approval boolean not null default true,\n  add column if not exists is_free boolean not null default false,\n  add column if not exists show_in_store boolean not null default false,\n  add column if not exists show_on_home boolean not null default false,\n  add column if not exists allow_reviews boolean not null default true,\n  add column if not exists allow_comments boolean not null default false,\n  add column if not exists deleted_at timestamptz;\n\nalter table public.product_images\n  add column if not exists updated_at timestamptz not null default now(),\n  add column if not exists deleted_at timestamptz;\n\nalter table public.product_files\n  add column if not exists title text,\n  add column if not exists file_kind text not null default 'download',\n  add column if not exists is_public boolean not null default false,\n  add column if not exists download_limit integer,\n  add column if not exists updated_at timestamptz not null default now(),\n  add column if not exists deleted_at timestamptz;\n\nalter table public.service_images\n  add column if not exists updated_at timestamptz not null default now(),\n  add column if not exists deleted_at timestamptz;\n\ncreate table if not exists public.product_tags (\n  product_id uuid not null references public.products(id) on delete cascade,\n  tag_id uuid not null references public.tags(id) on delete cascade,\n  created_at timestamptz not null default now(),\n  primary key(product_id,tag_id)\n);\n\ncreate table if not exists public.service_tags (\n  service_id uuid not null references public.services(id) on delete cascade,\n  tag_id uuid not null references public.tags(id) on delete cascade,\n  created_at timestamptz not null default now(),\n  primary key(service_id,tag_id)\n);\n\ncreate table if not exists public.product_gallery (\n  id uuid primary key default gen_random_uuid(),\n  product_id uuid not null references public.products(id) on delete cascade,\n  media_type text not null default 'image' check(media_type in ('image','video')),\n  storage_path text,\n  external_url text,\n  alt_text text,\n  caption text,\n  sort_order integer not null default 0,\n  is_cover boolean not null default false,\n  deleted_at timestamptz,\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now(),\n  check(storage_path is not null or external_url is not null)\n);\n\ncreate table if not exists public.plans (\n  id uuid primary key default gen_random_uuid(),\n  name text not null,\n  slug text not null unique,\n  short_description text,\n  long_description text,\n  price numeric(12,2) not null default 0 check(price>=0),\n  compare_at_price numeric(12,2) check(compare_at_price is null or compare_at_price>=0),\n  currency text not null default 'SAR',\n  billing_interval text not null default 'monthly' check(billing_interval in ('one_time','monthly','quarterly','yearly')),\n  trial_days integer not null default 0 check(trial_days>=0),\n  status public.catalog_status not null default 'draft',\n  visibility public.store_visibility not null default 'hidden',\n  is_active boolean not null default false,\n  is_featured boolean not null default false,\n  show_in_store boolean not null default false,\n  show_on_home boolean not null default false,\n  requires_approval boolean not null default true,\n  sort_order integer not null default 0,\n  max_workspaces integer,\n  max_users integer,\n  seo_title text,\n  seo_description text,\n  keywords text[] not null default '{}',\n  purchase_url text,\n  published_at timestamptz,\n  deleted_at timestamptz,\n  created_by uuid references public.profiles(id) on delete set null,\n  updated_by uuid references public.profiles(id) on delete set null,\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now()\n);\n\ncreate table if not exists public.plan_features (\n  id uuid primary key default gen_random_uuid(),\n  plan_id uuid not null references public.plans(id) on delete cascade,\n  name text not null,\n  description text,\n  feature_key text,\n  value jsonb not null default 'true'::jsonb,\n  is_highlighted boolean not null default false,\n  sort_order integer not null default 0,\n  deleted_at timestamptz,\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now()\n);\n\ncreate table if not exists public.offers (\n  id uuid primary key default gen_random_uuid(),\n  name text not null,\n  slug text not null unique,\n  description text,\n  discount_type text not null default 'percentage' check(discount_type in ('percentage','fixed','override_price')),\n  discount_value numeric(12,2) not null default 0 check(discount_value>=0),\n  starts_at timestamptz,\n  ends_at timestamptz,\n  status public.catalog_status not null default 'draft',\n  visibility public.store_visibility not null default 'hidden',\n  is_active boolean not null default false,\n  deleted_at timestamptz,\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now()\n);\n\ncreate table if not exists public.offer_items (\n  offer_id uuid not null references public.offers(id) on delete cascade,\n  entity_type text "... 3859 more characters,
+    expected: /status='published' and visibility='visible' and is_active and show_in_store/,
+    operator: 'match',
+    diff: 'simple'
+  }
 
-> madar-platform@0.1.0 test
-> node --test tests/*.test.mjs
-
-✔ accepts genuine JPEG, PNG, WebP, PDF and ZIP signatures (2.341054ms)
-✔ rejects forged signatures and binary or invalid UTF-8 text (0.745045ms)
-✔ enterprise design system exposes required foundations (9.391606ms)
-✔ legacy pages inherit the enterprise system without business changes (3.443097ms)
-✔ ORBY is present in the main, workspace and student navigation (8.037418ms)
-✔ root presentation remains Arabic, right-to-left and officially named (1.891392ms)
-✔ enterprise transformation does not introduce database or server action files (1.79458ms)
-✔ analytics is calculated inside a protected tenant-aware database function (1.646483ms)
-✔ business metrics include revenue costs profit customers stock and tasks (0.518982ms)
-✔ RPC wrappers end as invokers and delegate only to unexposed checked implementations (2.22135ms)
-✔ analytics range is timezone-aware and bounded (0.237364ms)
-✔ dashboard supports comparisons charts CSV and printable PDF workflow (0.514042ms)
-✔ phase four creates tenant-scoped business operating tables (3.595553ms)
-✔ business data policies require organization membership or explicit capability (0.324468ms)
-✔ sales and inventory mutations are atomic private implementations (0.524181ms)
-✔ Data API grants are revoked before least-privilege grants are restored (0.393177ms)
-✔ inventory quantity cannot be directly edited through the Data API grant (0.261179ms)
-✔ server actions redirect only after work completes (0.471653ms)
-✔ workspace exposes the operating center and core modules (0.238607ms)
-✔ phase four hardening covers foreign keys and avoids overlapping all policy (0.230652ms)
-✔ imports are tenant-scoped, bounded and not writable anonymously (3.421507ms)
-✔ commit validates capability and imports all rows in one database function (0.436197ms)
-✔ rollback refuses to erase imported records already used by later operations (0.267531ms)
-✔ RLS gets execution only for non-mutating helper functions (0.206848ms)
-✔ CSV ingestion is bounded and handles quoted values and bilingual mapping (0.269815ms)
-✔ upload actions validate size, type, mapping and tenant ownership (0.25094ms)
-✔ preview requires explicit column mapping before commit (0.243085ms)
-✔ Beta feedback privacy and activity are tenant safe (2.093159ms)
-✔ founder account and privileged actions are protected in the database (0.424485ms)
-✔ founder can control accounts workspaces subscriptions store and platform settings (0.308207ms)
-✔ platform switches are enforced below the UI (0.251641ms)
-✔ privacy exports require authenticated ownership and omit public file access (0.33101ms)
-✔ Beta operations and attachments are admin controlled (0.193633ms)
-✔ launch health endpoint is public and secret free (0.239218ms)
-✔ ORBY memory is isolated by user and organization (3.500635ms)
-✔ ORBY enforces daily quotas before generation (0.284051ms)
-✔ ORBY context comes from checked workspace analytics only (0.269177ms)
-✔ AI provider failure falls back without leaking provider details (0.260708ms)
-✔ proactive insights are deterministic and actionable (0.314669ms)
-✔ ORBY actions require draft then explicit confirmation (0.303158ms)
-✔ ORBY foreign keys have covering indexes (0.217818ms)
-✔ local payment methods are disabled until valid account details exist (2.49377ms)
-✔ first ten Beta workspaces are reserved atomically and expire when abandoned (0.316964ms)
-✔ paid workspace approval requires a private proof while Beta skips payment (0.236714ms)
-✔ payment proofs are validated and stored in a private bucket (0.299241ms)
-✔ renewal approval extends from the later of now or the current end date (0.225492ms)
-✔ subscription limits are enforced in the database (0.222286ms)
-✔ expired subscriptions block paid workspace pages but preserve renewal access (0.215093ms)
-✔ store migration creates the permanent engine tables and strict visibility policy (14.281752ms)
-✔ all requested seed data starts hidden, inactive and draft (2.934435ms)
-✔ public store routes use the shared database engine (10.838366ms)
-✔ legacy product module contains no hard-coded catalog records (1.534975ms)
-✔ admin store center and instant search API exist (2.762483ms)
-✔ every authenticated account can own one isolated free student workspace (1.363012ms)
-✔ student hub includes private library filters, planning and learning tools (0.362709ms)
-✔ AI assistant authenticates membership and limits submitted content (1.30332ms)
-✔ theme is applied before hydration and stored for later visits (8.524063ms)
-✔ light and dark tokens cover the enterprise design system (3.031938ms)
-✔ public and authenticated navigation shells expose the theme toggle (6.41363ms)
-✔ valid sessions refresh automatically and resume the last protected page (11.228399ms)
-✔ enterprise navigation exposes history controls, breadcrumbs, progress and scroll restoration (3.495606ms)
-✔ student and business spaces open on focused dashboards with separate navigation (4.863197ms)
-✔ official identity and supplied ORBY artwork are used without a boxed logo placeholder (2.047564ms)
-✔ return paths reject open redirects (2.088801ms)
-✔ workspace slug and type validation constraints are deterministic (0.411321ms)
-✔ migration creates an atomic owner membership and tenant isolation policies (0.269264ms)
-✔ private digital storage remains protected in phase one (0.199483ms)
-✔ member-management RPC limits admins and preserves ownership (0.243927ms)
-✔ public RPC wrappers are invoker functions and anonymous execution is revoked (0.182111ms)
-✔ phase hardening sets storage limits and explicit API grants (0.279433ms)
-✔ admin uploads validate storage types and use private digital bucket (0.257552ms)
-✔ career applications are write-only for visitors and reviewable only by admins (0.296706ms)
-✔ paid workspaces require payment and admin approval while student spaces stay free (0.374451ms)
-✔ student data and PDF storage are private tenant-scoped resources (0.354294ms)
-✔ workspace RPCs use invoker wrappers and anonymous execution is revoked (0.183914ms)
-✔ auth flows remain Arabic and email-only while phone login is deferred (0.232465ms)
-✔ phase three creates server-priced orders with private payment proofs and controlled downloads (1.252505ms)
-✔ payment approval and fulfillment are admin-only atomic operations (0.226825ms)
-✔ career submission is write-only without requesting the protected row back (0.139862ms)
-✔ home entry points change for authenticated visitors (0.267ms)
-ℹ tests 80
-ℹ suites 0
-ℹ pass 80
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 445.376134
+test at tests/store-engine.test.mjs:14:1
+✖ all requested seed data starts hidden, inactive and draft (5.265149ms)
+  AssertionError [ERR_ASSERTION]: missing seed: نظام إدارة واتساب للأعمال Lite
+      at TestContext.<anonymous> (file:///home/runner/work/madar-platform/madar-platform/tests/store-engine.test.mjs:16:172)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
 
 ===== lint =====
 

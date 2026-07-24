@@ -1,8 +1,8 @@
 {
-  "result": "success",
-  "commit": "748c7eeefbc16a8a3223650be84879e94d64053c",
+  "result": "failure",
+  "commit": "1bfa3a2f58e3039c783519b93938b8fe152c6a2d",
   "install": 0,
-  "test": 0,
+  "test": 1,
   "lint": 0,
   "typegen": 0,
   "typecheck": 0,
