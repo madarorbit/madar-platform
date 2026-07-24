@@ -1,0 +1,43 @@
+name: التحقق من التحول المؤسسي
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase-five-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: الاختبارات والتحليل والبناء
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SITE_URL: https://madar-platform-ten.vercel.app
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.signature
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.signature
+      SUPER_ADMIN_EMAIL: orbit.ops.digital@gmail.com
+    steps:
+      - name: جلب المستودع
+        uses: actions/checkout@v4
+      - name: إعداد بيئة التشغيل
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: تثبيت الاعتماديات
+        run: npm ci
+      - name: تشغيل الاختبارات
+        run: npm test
+      - name: فحص جودة الشفرة
+        run: npm run lint
+      - name: التحقق من الأنواع
+        run: npm run typecheck
+      - name: بناء المنصة
+        run: npm run build
