@@ -1,0 +1,36 @@
+-- Keep exposed RPC wrappers as invokers and permit delegation only inside the unexposed private schema.
+alter function public.adjust_inventory(uuid,numeric,text) security invoker;
+alter function public.business_analytics(uuid,date,date) security invoker;
+alter function public.commit_business_import(uuid,jsonb) security invoker;
+alter function public.create_customer_order(jsonb,text,text,text) security invoker;
+alter function public.create_organization(text,text,public.organization_type) security invoker;
+alter function public.create_workspace_request(text,text,public.organization_type) security invoker;
+alter function public.ensure_student_workspace() security invoker;
+alter function public.list_organization_members(uuid) security invoker;
+alter function public.manage_organization_member(uuid,text,public.organization_role,text) security invoker;
+alter function public.record_business_sale(uuid,uuid,jsonb,numeric,text,text) security invoker;
+alter function public.review_order_payment(uuid,boolean,text) security invoker;
+alter function public.review_workspace_request(uuid,text,text) security invoker;
+alter function public.rollback_business_import(uuid) security invoker;
+alter function public.submit_order_payment(uuid,text) security invoker;
+alter function public.submit_workspace_payment(uuid,text) security invoker;
+alter function public.sync_student_reminders(uuid) security invoker;
+alter function public.update_order_fulfillment(uuid,public.order_status,text) security invoker;
+
+grant execute on function private.adjust_inventory_impl(uuid,numeric,text) to authenticated;
+grant execute on function private.business_analytics_impl(uuid,date,date) to authenticated;
+grant execute on function private.commit_business_import_impl(uuid,jsonb) to authenticated;
+grant execute on function private.create_customer_order_impl(jsonb,text,text,text) to authenticated;
+grant execute on function private.create_student_organization_impl(text,text,public.organization_type) to authenticated;
+grant execute on function private.create_workspace_request_impl(text,text,public.organization_type) to authenticated;
+grant execute on function private.ensure_student_workspace_impl() to authenticated;
+grant execute on function private.list_organization_members_impl(uuid) to authenticated;
+grant execute on function private.manage_organization_member_impl(uuid,text,public.organization_role,text) to authenticated;
+grant execute on function private.record_business_sale_impl(uuid,uuid,jsonb,numeric,text,text) to authenticated;
+grant execute on function private.review_order_payment_impl(uuid,boolean,text) to authenticated;
+grant execute on function private.review_workspace_request_impl(uuid,text,text) to authenticated;
+grant execute on function private.rollback_business_import_impl(uuid) to authenticated;
+grant execute on function private.submit_order_payment_impl(uuid,text) to authenticated;
+grant execute on function private.submit_workspace_payment_impl(uuid,text) to authenticated;
+grant execute on function private.sync_student_reminders_impl(uuid) to authenticated;
+grant execute on function private.update_order_fulfillment_impl(uuid,public.order_status,text) to authenticated;

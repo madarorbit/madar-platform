@@ -28,8 +28,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run tests
-        run: npm test
+        shell: bash
+        run: set -o pipefail; npm test 2>&1 | tee test.log
       - name: Lint
-        run: npm run lint
+        shell: bash
+        run: set -o pipefail; npm run lint 2>&1 | tee lint.log
       - name: Build
-        run: npm run build
+        shell: bash
+        run: set -o pipefail; npm run build 2>&1 | tee build.log
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-diagnostics
+          path: |
+            test.log
+            lint.log
+            build.log
+          if-no-files-found: ignore
+          retention-days: 3
