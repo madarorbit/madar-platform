@@ -1,8 +1,8 @@
-MADAR Store Engine validation: failure
+MADAR Store Engine validation: success
 
 ===== install =====
 
-added 375 packages, and audited 376 packages in 11s
+added 375 packages, and audited 376 packages in 14s
 
 149 packages are looking for funding
   run `npm fund` for details
@@ -25,86 +25,86 @@ npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to revi
 > madar-platform@0.1.0 test
 > node --test tests/*.test.mjs
 
-✔ accepts genuine JPEG, PNG, WebP, PDF and ZIP signatures (1.836613ms)
-✔ rejects forged signatures and binary or invalid UTF-8 text (0.571419ms)
-✔ enterprise design system exposes required foundations (11.549239ms)
-✔ legacy pages inherit the enterprise system without business changes (2.707314ms)
-✔ ORBY is present in the main, workspace and student navigation (6.290365ms)
-✔ root presentation remains Arabic, right-to-left and officially named (1.757454ms)
-✔ enterprise transformation does not introduce database or server action files (1.775531ms)
-✔ analytics is calculated inside a protected tenant-aware database function (1.220637ms)
-✔ business metrics include revenue costs profit customers stock and tasks (0.423677ms)
-✔ RPC wrappers end as invokers and delegate only to unexposed checked implementations (1.744225ms)
-✔ analytics range is timezone-aware and bounded (0.196696ms)
-✔ dashboard supports comparisons charts CSV and printable PDF workflow (0.345199ms)
-✔ phase four creates tenant-scoped business operating tables (2.677719ms)
-✔ business data policies require organization membership or explicit capability (0.262645ms)
-✔ sales and inventory mutations are atomic private implementations (0.484168ms)
-✔ Data API grants are revoked before least-privilege grants are restored (0.327803ms)
-✔ inventory quantity cannot be directly edited through the Data API grant (0.234192ms)
-✔ server actions redirect only after work completes (0.267142ms)
-✔ workspace exposes the operating center and core modules (0.196255ms)
-✔ phase four hardening covers foreign keys and avoids overlapping all policy (0.20609ms)
-✔ imports are tenant-scoped, bounded and not writable anonymously (2.088723ms)
-✔ commit validates capability and imports all rows in one database function (0.340572ms)
-✔ rollback refuses to erase imported records already used by later operations (0.193711ms)
-✔ RLS gets execution only for non-mutating helper functions (0.173621ms)
-✔ CSV ingestion is bounded and handles quoted values and bilingual mapping (0.241754ms)
-✔ upload actions validate size, type, mapping and tenant ownership (0.18631ms)
-✔ preview requires explicit column mapping before commit (0.176045ms)
-✔ Beta feedback privacy and activity are tenant safe (1.313847ms)
-✔ founder account and privileged actions are protected in the database (0.310677ms)
-✔ founder can control accounts workspaces subscriptions store and platform settings (0.300092ms)
-✔ platform switches are enforced below the UI (0.261684ms)
-✔ privacy exports require authenticated ownership and omit public file access (0.317188ms)
-✔ Beta operations and attachments are admin controlled (0.209645ms)
-✔ launch health endpoint is public and secret free (0.254693ms)
-✔ ORBY memory is isolated by user and organization (2.898381ms)
-✔ ORBY enforces daily quotas before generation (0.354203ms)
-✔ ORBY context comes from checked workspace analytics only (0.263166ms)
-✔ AI provider failure falls back without leaking provider details (0.221984ms)
-✔ proactive insights are deterministic and actionable (0.282535ms)
-✔ ORBY actions require draft then explicit confirmation (0.453652ms)
-✔ ORBY foreign keys have covering indexes (0.190767ms)
-✔ local payment methods are disabled until valid account details exist (2.524008ms)
-✔ first ten Beta workspaces are reserved atomically and expire when abandoned (0.283307ms)
-✔ paid workspace approval requires a private proof while Beta skips payment (0.260702ms)
-✔ payment proofs are validated and stored in a private bucket (0.168594ms)
-✔ renewal approval extends from the later of now or the current end date (0.179971ms)
-✔ subscription limits are enforced in the database (0.175203ms)
-✔ expired subscriptions block paid workspace pages but preserve renewal access (0.208544ms)
-✔ store migration creates the permanent engine tables and strict visibility policy (10.422793ms)
-✔ all requested seed data starts hidden, inactive and draft (3.021878ms)
-✔ public store routes use the shared database engine (7.983974ms)
-✔ legacy product module contains no hard-coded catalog records (3.462816ms)
-✔ admin store center and instant search API exist (1.884857ms)
-✔ every authenticated account can own one isolated free student workspace (1.325505ms)
-✔ student hub includes private library filters, planning and learning tools (0.768386ms)
-✔ AI assistant authenticates membership and limits submitted content (1.82103ms)
-✔ theme is applied before hydration and stored for later visits (9.839596ms)
-✔ light and dark tokens cover the enterprise design system (2.382275ms)
-✔ public and authenticated navigation shells expose the theme toggle (3.054326ms)
-✔ valid sessions refresh automatically and resume the last protected page (7.665474ms)
-✔ enterprise navigation exposes history controls, breadcrumbs, progress and scroll restoration (2.967595ms)
-✔ student and business spaces open on focused dashboards with separate navigation (4.217467ms)
-✔ official identity and supplied ORBY artwork are used without a boxed logo placeholder (1.952237ms)
-✔ return paths reject open redirects (2.014521ms)
-✔ workspace slug and type validation constraints are deterministic (0.407523ms)
-✔ migration creates an atomic owner membership and tenant isolation policies (0.315024ms)
-✔ private digital storage remains protected in phase one (0.21927ms)
-✔ member-management RPC limits admins and preserves ownership (0.202495ms)
-✔ public RPC wrappers are invoker functions and anonymous execution is revoked (0.202865ms)
-✔ phase hardening sets storage limits and explicit API grants (0.29224ms)
-✔ admin uploads validate storage types and use private digital bucket (0.313952ms)
-✔ career applications are write-only for visitors and reviewable only by admins (0.313131ms)
-✔ paid workspaces require payment and admin approval while student spaces stay free (0.311129ms)
-✔ student data and PDF storage are private tenant-scoped resources (0.299601ms)
-✔ workspace RPCs use invoker wrappers and anonymous execution is revoked (0.21921ms)
-✔ auth flows remain Arabic and email-only while phone login is deferred (0.374784ms)
-✔ phase three creates server-priced orders with private payment proofs and controlled downloads (1.273175ms)
-✔ payment approval and fulfillment are admin-only atomic operations (0.181884ms)
-✔ career submission is write-only without requesting the protected row back (0.205279ms)
-✔ home entry points change for authenticated visitors (0.25939ms)
+✔ accepts genuine JPEG, PNG, WebP, PDF and ZIP signatures (1.802222ms)
+✔ rejects forged signatures and binary or invalid UTF-8 text (0.615017ms)
+✔ enterprise design system exposes required foundations (5.737224ms)
+✔ legacy pages inherit the enterprise system without business changes (1.954186ms)
+✔ ORBY is present in the main, workspace and student navigation (5.124199ms)
+✔ root presentation remains Arabic, right-to-left and officially named (1.761557ms)
+✔ enterprise transformation does not introduce database or server action files (4.93663ms)
+✔ analytics is calculated inside a protected tenant-aware database function (1.247657ms)
+✔ business metrics include revenue costs profit customers stock and tasks (0.298306ms)
+✔ RPC wrappers end as invokers and delegate only to unexposed checked implementations (1.149925ms)
+✔ analytics range is timezone-aware and bounded (0.187871ms)
+✔ dashboard supports comparisons charts CSV and printable PDF workflow (0.205323ms)
+✔ phase four creates tenant-scoped business operating tables (3.235706ms)
+✔ business data policies require organization membership or explicit capability (0.327862ms)
+✔ sales and inventory mutations are atomic private implementations (0.496897ms)
+✔ Data API grants are revoked before least-privilege grants are restored (0.383295ms)
+✔ inventory quantity cannot be directly edited through the Data API grant (0.258132ms)
+✔ server actions redirect only after work completes (0.286635ms)
+✔ workspace exposes the operating center and core modules (0.247772ms)
+✔ phase four hardening covers foreign keys and avoids overlapping all policy (0.2359ms)
+✔ imports are tenant-scoped, bounded and not writable anonymously (1.81694ms)
+✔ commit validates capability and imports all rows in one database function (0.270555ms)
+✔ rollback refuses to erase imported records already used by later operations (0.190346ms)
+✔ RLS gets execution only for non-mutating helper functions (0.145381ms)
+✔ CSV ingestion is bounded and handles quoted values and bilingual mapping (0.232815ms)
+✔ upload actions validate size, type, mapping and tenant ownership (0.167021ms)
+✔ preview requires explicit column mapping before commit (0.19785ms)
+✔ Beta feedback privacy and activity are tenant safe (1.520697ms)
+✔ founder account and privileged actions are protected in the database (0.372435ms)
+✔ founder can control accounts workspaces subscriptions store and platform settings (0.334685ms)
+✔ platform switches are enforced below the UI (0.28419ms)
+✔ privacy exports require authenticated ownership and omit public file access (0.372324ms)
+✔ Beta operations and attachments are admin controlled (0.250888ms)
+✔ launch health endpoint is public and secret free (0.285363ms)
+✔ ORBY memory is isolated by user and organization (5.777869ms)
+✔ ORBY enforces daily quotas before generation (0.392633ms)
+✔ ORBY context comes from checked workspace analytics only (0.365562ms)
+✔ AI provider failure falls back without leaking provider details (0.249305ms)
+✔ proactive insights are deterministic and actionable (0.327621ms)
+✔ ORBY actions require draft then explicit confirmation (0.284241ms)
+✔ ORBY foreign keys have covering indexes (0.233856ms)
+✔ local payment methods are disabled until valid account details exist (2.623795ms)
+✔ first ten Beta workspaces are reserved atomically and expire when abandoned (0.354251ms)
+✔ paid workspace approval requires a private proof while Beta skips payment (0.275884ms)
+✔ payment proofs are validated and stored in a private bucket (0.267128ms)
+✔ renewal approval extends from the later of now or the current end date (0.307765ms)
+✔ subscription limits are enforced in the database (0.25735ms)
+✔ expired subscriptions block paid workspace pages but preserve renewal access (0.274222ms)
+✔ store migration creates the permanent engine tables and strict visibility policy (7.441072ms)
+✔ all requested seed data starts hidden, inactive and draft (2.76457ms)
+✔ public store routes use the shared database engine (5.884829ms)
+✔ legacy product module contains no hard-coded catalog records (1.270089ms)
+✔ admin store center and instant search API exist (2.530429ms)
+✔ every authenticated account can own one isolated free student workspace (1.427754ms)
+✔ student hub includes private library filters, planning and learning tools (0.378626ms)
+✔ AI assistant authenticates membership and limits submitted content (1.738072ms)
+✔ theme is applied before hydration and stored for later visits (5.642106ms)
+✔ light and dark tokens cover the enterprise design system (1.771244ms)
+✔ public and authenticated navigation shells expose the theme toggle (2.511896ms)
+✔ valid sessions refresh automatically and resume the last protected page (7.736534ms)
+✔ enterprise navigation exposes history controls, breadcrumbs, progress and scroll restoration (2.053661ms)
+✔ student and business spaces open on focused dashboards with separate navigation (3.894303ms)
+✔ official identity and supplied ORBY artwork are used without a boxed logo placeholder (1.385695ms)
+✔ return paths reject open redirects (4.919118ms)
+✔ workspace slug and type validation constraints are deterministic (0.340064ms)
+✔ migration creates an atomic owner membership and tenant isolation policies (0.250107ms)
+✔ private digital storage remains protected in phase one (0.220381ms)
+✔ member-management RPC limits admins and preserves ownership (0.215242ms)
+✔ public RPC wrappers are invoker functions and anonymous execution is revoked (0.170438ms)
+✔ phase hardening sets storage limits and explicit API grants (0.279612ms)
+✔ admin uploads validate storage types and use private digital bucket (0.248954ms)
+✔ career applications are write-only for visitors and reviewable only by admins (0.281154ms)
+✔ paid workspaces require payment and admin approval while student spaces stay free (0.355453ms)
+✔ student data and PDF storage are private tenant-scoped resources (0.303496ms)
+✔ workspace RPCs use invoker wrappers and anonymous execution is revoked (0.174896ms)
+✔ auth flows remain Arabic and email-only while phone login is deferred (0.228015ms)
+✔ phase three creates server-priced orders with private payment proofs and controlled downloads (0.372584ms)
+✔ payment approval and fulfillment are admin-only atomic operations (0.225271ms)
+✔ career submission is write-only without requesting the protected row back (0.190565ms)
+✔ home entry points change for authenticated visitors (0.19842ms)
 ℹ tests 80
 ℹ suites 0
 ℹ pass 80
@@ -112,7 +112,7 @@ npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to revi
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 402.214125
+ℹ duration_ms 375.536011
 
 ===== lint =====
 
@@ -129,46 +129,125 @@ Generating route types...
 > madar-platform@0.1.0 typecheck
 > tsc --noEmit
 
-app/categories/page.tsx(12,6): error TS2322: Type '(StoreCategory | null)[]' is not assignable to type 'StoreCategory[]'.
-  Type 'StoreCategory | null' is not assignable to type 'StoreCategory'.
-    Type 'null' is not assignable to type 'StoreCategory'.
-app/store/page.tsx(24,23): error TS2322: Type '(StoreCategory | null)[]' is not assignable to type 'StoreCategory[]'.
-  Type 'StoreCategory | null' is not assignable to type 'StoreCategory'.
-    Type 'null' is not assignable to type 'StoreCategory'.
-components/store/StoreListingPage.tsx(18,15): error TS2322: Type '(StoreCategory | null)[]' is not assignable to type 'StoreCategory[]'.
-  Type 'StoreCategory | null' is not assignable to type 'StoreCategory'.
-    Type 'null' is not assignable to type 'StoreCategory'.
 
 ===== build =====
+├ ƒ /account/business/members
+├ ƒ /account/notifications
+├ ƒ /account/orders
+├ ƒ /account/orders/[id]
+├ ƒ /account/privacy
+├ ƒ /account/privacy/export/account
+├ ƒ /account/privacy/export/workspace
+├ ƒ /account/profile
+├ ƒ /account/purchases
+├ ƒ /account/purchases/[id]/download
+├ ƒ /account/subscription
+├ ƒ /account/support
+├ ƒ /admin
+├ ƒ /admin/applications
+├ ƒ /admin/assets
+├ ƒ /admin/beta-operations
+├ ƒ /admin/beta-operations/attachment/[id]
+├ ƒ /admin/categories
+├ ƒ /admin/content
+├ ƒ /admin/coupons
+├ ƒ /admin/files
+├ ƒ /admin/founder
+├ ƒ /admin/founder/audit
+├ ƒ /admin/founder/settings
+├ ƒ /admin/founder/users
+├ ƒ /admin/founder/workspaces
+├ ƒ /admin/local-payments
+├ ƒ /admin/local-payments/proof/[type]/[id]
+├ ƒ /admin/orders
+├ ƒ /admin/orders/[id]
+├ ƒ /admin/payment-proofs/[id]
+├ ƒ /admin/products
+├ ƒ /admin/products/[id]/edit
+├ ƒ /admin/products/new
+├ ƒ /admin/reports
+├ ƒ /admin/services
+├ ƒ /admin/services/[id]/edit
+├ ƒ /admin/services/new
+├ ƒ /admin/store
+├ ƒ /admin/store/[section]
+├ ƒ /admin/store/gallery
+├ ƒ /admin/store/plan-features
+├ ƒ /admin/system-health
+├ ƒ /admin/users
+├ ƒ /admin/workspace-requests
+├ ƒ /api/health
+├ ƒ /api/orby
+├ ƒ /api/store/search
+├ ƒ /api/student/assistant
+├ ƒ /auth/callback
+├ ƒ /auth/session
+├ ƒ /best-sellers
+├ ƒ /blog
+├ ƒ /blog/[slug]
+├ ƒ /careers
+├ ƒ /careers/[slug]
+├ ƒ /cart
+├ ƒ /categories
+├ ƒ /checkout
+├ ƒ /community
+├ ƒ /contact
+├ ƒ /dashboard
+├ ƒ /docs
+├ ƒ /faq
+├ ƒ /featured
+├ ƒ /forgot-password
+├ ƒ /free
+├ ƒ /help
+├ ƒ /latest
+├ ƒ /login
+├ ƒ /maintenance
+├ ○ /manifest.webmanifest
+├ ƒ /offers
+├ ƒ /onboarding
+├ ƒ /order-confirmation
+├ ƒ /payment/failed
+├ ƒ /payment/success
+├ ƒ /privacy
+├ ƒ /products
+├ ƒ /products/[slug]
+├ ƒ /refund-policy
+├ ƒ /register
+├ ƒ /reset-password
+├ ○ /robots.txt
+├ ƒ /search
+├ ƒ /service-agreement
+├ ƒ /services
+├ ƒ /services/[slug]
+├ ○ /sitemap.xml                                     1m      1y
+├ ƒ /store
+├ ƒ /student
+├ ƒ /student/documents/[id]
+├ ƒ /subscriptions
+├ ƒ /subscriptions/[slug]
+├ ƒ /terms
+├ ƒ /workspace
+├ ƒ /workspace-payment/[id]
+├ ƒ /workspace/activity
+├ ƒ /workspace/analytics
+├ ƒ /workspace/analytics/export
+├ ƒ /workspace/analytics/print
+├ ƒ /workspace/customers
+├ ƒ /workspace/expenses
+├ ƒ /workspace/imports
+├ ƒ /workspace/imports/[id]
+├ ƒ /workspace/imports/template/[entity]
+├ ƒ /workspace/inventory
+├ ƒ /workspace/orby
+├ ƒ /workspace/products
+├ ƒ /workspace/sales
+├ ƒ /workspace/setup
+├ ƒ /workspace/suppliers
+└ ƒ /workspace/tasks
 
-> madar-platform@0.1.0 build
-> next build
 
-⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
-Attention: Next.js now collects completely anonymous telemetry regarding usage.
-This information is used to shape Next.js' roadmap and prioritize features.
-You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-https://nextjs.org/telemetry
+ƒ Proxy (Middleware)
 
-▲ Next.js 16.2.10 (Turbopack)
-- Experiments (use with caution):
-  · serverActions
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
 
-  Creating an optimized production build ...
-✓ Compiled successfully in 8.3s
-  Running TypeScript ...
-Failed to type check.
-
-./app/categories/page.tsx:12:6
-Type error: Type '(StoreCategory | null)[]' is not assignable to type 'StoreCategory[]'.
-  Type 'StoreCategory | null' is not assignable to type 'StoreCategory'.
-    Type 'null' is not assignable to type 'StoreCategory'.
-
-  [90m10 |[0m [36mexport[0m [36mdefault[0m [36masync[0m [36mfunction[0m [33mPage[0m(){
-  [90m11 |[0m  [36mlet[0m categories:[33mStoreCategory[0m[]=[];
-[31m[1m>[0m [90m12 |[0m  [36mtry[0m{categories=[36mawait[0m getStoreCategories()}[36mcatch[0m{}
-  [90m   |[0m      [31m[1m^[0m
-  [90m13 |[0m  [36mreturn[0m <[33mPageShell[0m><[33mPageHero[0m eyebrow=[32m"متجر مَدار · التصنيفات"[0m title=[32m"استكشف المتجر حسب المج...[0m
-  [90m14 |[0m [32m}[0m
-  [90m15 |[0m
-Next.js build worker exited with code: 1 and signal: null

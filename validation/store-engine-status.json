@@ -1,10 +1,10 @@
 {
-  "result": "failure",
-  "commit": "744bc670abd7cec0710f7ee2ffc4c8ca2ff0fe0b",
+  "result": "success",
+  "commit": "53a3ac56cac41da7e423d14065479faea621c5c6",
   "install": 0,
   "test": 0,
   "lint": 0,
   "typegen": 0,
-  "typecheck": 2,
-  "build": 1
+  "typecheck": 0,
+  "build": 0
 }
