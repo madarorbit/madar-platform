@@ -1,5 +1,19 @@
-import { products } from '../src/data/products'; import { services } from '../src/data/services';
-const url=process.env.NEXT_PUBLIC_SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;if(!url||!key)throw new Error('Set Supabase URL and service role key.');
-const baseUrl=url!; const serviceKey=key!;
-async function upsert(table:string,body:unknown,onConflict='slug'){const r=await fetch(`${baseUrl}/rest/v1/${table}?on_conflict=${onConflict}`,{method:'POST',headers:{apikey:serviceKey,Authorization:`Bearer ${serviceKey}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},body:JSON.stringify(body)});if(!r.ok)throw new Error(`Cannot seed ${table}`);}
-const categories=[...new Set(products.map(p=>p.category))].map((name,i)=>({name,slug:`legacy-${i+1}-${encodeURIComponent(name).slice(0,30)}`,sort_order:i}));await upsert('categories',categories);for(const p of products)await upsert('products',{name:p.title,slug:p.slug,short_description:p.description,long_description:p.longDescription,price:p.price,currency:'SAR',status:p.status,features:p.features,includes:p.includes,delivery_type:'digital'});for(const s of services)await upsert('services',{name:s.title,slug:s.slug,short_description:s.description,price_from:Number(s.startingFrom.replace(/[^\d]/g,''))||0,currency:'SAR',status:'published',features:s.outcomes});console.log('Catalog seed completed.');
+import {readFile} from 'node:fs/promises';
+
+const migrationUrl=new URL('../supabase/migrations/20260724223000_madar_store_engine.sql',import.meta.url);
+const migration=await readFile(migrationUrl,'utf8');
+
+const requiredSections=[
+ 'insert into public.categories',
+ 'insert into public.subcategories',
+ 'insert into public.tags',
+ 'insert into public.products',
+ 'insert into public.services',
+ 'insert into public.store_settings',
+];
+
+const missing=requiredSections.filter(section=>!migration.includes(section));
+if(missing.length)throw new Error(`Store Engine seed migration is incomplete: ${missing.join(', ')}`);
+if(!migration.includes("'draft','hidden',false,false,false"))throw new Error('Store Engine defaults must remain draft, hidden and inactive.');
+
+console.log('MADAR Store Engine seed data is versioned inside the Supabase migration. Apply migrations to seed the database safely.');
