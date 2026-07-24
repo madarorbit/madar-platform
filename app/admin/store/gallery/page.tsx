@@ -1,0 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import Link from 'next/link';
+import {requireAdmin} from '@/src/lib/auth';
+import {supabaseFetch} from '@/src/lib/supabase/server';
+import {GalleryForm} from '@/components/admin/store/StoreRelationForms';
+import {softDeleteGalleryMedia} from '@/app/actions/store-relations';
+
+export const dynamic='force-dynamic';
+export default async function Page({searchParams}:{searchParams:Promise<{edit?:string}>}){await requireAdmin();const edit=(await searchParams).edit||'';let products:any[]=[];let rows:any[]=[];try{[products,rows]=await Promise.all([supabaseFetch('/rest/v1/products?deleted_at=is.null&select=id,name&order=name.asc'),supabaseFetch('/rest/v1/product_gallery?deleted_at=is.null&select=*&order=product_id.asc,sort_order.asc')])}catch{}const initial=rows.find(row=>row.id===edit);return <main className="mx-auto max-w-7xl p-4 py-6 sm:p-6"><header className="mb-6"><Link href="/admin/store/media" className="text-sm text-emerald-300">الوسائط ←</Link><h1 className="mt-2 text-3xl font-black">معرض المنتجات</h1><p className="mt-2 text-slate-400">أضف صورًا وفيديوهات متعددة، وحدد الغلاف والترتيب والنصوص البديلة.</p></header><GalleryForm products={products} initial={initial}/><section className="mt-7 grid gap-3">{rows.map(row=><article key={row.id} className="md-card flex flex-wrap items-center justify-between gap-4 p-4"><div><strong>{products.find(product=>product.id===row.product_id)?.name||'منتج'}</strong><p className="mt-1 text-xs text-slate-500">{row.media_type} · ترتيب {row.sort_order}{row.is_cover?' · غلاف':''}</p></div><div className="flex gap-2"><Link href={`/admin/store/gallery?edit=${row.id}`} className="md-button md-button-secondary md-button-sm">تعديل</Link><form action={softDeleteGalleryMedia}><input type="hidden" name="id" value={row.id}/><button className="md-button md-button-danger md-button-sm">حذف ناعم</button></form></div></article>)}</section></main>}
