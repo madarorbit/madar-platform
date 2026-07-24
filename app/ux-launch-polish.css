@@ -1,0 +1,48 @@
+/* تحسينات الإطلاق: تنقل مؤسسي، أحجام مدمجة، وحركة هادئة دون تغيير المنطق. */
+
+.md-route-progress{position:fixed;inset:0 0 auto;z-index:10000;height:2px;overflow:hidden;pointer-events:none;opacity:0;transition:opacity 160ms ease}
+.md-route-progress span{display:block;width:36%;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--md-color-mint),#5b8cff,var(--md-color-brand));box-shadow:0 0 16px rgba(124,77,255,.65);transform:translateX(290%)}
+.md-route-pending .md-route-progress{opacity:1}
+.md-route-pending .md-route-progress span{animation:md-route-progress 1.05s cubic-bezier(.2,.8,.2,1) infinite}
+@keyframes md-route-progress{0%{transform:translateX(290%) scaleX(.55)}55%{transform:translateX(20%) scaleX(1)}100%{transform:translateX(-300%) scaleX(.55)}}
+
+.md-navigation-controls{display:flex;min-width:0;align-items:center;gap:.75rem;color:var(--md-color-text-muted);font-size:.75rem}
+.md-history-button{display:grid;width:2rem;height:2rem;place-items:center;border:1px solid var(--md-color-border);border-radius:.6rem;background:rgba(255,255,255,.035);color:var(--md-color-text-soft);transition:transform 150ms var(--md-ease),border-color 180ms var(--md-ease),background 180ms var(--md-ease),color 180ms var(--md-ease)}
+.md-history-button:hover{border-color:rgba(124,77,255,.42);background:var(--md-color-brand-soft);color:var(--md-color-text);transform:translateY(-1px)}
+.md-history-button:active{transform:scale(.95)}
+.md-breadcrumbs{display:flex;min-width:0;align-items:center;gap:.4rem;overflow:hidden;white-space:nowrap}
+.md-breadcrumb-link{display:inline-flex;align-items:center;color:var(--md-color-text-muted);transition:color 160ms ease}
+.md-breadcrumb-link:hover{color:var(--md-color-mint)}
+
+main,.md-page,.md-shell>section{animation:md-page-enter 260ms cubic-bezier(.2,.8,.2,1) both}
+@keyframes md-page-enter{from{opacity:.72;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.md-orby-alive{transform-origin:50% 58%;animation:md-orby-idle 4.8s ease-in-out infinite;will-change:transform,filter;transition:transform 220ms var(--md-ease),filter 220ms var(--md-ease)}
+.md-orby-alive:hover{animation-play-state:paused;transform:translateY(-3px) scale(1.045) rotate(-1deg);filter:drop-shadow(0 8px 16px rgba(50,214,189,.22)) drop-shadow(0 0 12px rgba(124,77,255,.25))}
+.md-orby-stage{position:relative;isolation:isolate;animation:md-orby-arrive 520ms cubic-bezier(.18,.86,.24,1.18) both}
+.md-orby-stage::after{content:"";position:absolute;inset:auto 12% -4% 12%;z-index:-1;height:12%;border-radius:50%;background:radial-gradient(ellipse,rgba(50,214,189,.34),rgba(124,77,255,.18) 48%,transparent 72%);filter:blur(8px);animation:md-orby-breathe 3.4s ease-in-out infinite}
+@keyframes md-orby-idle{0%,100%{transform:translateY(0) scale(1)}46%{transform:translateY(-3px) scale(1.008)}52%{transform:translateY(-3px) scaleY(.985)}58%{transform:translateY(-3px) scale(1.008)}}
+@keyframes md-orby-arrive{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes md-orby-breathe{0%,100%{opacity:.5;transform:scaleX(.88)}50%{opacity:.92;transform:scaleX(1.08)}}
+
+/* كثافة واجهة أقرب إلى لوحات SaaS المؤسسية. */
+.md-sidebar{--md-sidebar:16.25rem}
+.md-sidebar-link{min-height:2.45rem!important;border-radius:.7rem!important;padding:.45rem .65rem!important;font-size:.8125rem!important}
+.md-panel{padding:clamp(1rem,2vw,1.45rem)!important;border-radius:1rem!important}
+.md-card{padding:1rem;border-radius:.875rem}
+.md-stat{padding:1rem!important}
+.md-stat-value{font-size:clamp(1.25rem,2.5vw,1.75rem)!important}
+.md-heading{font-size:clamp(1.2rem,2.5vw,1.65rem)}
+.md-button{min-height:2.4rem;padding:.56rem .82rem;border-radius:.72rem;font-size:.875rem}
+.md-button-sm{min-height:2.05rem;padding:.38rem .65rem;font-size:.75rem}
+.md-button-lg{min-height:2.75rem;padding:.68rem 1rem}
+.md-input,.md-select,.md-textarea,input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),textarea,select,.field{min-height:2.55rem;border-radius:.72rem;padding:.58rem .78rem;font-size:.875rem}
+table{font-size:.8125rem}
+th,td{padding:.65rem .75rem!important}
+
+.md-dashboard-shortcut{display:flex;align-items:center;gap:.75rem;border:1px solid var(--md-color-border);border-radius:.875rem;background:rgba(255,255,255,.025);padding:.85rem;transition:transform 180ms var(--md-ease),border-color 180ms var(--md-ease),background 180ms var(--md-ease)}
+.md-dashboard-shortcut:hover{transform:translateY(-2px);border-color:rgba(50,214,189,.32);background:var(--md-color-mint-soft)}
+.md-dashboard-shortcut-icon{display:grid;width:2.25rem;height:2.25rem;flex:none;place-items:center;border-radius:.65rem;background:var(--md-color-brand-soft);color:#bba8ff}
+
+@media(max-width:767px){.md-navigation-controls{overflow-x:auto;padding-inline:.25rem}.md-breadcrumbs{overflow:visible}.md-sidebar-layout{display:block!important}.md-sidebar{position:static!important;width:100%!important;max-height:none!important;border-inline-end:0!important}.md-sidebar-nav{display:flex!important;overflow-x:auto!important;padding-bottom:.35rem!important}.md-sidebar-link{min-width:max-content!important}}
+@media(prefers-reduced-motion:reduce){.md-route-progress span,.md-orby-alive,.md-orby-stage,.md-orby-stage::after,main,.md-page,.md-shell>section{animation:none!important}.md-history-button,.md-dashboard-shortcut{transition:none!important}}
