@@ -7,7 +7,7 @@ type RawCategory={id:string;name:string;slug:string;description:string|null;imag
 type RawItem=Record<string,unknown>&{categories?:RawCategory|null;subcategories?:RawCategory|null};
 
 const publicPredicate={status:'published',visibility:'visible',is_active:'true',show_in_store:'true',deleted_at:'is.null'} as const;
-const commonSelect='id,name,slug,short_description,long_description,currency,status,visibility,is_featured,show_on_home,rating_average,rating_count,sales_count,view_count,thumbnail_url,video_url,external_url,purchase_url,delivery_duration,requires_approval,is_free,features,keywords,published_at,created_at,categories(id,name,slug,description,image_url,sort_order),subcategories(id,name,slug,description,image_url,sort_order)';
+const commonSelect='id,name,slug,short_description,long_description,currency,status,visibility,availability,is_featured,show_on_home,rating_average,rating_count,sales_count,view_count,thumbnail_url,video_url,external_url,purchase_url,delivery_duration,delivery_type,requires_approval,is_free,features,includes,keywords,published_at,created_at,categories(id,name,slug,description,image_url,sort_order),subcategories(id,name,slug,description,image_url,sort_order)';
 
 function cleanSearch(value:string){return value.replace(/[*,()]/g,' ').replace(/\s+/g,' ').trim().slice(0,100)}
 function category(value:unknown):StoreCategory|null{const item=value as RawCategory|null|undefined;return item?{id:item.id,name:item.name,slug:item.slug,description:item.description,imageUrl:catalogImageUrl(item.image_url),sortOrder:Number(item.sort_order||0)}:null}
@@ -19,7 +19,7 @@ function mapItem(raw:RawItem,entityType:StoreEntityType):StoreItem{
  const price=entityType==='service'?number(raw.price_from):number(raw.price);
  return {
   id:String(raw.id),entityType,name:String(raw.name||''),slug:String(raw.slug||''),shortDescription:String(raw.short_description||''),longDescription:String(raw.long_description||raw.short_description||''),
-  price,compareAtPrice:nullableNumber(raw.compare_at_price),currency:String(raw.currency||'SAR'),status:String(raw.status||'draft') as StoreItem['status'],visibility:String(raw.visibility||'hidden') as StoreItem['visibility'],
+  price,compareAtPrice:nullableNumber(raw.compare_at_price),currency:String(raw.currency||'SAR'),status:String(raw.status||'draft') as StoreItem['status'],visibility:String(raw.visibility||'hidden') as StoreItem['visibility'],availability:String(raw.availability||'available') as StoreItem['availability'],
   itemType:String(raw.product_type||raw.service_type||(entityType==='plan'?'subscription':entityType)),category:category(raw.categories),subcategory:category(raw.subcategories),thumbnailUrl:catalogImageUrl(raw.thumbnail_url),
   videoUrl:raw.video_url?String(raw.video_url):null,externalUrl:raw.external_url?String(raw.external_url):null,purchaseUrl:raw.purchase_url?String(raw.purchase_url):null,
   deliveryType:raw.delivery_type?String(raw.delivery_type):null,deliveryDuration:raw.delivery_duration?String(raw.delivery_duration):null,requiresApproval:Boolean(raw.requires_approval),isFree:Boolean(raw.is_free)||price===0,
@@ -40,7 +40,7 @@ async function publicFetch(path:string,{count=false,revalidate=60}:{count?:boole
 function appendPublic(params:URLSearchParams){for(const[key,value]of Object.entries(publicPredicate))params.set(key,value)}
 function appendFilters(params:URLSearchParams,filters:StoreSearchFilters,entityType:StoreEntityType){
  appendPublic(params);
- if(filters.q){const q=encodeURIComponent(`*${cleanSearch(filters.q)}*`);params.set('or',`(name.ilike.${q},short_description.ilike.${q},long_description.ilike.${q},seo_title.ilike.${q},seo_description.ilike.${q})`)}
+ if(filters.q){const q=`*${cleanSearch(filters.q)}*`;params.set('or',`(name.ilike.${q},short_description.ilike.${q},long_description.ilike.${q},seo_title.ilike.${q},seo_description.ilike.${q})`)}
  if(filters.category)params.set('categories.slug',`eq.${filters.category}`);
  if(filters.subcategory)params.set('subcategories.slug',`eq.${filters.subcategory}`);
  if(filters.free==='free')params.set('is_free','eq.true');
@@ -55,22 +55,21 @@ function appendFilters(params:URLSearchParams,filters:StoreSearchFilters,entityT
  params.set('order',`${order},sort_order.asc`);
 }
 
+function typeFields(entityType:StoreEntityType){return entityType==='product'?',price,compare_at_price,product_type':entityType==='service'?',price_from,service_type':',price,compare_at_price,billing_interval,trial_days'}
+function table(entityType:StoreEntityType){return entityType==='product'?'products':entityType==='service'?'services':'plans'}
+
 async function queryEntity(entityType:StoreEntityType,filters:StoreSearchFilters){
  const page=Math.max(1,filters.page||1),pageSize=Math.min(48,Math.max(1,filters.pageSize||12)),offset=(page-1)*pageSize;
- const params=new URLSearchParams();
- const typeFields=entityType==='product'?',price,compare_at_price,product_type,delivery_type,includes,availability':entityType==='service'?',price_from,service_type,delivery_type,availability':',price,compare_at_price,billing_interval,trial_days,availability';
- params.set('select',`${commonSelect}${typeFields}`);
- appendFilters(params,filters,entityType);
- params.set('limit',String(pageSize));params.set('offset',String(offset));
- const table=entityType==='product'?'products':entityType==='service'?'services':'plans';
- const {data,count}=await publicFetch(`/rest/v1/${table}?${params.toString()}`,{count:true});
+ const params=new URLSearchParams();params.set('select',`${commonSelect}${typeFields(entityType)}`);appendFilters(params,filters,entityType);params.set('limit',String(pageSize));params.set('offset',String(offset));
+ const {data,count}=await publicFetch(`/rest/v1/${table(entityType)}?${params.toString()}`,{count:true});
  return {items:(data as RawItem[]).map(item=>mapItem(item,entityType)),count};
 }
 
 export async function searchStore(filters:StoreSearchFilters={}):Promise<StoreSearchResponse>{
  const page=Math.max(1,filters.page||1),pageSize=Math.min(48,Math.max(1,filters.pageSize||12));
  const types:StoreEntityType[]=filters.entityType&&filters.entityType!=='all'?[filters.entityType]:['product','service','plan'];
- const results=await Promise.all(types.map(type=>queryEntity(type,{...filters,page:1,pageSize:Math.ceil(pageSize/types.length)+2})));
+ const entityPageSize=types.length===1?pageSize:Math.ceil(pageSize/types.length)+1;
+ const results=await Promise.all(types.map(type=>queryEntity(type,{...filters,page,pageSize:entityPageSize})));
  const sort=filters.sort||'latest';
  const items=results.flatMap(result=>result.items).sort((a,b)=>{
   if(sort==='best_selling')return b.salesCount-a.salesCount;
@@ -85,8 +84,9 @@ export async function searchStore(filters:StoreSearchFilters={}):Promise<StoreSe
 }
 
 export async function getStoreItem(entityType:StoreEntityType,slug:string){
- const result=await searchStore({entityType,q:slug,pageSize:48});
- return result.items.find(item=>item.slug===slug)||null;
+ const params=new URLSearchParams();params.set('select',`${commonSelect}${typeFields(entityType)}`);appendPublic(params);params.set('slug',`eq.${slug}`);params.set('limit','1');
+ const {data}=await publicFetch(`/rest/v1/${table(entityType)}?${params.toString()}`);
+ return (data as RawItem[])[0]?mapItem((data as RawItem[])[0],entityType):null;
 }
 
 export async function getStoreCategories(){
