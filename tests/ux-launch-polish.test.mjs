@@ -29,7 +29,7 @@ test('enterprise navigation exposes history controls, breadcrumbs, progress and 
 
 test('student and business spaces open on focused dashboards with separate navigation',async()=>{
  const[studentShell,studentPage,workspaceShell,workspacePage]=await Promise.all([read('components/student/EnterpriseStudentShell.tsx'),read('app/student/page.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('app/workspace/page.tsx')]);
- assert.match(studentShell,/view=dashboard/);
+ assert.match(studentShell,/view:'dashboard'/);
  assert.match(studentShell,/لوحة المعلومات/);
  for(const view of ['courses','tasks','library','calendar','notes','focus','ai'])assert.match(studentPage,new RegExp(`view==='${view}'`));
  assert.match(workspaceShell,/لوحة المعلومات/);
