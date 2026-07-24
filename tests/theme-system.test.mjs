@@ -26,9 +26,10 @@ test('light and dark tokens cover the enterprise design system',async()=>{
  assert.match(css,/\.md-footer/);
 });
 
-test('authenticated navigation shells expose the theme toggle',async()=>{
+test('public and authenticated navigation shells expose the theme toggle',async()=>{
  const[navbar,admin,workspace]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/admin/EnterpriseAdminShell.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx')]);
- assert.match(navbar,/authenticated&&<ThemeToggle/);
+ assert.doesNotMatch(navbar,/authenticated&&<ThemeToggle/);
+ assert.equal((navbar.match(/<ThemeToggle\/>/g)||[]).length,2,'desktop and mobile navigation must always expose the toggle');
  assert.match(admin,/<ThemeToggle\/>/);
  assert.match(workspace,/<ThemeToggle\/>/);
 });
