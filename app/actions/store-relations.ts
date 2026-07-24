@@ -1,0 +1,22 @@
+'use server';
+
+import {revalidatePath,updateTag} from 'next/cache';
+import {requireAdmin} from '@/src/lib/auth';
+import {supabaseFetch} from '@/src/lib/supabase/server';
+import type {StoreActionState} from './store';
+
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function refresh(){updateTag('madar-store');revalidatePath('/admin/store');revalidatePath('/store');revalidatePath('/products')}
+async function audit(actor:string,action:string,type:string,id?:string){await supabaseFetch('/rest/v1/audit_logs',{method:'POST',body:JSON.stringify({actor_id:actor,action,entity_type:type,entity_id:id||null})})}
+
+export async function saveGalleryMedia(_previous:StoreActionState,form:FormData):Promise<StoreActionState>{
+ try{const actor=await requireAdmin(),id=String(form.get('id')||''),productId=String(form.get('product_id')||''),mediaType=String(form.get('media_type')||'image'),storagePath=String(form.get('storage_path')||'').trim(),externalUrl=String(form.get('external_url')||'').trim();if(!uuid.test(productId)||!['image','video'].includes(mediaType)||(!storagePath&&!externalUrl))throw new Error('بيانات الوسائط غير مكتملة.');if(externalUrl&&!/^https:\/\//i.test(externalUrl))throw new Error('الرابط الخارجي يجب أن يبدأ بـ https://');const isCover=form.get('is_cover')==='on';const payload={product_id:productId,media_type:mediaType,storage_path:storagePath||null,external_url:externalUrl||null,alt_text:String(form.get('alt_text')||'').trim()||null,caption:String(form.get('caption')||'').trim()||null,sort_order:Number(form.get('sort_order')||0),is_cover:isCover};if(isCover)await supabaseFetch(`/rest/v1/product_gallery?product_id=eq.${encodeURIComponent(productId)}&deleted_at=is.null`,{method:'PATCH',body:JSON.stringify({is_cover:false})});let rowId=id;if(id)await supabaseFetch(`/rest/v1/product_gallery?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(payload)});else{const rows=await supabaseFetch('/rest/v1/product_gallery',{method:'POST',body:JSON.stringify(payload)});rowId=String(rows?.[0]?.id||'')}if(isCover){const cover=externalUrl||`catalog-images/${storagePath}`;await supabaseFetch(`/rest/v1/products?id=eq.${encodeURIComponent(productId)}`,{method:'PATCH',body:JSON.stringify({thumbnail_url:cover,updated_by:actor.id})})}await audit(actor.id,'store.gallery.saved','product_gallery',rowId);refresh();return{success:'تم حفظ عنصر المعرض.'}}catch(error){return{error:error instanceof Error?error.message:'تعذر حفظ الوسائط.'}}
+}
+
+export async function softDeleteGalleryMedia(form:FormData){try{const actor=await requireAdmin(),id=String(form.get('id')||'');if(!uuid.test(id))return;await supabaseFetch(`/rest/v1/product_gallery?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({deleted_at:new Date().toISOString(),is_cover:false})});await audit(actor.id,'store.gallery.soft_deleted','product_gallery',id);refresh()}catch{}}
+
+export async function savePlanFeature(_previous:StoreActionState,form:FormData):Promise<StoreActionState>{
+ try{const actor=await requireAdmin(),id=String(form.get('id')||''),planId=String(form.get('plan_id')||''),name=String(form.get('name')||'').trim();if(!uuid.test(planId)||name.length<2)throw new Error('اختر الخطة وأدخل اسم الميزة.');let value:unknown=true;const raw=String(form.get('value')||'true').trim();try{value=JSON.parse(raw)}catch{value=raw}const payload={plan_id:planId,name,description:String(form.get('description')||'').trim()||null,feature_key:String(form.get('feature_key')||'').trim()||null,value,is_highlighted:form.get('is_highlighted')==='on',sort_order:Number(form.get('sort_order')||0)};let rowId=id;if(id)await supabaseFetch(`/rest/v1/plan_features?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(payload)});else{const rows=await supabaseFetch('/rest/v1/plan_features',{method:'POST',body:JSON.stringify(payload)});rowId=String(rows?.[0]?.id||'')}await audit(actor.id,'store.plan_feature.saved','plan_feature',rowId);refresh();return{success:'تم حفظ ميزة الاشتراك.'}}catch(error){return{error:error instanceof Error?error.message:'تعذر حفظ ميزة الاشتراك.'}}
+}
+
+export async function softDeletePlanFeature(form:FormData){try{const actor=await requireAdmin(),id=String(form.get('id')||'');if(!uuid.test(id))return;await supabaseFetch(`/rest/v1/plan_features?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({deleted_at:new Date().toISOString()})});await audit(actor.id,'store.plan_feature.soft_deleted','plan_feature',id);refresh()}catch{}}
