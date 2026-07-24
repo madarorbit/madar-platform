@@ -1,0 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import Link from 'next/link';
+import {requireAdmin} from '@/src/lib/auth';
+import {supabaseFetch} from '@/src/lib/supabase/server';
+import {PlanFeatureForm} from '@/components/admin/store/StoreRelationForms';
+import {softDeletePlanFeature} from '@/app/actions/store-relations';
+
+export const dynamic='force-dynamic';
+export default async function Page({searchParams}:{searchParams:Promise<{edit?:string}>}){await requireAdmin();const edit=(await searchParams).edit||'';let plans:any[]=[];let rows:any[]=[];try{[plans,rows]=await Promise.all([supabaseFetch('/rest/v1/plans?deleted_at=is.null&select=id,name&order=name.asc'),supabaseFetch('/rest/v1/plan_features?deleted_at=is.null&select=*&order=plan_id.asc,sort_order.asc')])}catch{}const initial=rows.find(row=>row.id===edit);return <main className="mx-auto max-w-7xl p-4 py-6 sm:p-6"><header className="mb-6"><Link href="/admin/store/plans" className="text-sm text-emerald-300">الاشتراكات ←</Link><h1 className="mt-2 text-3xl font-black">خصائص خطط الاشتراك</h1><p className="mt-2 text-slate-400">أنشئ ميزات قابلة للترتيب والتوسعة لكل خطة، مع قيمة مرنة بصيغة JSON.</p></header><PlanFeatureForm plans={plans} initial={initial}/><section className="mt-7 grid gap-3">{rows.map(row=><article key={row.id} className="md-card flex flex-wrap items-center justify-between gap-4 p-4"><div><strong>{row.name}</strong><p className="mt-1 text-xs text-slate-500">{plans.find(plan=>plan.id===row.plan_id)?.name||'خطة'} · {row.feature_key||'بدون مفتاح'}</p></div><div className="flex gap-2"><Link href={`/admin/store/plan-features?edit=${row.id}`} className="md-button md-button-secondary md-button-sm">تعديل</Link><form action={softDeletePlanFeature}><input type="hidden" name="id" value={row.id}/><button className="md-button md-button-danger md-button-sm">حذف ناعم</button></form></div></article>)}</section></main>}
