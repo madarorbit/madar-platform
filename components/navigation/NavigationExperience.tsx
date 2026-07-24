@@ -34,7 +34,7 @@ export default function NavigationExperience(){
   if(historyNavigation.current){
    historyNavigation.current=false;
    const value=sessionStorage.getItem(storageKey(fullPath));
-   if(value!==null)requestAnimationFrame(()=>requestAnimationFrame(()=>scrollTo({top:Number(value)||0,behavior:'instant'})));
+   if(value!==null)requestAnimationFrame(()=>requestAnimationFrame(()=>scrollTo({top:Number(value)||0,behavior:'auto'})));
   }
   requestAnimationFrame(()=>root.classList.remove('md-route-pending'));
  },[pathname]);
