@@ -40,12 +40,6 @@ async function syncTags(kind:StoreKind,entityId:string,tagIds:string[]){
  if(tagIds.length)await supabaseFetch(`/rest/v1/${relation}`,{method:'POST',body:JSON.stringify(tagIds.map(tagId=>({[foreignKey]:entityId,tag_id:tagId})))});
 }
 
-function legacyProductDelivery(value:string){
- if(value==='instant_download')return'instant';
- if(value==='external_link')return'external';
- return'manual';
-}
-
 export async function saveStoreEntity(_previous:StoreActionState,form:FormData):Promise<StoreActionState>{
  try{
   const actor=await requireAdmin();
@@ -64,7 +58,7 @@ export async function saveStoreEntity(_previous:StoreActionState,form:FormData):
    updated_by:actor.id,...(!id?{created_by:actor.id}:{})
   };
   const payload=values.kind==='product'
-   ?{...common,price:values.price,compare_at_price:values.compare_at_price,product_type:values.item_type,delivery_type:legacyProductDelivery(values.delivery_type),includes:values.includes}
+   ?{...common,price:values.price,compare_at_price:values.compare_at_price,product_type:values.item_type,delivery_type:values.delivery_type,includes:values.includes}
    :values.kind==='service'
     ?{...common,price_from:values.price,compare_at_price:values.compare_at_price,service_type:values.item_type,delivery_type:values.delivery_type,includes:values.includes}
     :{...common,price:values.price,compare_at_price:values.compare_at_price,plan_type:values.item_type,delivery_type:values.delivery_type,billing_interval:values.billing_interval,trial_days:values.trial_days,includes:values.includes};
