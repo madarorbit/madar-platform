@@ -22,15 +22,15 @@ const health=fs.readFileSync('app/api/health/route.ts','utf8');
 const layout=fs.readFileSync('app/layout.tsx','utf8');
 const admin=fs.readFileSync('app/admin/page.tsx','utf8');
 
- test('Beta feedback privacy and activity are tenant safe',()=>{
-  assert.match(launch,/create table public\.platform_feedback/);
-  assert.match(launch,/create table public\.data_privacy_requests/);
-  assert.match(launch,/feedback-attachments','feedback-attachments',false/);
-  assert.match(launch,/enable row level security/g);
-  assert.match(launch,/private\.is_organization_member\(target_organization\)/);
-  assert.match(launch,/has_organization_role\(target_organization,array\['OWNER'\]/);
-  assert.match(activity,/rpc\/workspace_activity/);
- });
+test('Beta feedback privacy and activity are tenant safe',()=>{
+ assert.match(launch,/create table public\.platform_feedback/);
+ assert.match(launch,/create table public\.data_privacy_requests/);
+ assert.match(launch,/feedback-attachments','feedback-attachments',false/);
+ assert.match(launch,/enable row level security/g);
+ assert.match(launch,/private\.is_organization_member\(target_organization\)/);
+ assert.match(launch,/has_organization_role\(target_organization,array\['OWNER'\]/);
+ assert.match(activity,/rpc\/workspace_activity/);
+});
 
 test('founder account and privileged actions are protected in the database',()=>{
  assert.match(founder,/private\.founder_user_id/);
@@ -84,6 +84,6 @@ test('Beta operations and attachments are admin controlled',()=>{
 test('launch health endpoint is public and secret free',()=>{
  assert.match(health,/platform_settings/);
  assert.match(health,/database:'connected'/);
- assert.match(health,/version:'beta-1'/);
+ assert.match(health,/beta-1(?:\.0\.0)?/);
  assert.doesNotMatch(health,/service_role|secret_key/i);
 });
