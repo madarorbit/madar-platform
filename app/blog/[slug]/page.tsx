@@ -1,18 +1,38 @@
+/* eslint-disable @next/next/no-img-element */
 import type {Metadata} from 'next';
-import {notFound} from 'next/navigation';
 import Link from 'next/link';
+import {notFound} from 'next/navigation';
 import PageShell from '@/components/ui/PageShell';
 import {PageHero,Section} from '@/components/ui/Section';
-import {blogPosts} from '@/src/data/platform-content';
+import BlogInteractions from '@/components/blog/BlogInteractions';
+import {deleteBlogPost} from '@/app/actions/blog';
+import {blogCategoryBySlug} from '@/src/data/blog';
+import {canManageBlog,getPublicComments,getVisiblePostBySlug} from '@/src/lib/blog/server';
+import {currentProfile} from '@/src/lib/supabase/server';
 import {absoluteUrl,createPageMetadata,safeJsonLd} from '@/src/lib/seo';
 import {siteConfig} from '@/src/config/site';
 
-const publishedTime='2026-07-22T00:00:00.000Z';
-const articles:Record<string,{heading:string;paragraphs:string[];steps:{title:string;body:string}[]}>= {
- 'digital-foundation':{heading:'الأداة لا تصلح عملية غير واضحة',paragraphs:['تبدأ مشاريع الرقمنة الضعيفة عادةً بسؤال: ما الأداة التي نشتريها؟ بينما يبدأ المشروع الصحيح بسؤال مختلف: كيف تتحرك المعلومة والطلب والقرار اليوم؟','الرقمنة ليست نقل الفوضى من الورق إلى الشاشة؛ بل إزالة التكرار وتحديد المسؤولية وبناء سجل يمكن الرجوع إليه وقياسه.'],steps:[{title:'ارسم المسار الحالي',body:'وثّق نقطة البداية، الأشخاص المتدخلين، القرارات، والنتيجة النهائية.'},{title:'حدّد موضع الاحتكاك',body:'ابحث عن إعادة الإدخال، الانتظار، الأخطاء المتكررة، والبيانات المفقودة.'},{title:'بسّط قبل أن تؤتمت',body:'احذف الخطوات غير الضرورية ووحّد التعريفات ثم اختر أصغر أداة مناسبة.'}]},
- 'smart-business-layer':{heading:'الذكاء يصبح قيمة عندما يجد سياقاً منظماً',paragraphs:['استخدام مساعد ذكي لكتابة نص لا يعني أن العمل أصبح ذكياً. الطبقة الذكية هي قدرة مترابطة تفهم سياق العمل وبياناته وتعمل داخل ضوابط ومؤشرات مراجعة.','تبدأ هذه الطبقة ببيانات نظيفة، وصلاحيات واضحة، وتدفق يمكن قياسه؛ ثم يأتي النموذج الذكي لتلخيص أو تصنيف أو اقتراح قرار، مع بقاء المراجعة البشرية حيث يلزم.'],steps:[{title:'سياق موثوق',body:'مصدر بيانات معروف ومحدث وتعريفات مشتركة بين الفريق.'},{title:'مهمة محددة',body:'اختيار قرار أو إجراء واحد يمكن قياس جودة مخرجاته.'},{title:'ضوابط ومراجعة',body:'تحديد ما يستطيع النظام فعله، وما يحتاج موافقة إنسانية، وكيف تسجل النتائج.'}]},
- 'commerce-operations':{heading:'التشتت التشغيلي يظهر قبل أن يظهر في الأرقام',paragraphs:['قد تستمر المبيعات بينما تتراجع جودة التشغيل بصمت. أولى الإشارات هي اعتماد الفريق على ذاكرة شخص واحد، وتكرار السؤال عن حالة الطلب، وتعدد نسخ الملف نفسه.','معالجة هذه الإشارات مبكراً أرخص بكثير من استبدال النظام تحت ضغط النمو.'],steps:[{title:'الطلبات بلا مصدر واحد',body:'إذا اختلفت حالة الطلب بين واتساب والجدول والمحاسبة فأنت تحتاج سجلاً مركزياً.'},{title:'التقارير يدوية ومتأخرة',body:'إذا استغرق إعداد رقم بسيط ساعات، فتعريف البيانات ومسارها يحتاجان للمراجعة.'},{title:'العمل يتوقف بغياب شخص',body:'وثّق الإجراءات والصلاحيات واجعل المعرفة جزءاً من النظام لا من الذاكرة.'}]}
-};
-export function generateStaticParams(){return blogPosts.map(p=>({slug:p.slug}))}
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const{slug}=await params;const post=blogPosts.find(p=>p.slug===slug);if(!post)return{title:{absolute:'مقال غير موجود | مَدار | ORBIT'},robots:{index:false,follow:false}};const metadata=createPageMetadata({title:post.title,description:post.excerpt,path:`/blog/${slug}`});return{...metadata,openGraph:{title:`${post.title} | ${siteConfig.name}`,description:post.excerpt,url:absoluteUrl(`/blog/${slug}`),type:'article',locale:siteConfig.locale,siteName:siteConfig.name,publishedTime,modifiedTime:publishedTime,images:[absoluteUrl(siteConfig.assets.ogImage)]}}}
-export default async function Page({params}:{params:Promise<{slug:string}>}){const{slug}=await params;const post=blogPosts.find(p=>p.slug===slug),article=articles[slug];if(!post||!article)notFound();const url=absoluteUrl(`/blog/${slug}`);const structuredData={'@context':'https://schema.org','@type':'Article','@id':`${url}#article`,headline:post.title,description:post.excerpt,datePublished:publishedTime,dateModified:publishedTime,inLanguage:'ar',mainEntityOfPage:{'@type':'WebPage','@id':url},image:[absoluteUrl(siteConfig.assets.ogImage)],author:{'@type':'Organization','@id':`${siteConfig.baseUrl}/#organization`,name:siteConfig.name},publisher:{'@type':'Organization','@id':`${siteConfig.baseUrl}/#organization`,name:siteConfig.name,logo:{'@type':'ImageObject',url:absoluteUrl('/brand/symbol-512x512.png')}}};return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJsonLd(structuredData)}}/><PageShell><PageHero eyebrow={`${post.category} · ${post.date}`} title={post.title} description={post.excerpt}/><Section><article className="mx-auto max-w-3xl"><h2 className="text-3xl font-black">{article.heading}</h2>{article.paragraphs.map(p=><p key={p} className="mt-6 text-lg leading-9 text-slate-300">{p}</p>)}<div className="mt-10 grid gap-4">{article.steps.map((s,i)=><section key={s.title} className="rounded-3xl border border-white/10 bg-white/[.04] p-6"><p className="text-sm font-black text-[#70E4D4]">0{i+1}</p><h3 className="mt-2 text-xl font-black">{s.title}</h3><p className="mt-3 leading-8 text-slate-300">{s.body}</p></section>)}</div><div className="mt-10 border-t border-white/10 pt-8"><Link href="/blog" className="font-bold text-[#70E4D4]">العودة إلى المدونة</Link></div></article></Section></PageShell></>}
+export const dynamic='force-dynamic';
+
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
+ const{slug}=await params,post=await getVisiblePostBySlug(slug).catch(()=>null);
+ if(!post)return{title:'مقال غير موجود',robots:{index:false,follow:false}};
+ const metadata=createPageMetadata({title:post.title,description:post.excerpt||post.content.slice(0,160),path:`/blog/${post.slug}`});
+ return post.status==='draft'?{...metadata,robots:{index:false,follow:false}}:metadata;
+}
+
+export default async function BlogPostPage({params}:{params:Promise<{slug:string}>}){
+ const{slug}=await params,post=await getVisiblePostBySlug(slug).catch(()=>null);if(!post)notFound();
+ const profile=await currentProfile().catch(()=>null),manager=canManageBlog(profile),category=blogCategoryBySlug(post.category_slug),comments=post.status==='published'?await getPublicComments(post.id).catch(()=>[]):[];
+ const url=absoluteUrl(`/blog/${post.slug}`),description=post.excerpt||post.content.slice(0,160),structuredData={'@context':'https://schema.org','@type':'Article',headline:post.title,description,datePublished:post.published_at||post.created_at,dateModified:post.updated_at,inLanguage:'ar',mainEntityOfPage:url,image:post.media_type==='image'&&post.media_url?[post.media_url]:[absoluteUrl(siteConfig.assets.ogImage)],author:{'@type':'Organization',name:siteConfig.name},publisher:{'@type':'Organization',name:siteConfig.name}};
+ const paragraphs=post.content.split(/\n\s*\n/).map(value=>value.trim()).filter(Boolean);
+ return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJsonLd(structuredData)}}/><PageShell><PageHero eyebrow={`${category?.title||'مدونة مَدار'} · ${new Date(post.published_at||post.created_at).toLocaleDateString('ar-YE')}`} title={post.title} description={description}/><Section><article className="mx-auto max-w-4xl">
+  {post.status==='draft'&&<div className="mb-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-4 font-bold text-amber-100">هذه مسودة خاصة لا يراها إلا المؤسس أو المدوّن المعتمد.</div>}
+  {manager&&<div className="mb-6 flex flex-wrap gap-2"><Link href={`/blog/manage/${post.id}`} className="rounded-xl bg-violet-300 px-5 py-3 font-black text-violet-950">تعديل المقال</Link><form action={deleteBlogPost}><input type="hidden" name="id" value={post.id}/><button className="rounded-xl border border-red-300/30 px-5 py-3 font-black text-red-200">حذف المقال</button></form></div>}
+  {post.media_type==='image'&&post.media_url&&<img src={post.media_url} alt={post.title} className="mb-8 max-h-[34rem] w-full rounded-3xl border border-white/10 object-cover"/>}{post.media_type==='video'&&post.media_url&&<video src={post.media_url} controls preload="metadata" className="mb-8 max-h-[34rem] w-full rounded-3xl border border-white/10 bg-black"/>}
+  <div className="rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-10">{paragraphs.map((paragraph,index)=><p key={`${index}-${paragraph.slice(0,20)}`} className={`${index?'mt-7':''} whitespace-pre-wrap text-lg leading-9 text-slate-200`}>{paragraph}</p>)}</div>
+  {post.status==='published'&&<BlogInteractions postId={post.id} title={post.title} initialLikes={post.likes_count} initialComments={post.comments_count} initialShares={post.shares_count} authenticatedName={profile?.full_name||undefined}/>} 
+  <section id="comments" className="mt-10"><h2 className="text-2xl font-black">التعليقات ({post.comments_count})</h2>{comments.length?<div className="mt-5 space-y-4">{comments.map(comment=><article key={comment.id} className="rounded-2xl border border-white/10 bg-white/[.035] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><strong>{comment.author_name}</strong><time className="text-xs text-slate-500">{new Date(comment.created_at).toLocaleString('ar-YE')}</time></div><p className="mt-3 whitespace-pre-wrap leading-8 text-slate-300">{comment.body}</p></article>)}</div>:<p className="mt-4 rounded-2xl border border-dashed border-white/10 p-6 text-center text-slate-500">لا توجد تعليقات بعد.</p>}</section>
+  <div className="mt-10 border-t border-white/10 pt-7"><Link href={`/blog/category/${post.category_slug}`} className="font-bold text-[#70E4D4]">العودة إلى قسم {category?.title}</Link></div>
+ </article></Section></PageShell></>;
+}

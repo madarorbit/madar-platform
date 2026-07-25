@@ -22,13 +22,13 @@ const common:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin/users',label:'المستخدمون',icon:'community'},
  {href:'/admin/workspace-requests',label:'طلبات المساحات',icon:'automation'},
  {href:'/admin/local-payments',label:'الدفع والاشتراكات',icon:'shield'},
- {href:'/admin/applications',label:'طلبات التوظيف',icon:'briefcase'},
  {href:'/admin/beta-operations',label:'الدعم التجريبي',icon:'help'},
  {href:'/admin/system-health',label:'صحة المنصة',icon:'check'},
 ];
 const founder:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin/founder',label:'مركز قيادة المؤسس',icon:'sparkles'},
- {href:'/admin/founder/users',label:'تحكم الحسابات',icon:'user'},
+ {href:'/admin/applications',label:'طلبات التوظيف',icon:'briefcase'},
+ {href:'/admin/founder/users',label:'تحكم الحسابات والمدوّن',icon:'user'},
  {href:'/admin/founder/workspaces',label:'تحكم المساحات',icon:'layers'},
  {href:'/admin/founder/settings',label:'إعدادات المنصة',icon:'settings'},
  {href:'/admin/founder/audit',label:'سجل القرارات',icon:'shield'},
