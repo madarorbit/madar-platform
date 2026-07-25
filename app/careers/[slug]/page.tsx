@@ -1,3 +1,12 @@
-import {notFound} from 'next/navigation';import PageShell from '@/components/ui/PageShell';import {PageHero,Section} from '@/components/ui/Section';import {jobs} from '@/src/data/platform-content';import {ApplicationForm} from '@/components/careers/ApplicationForm';import {Icon} from '@/components/ui/Icons';
+import type {Metadata} from 'next';
+import {notFound} from 'next/navigation';
+import PageShell from '@/components/ui/PageShell';
+import {PageHero,Section} from '@/components/ui/Section';
+import {jobs} from '@/src/data/platform-content';
+import {ApplicationForm} from '@/components/careers/ApplicationForm';
+import {Icon} from '@/components/ui/Icons';
+import {createPageMetadata} from '@/src/lib/seo';
+
 export function generateStaticParams(){return jobs.map(j=>({slug:j.slug}))}
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const{slug}=await params;const job=jobs.find(j=>j.slug===slug);return job?createPageMetadata({title:job.title,description:job.summary,path:`/careers/${job.slug}`}):{title:{absolute:'وظيفة غير موجودة | مَدار | ORBIT'},robots:{index:false,follow:false}}}
 export default async function Page({params}:{params:Promise<{slug:string}>}){const{slug}=await params,job=jobs.find(j=>j.slug===slug);if(!job)notFound();return <PageShell><PageHero eyebrow={`${job.department} · ${job.type}`} title={job.title} description={job.summary}/><Section><div className="grid items-start gap-8 lg:grid-cols-[.8fr_1.2fr]"><div className="space-y-6 lg:sticky lg:top-24"><section className="rounded-3xl border border-white/10 bg-white/[.04] p-6"><h2 className="text-2xl font-black">ما نبحث عنه</h2><ul className="mt-5 space-y-4">{job.requirements.map(r=><li key={r} className="flex gap-3 leading-7 text-slate-300"><Icon name="check" className="mt-1 h-5 w-5 shrink-0 text-[#70E4D4]"/>{r}</li>)}</ul></section><section className="rounded-3xl border border-white/10 bg-white/[.04] p-6"><h2 className="text-xl font-black">مراحل التقديم</h2><ol className="mt-4 space-y-3 text-sm leading-7 text-slate-300"><li>1. مراجعة الطلب وملاءمة الخبرة.</li><li>2. محادثة تعريفية قصيرة.</li><li>3. مهمة عملية محدودة عند الحاجة.</li><li>4. اتفاق واضح على الدور والتعاون.</li></ol></section></div><ApplicationForm jobSlug={job.slug} jobTitle={job.title}/></div></Section></PageShell>}

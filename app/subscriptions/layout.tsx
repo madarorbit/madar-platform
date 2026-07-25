@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'الاشتراكات والباقات | مَدار | ORBIT',description:'خطط وباقات الاشتراك المنشورة والمتاحة في متجر مَدار.',path:'/subscriptions'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

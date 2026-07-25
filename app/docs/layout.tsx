@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'وثائق مَدار | ORBIT',description:'دليل مبسّط لاستخدام منصة مَدار ومتجرها وخدماتها.',path:'/docs'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'أحدث المنتجات والخدمات | مَدار | ORBIT',description:'أحدث العناصر المنشورة في محرك متجر مَدار مرتبة بحسب تاريخ النشر.',path:'/latest'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

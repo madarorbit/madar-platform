@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'مدونة مَدار | ORBIT',description:'مقالات عملية عن إدارة التجارة ورقمنة الأعمال والذكاء الاصطناعي.',path:'/blog'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

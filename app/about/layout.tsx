@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'عن مَدار',description:'رؤية مَدار ورسالتها ومنهجها في إدارة التجارة ورقمنة الأعمال العربية.',path:'/about'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'مركز مساعدة مَدار | ORBIT',description:'مركز مساعدة مَدار للحسابات والمتجر والطلبات والدعم المباشر.',path:'/help'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

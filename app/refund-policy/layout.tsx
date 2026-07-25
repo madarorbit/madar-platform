@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'سياسة الاسترجاع والإلغاء | مَدار | ORBIT',description:'سياسة الاسترجاع والإلغاء للمنتجات الرقمية والخدمات المقدمة عبر مَدار.',path:'/refund-policy'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

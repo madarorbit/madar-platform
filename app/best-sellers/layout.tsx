@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'الأكثر مبيعًا | متجر مَدار | ORBIT',description:'العناصر المنشورة في متجر مَدار مرتبة وفق عدد المبيعات المسجل.',path:'/best-sellers'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

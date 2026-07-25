@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'مجتمع مَدار | ORBIT',description:'مساحة عربية للمعرفة والتجارب العملية حول التجارة الذكية ورقمنة الأعمال.',path:'/community'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

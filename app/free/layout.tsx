@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'المنتجات والخدمات المجانية | مَدار | ORBIT',description:'المنتجات والخدمات والموارد المجانية المنشورة في متجر مَدار.',path:'/free'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

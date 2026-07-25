@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'شروط الاستخدام | مَدار | ORBIT',description:'شروط الوصول إلى منصة مَدار والحسابات والمتجر والمحتوى والخدمات.',path:'/terms'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

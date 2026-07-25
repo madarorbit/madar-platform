@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'متجر مَدار | ORBIT',description:'محرك متجر مَدار للمنتجات الرقمية والأنظمة والخدمات والاشتراكات والباقات.',path:'/store'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

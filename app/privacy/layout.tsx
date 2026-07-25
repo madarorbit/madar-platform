@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'سياسة الخصوصية | مَدار | ORBIT',description:'سياسة مَدار لجمع البيانات واستخدامها وحمايتها وحقوق المستخدمين.',path:'/privacy'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

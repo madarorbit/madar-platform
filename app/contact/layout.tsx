@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'اتصل بنا | مَدار | ORBIT',description:'تواصل مع فريق مَدار للاستفسارات التجارية وطلبات المنتجات والخدمات والدعم.',path:'/contact'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

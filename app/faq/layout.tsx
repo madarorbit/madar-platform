@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'الأسئلة الشائعة | مَدار | ORBIT',description:'إجابات واضحة عن التسليم والدفع والتخصيص والاسترجاع واستخدام خدمات مَدار.',path:'/faq'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

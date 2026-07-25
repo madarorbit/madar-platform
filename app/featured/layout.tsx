@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'المنتجات والخدمات المميزة | مَدار | ORBIT',description:'المنتجات والخدمات والاشتراكات التي اختارتها إدارة مَدار للظهور المميز.',path:'/featured'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'اتفاقية تقديم الخدمات | مَدار | ORBIT',description:'الإطار العام الذي يحكم الخدمات الاستشارية والتنفيذية المقدمة من مَدار.',path:'/service-agreement'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}

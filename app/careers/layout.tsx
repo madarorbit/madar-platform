@@ -1,0 +1,1 @@
+import type {ReactNode} from 'react';import {createRouteMetadata} from '@/src/lib/seo';export const metadata=createRouteMetadata({title:'الوظائف في مَدار | ORBIT',description:'الفرص المتاحة للانضمام إلى فريق مَدار والمساهمة في بناء منصة عربية للأعمال.',path:'/careers'});export default function Layout({children}:{children:ReactNode}){return <>{children}</>}
