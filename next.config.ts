@@ -12,6 +12,7 @@ const noIndexRoutes=['/admin/:path*','/account/:path*','/workspace/:path*','/wor
 const nextConfig:NextConfig={
  images:{remotePatterns:[{protocol:'https',hostname:'**.supabase.co',pathname:'/storage/v1/object/public/**'}]},
  experimental:{serverActions:{bodySizeLimit:'25mb'}},
+ async redirects(){return[{source:'/apple-touch-icon.png',destination:'/brand/symbol-180x180.png',permanent:true}]},
  async headers(){return[{source:'/:path*',headers:securityHeaders},...noIndexRoutes.map(source=>({source,headers:[{key:'X-Robots-Tag',value:'noindex, nofollow, noarchive'}]}))]},
 };
 export default nextConfig;
