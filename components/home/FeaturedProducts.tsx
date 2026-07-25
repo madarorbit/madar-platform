@@ -1,4 +1,4 @@
-import Link from '@/components/navigation/TrackedLink';
+import Link from 'next/link';
 import ProductCard from '@/components/product/ProductCard';
 import {siteConfig} from '@/src/config/site';
 import {searchStore} from '@/src/lib/store/server';
