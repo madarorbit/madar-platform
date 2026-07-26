@@ -21,7 +21,11 @@ test('public store routes use the shared database engine',async()=>{
  for(const path of ['app/products/page.tsx','app/services/page.tsx','app/featured/page.tsx','app/latest/page.tsx','app/best-sellers/page.tsx','app/free/page.tsx','app/subscriptions/page.tsx']){
   const source=await read(path);assert.match(source,/StoreListingPage/);
  }
- const server=await read('src/lib/store/server.ts');assert.match(server,/status:'published'/);assert.match(server,/visibility:'visible'/);assert.match(server,/show_in_store:'true'/);
+ const server=await read('src/lib/store/server.ts');
+ assert.match(server,/status:'eq\.published'/);
+ assert.match(server,/visibility:'eq\.visible'/);
+ assert.match(server,/show_in_store:'eq\.true'/);
+ assert.doesNotMatch(server,/status:'published'/);
 });
 
 test('legacy product module contains no hard-coded catalog records',async()=>{
