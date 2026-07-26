@@ -35,3 +35,19 @@ test('prelaunch migration removes unsafe public admin resolution and frontend gr
   assert.match(source, /revoke truncate, references, trigger/i);
   assert.match(source, /notify pgrst, 'reload schema'/);
 });
+
+test('workspace subscriptions remain tenant scoped while founders retain oversight', async () => {
+  const source = await read('supabase/migrations/20260726185000_workspace_rls_tenant_isolation_fix.sql');
+  assert.match(source, /private\.is_admin\(\) or private\.is_organization_member\(organization_id\)/);
+  assert.doesNotMatch(source, /m\.organization_id\s*=\s*m\.organization_id/);
+  assert.match(source, /organization member read/);
+  assert.match(source, /organization member list/);
+});
+
+test('expected database domain errors are translated without polluting runtime error logs', async () => {
+  const source = await read('src/lib/supabase/server.ts');
+  assert.match(source, /Member already exists/);
+  assert.match(source, /payload\?\.code!==\s*'P0001'/);
+  assert.match(source, /status===401/);
+  assert.match(source, /status===422/);
+});
