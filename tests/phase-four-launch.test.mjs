@@ -81,9 +81,10 @@ test('Beta operations and attachments are admin controlled',()=>{
  assert.match(attachmentRoute,/signedFeedbackAttachment/);
 });
 
-test('launch health endpoint is public and secret free',()=>{
+test('launch health endpoint is public, stable and secret free',()=>{
  assert.match(health,/platform_settings/);
  assert.match(health,/database:'connected'/);
- assert.match(health,/beta-1(?:\.0\.0)?/);
+ assert.match(health,/VERSION='1\.0\.0'/);
+ assert.match(health,/RELEASE_CHANNEL='stable'/);
  assert.doesNotMatch(health,/service_role|secret_key/i);
 });
