@@ -7,7 +7,7 @@ type RawCategory={id:string;name:string;slug:string;description:string|null;imag
 type RawItem=Record<string,unknown>&{categories?:RawCategory|null;subcategories?:RawCategory|null};
 export type StoreOffer={id:string;name:string;slug:string;description:string;discountType:'percentage'|'fixed'|'override_price';discountValue:number;startsAt:string|null;endsAt:string|null};
 
-const publicPredicate={status:'published',visibility:'visible',is_active:'true',show_in_store:'true',deleted_at:'is.null'} as const;
+const publicPredicate={status:'eq.published',visibility:'eq.visible',is_active:'eq.true',show_in_store:'eq.true',deleted_at:'is.null'} as const;
 const commonSelect='id,name,slug,short_description,long_description,currency,status,visibility,availability,is_featured,show_on_home,rating_average,rating_count,sales_count,view_count,thumbnail_url,video_url,external_url,purchase_url,delivery_duration,delivery_type,requires_approval,is_free,features,includes,keywords,published_at,created_at,categories(id,name,slug,description,image_url,sort_order),subcategories(id,name,slug,description,image_url,sort_order)';
 
 function cleanSearch(value:string){return value.replace(/[*,()]/g,' ').replace(/\s+/g,' ').trim().slice(0,100)}
@@ -34,7 +34,7 @@ async function publicFetch(path:string,{count=false,revalidate=60}:{count?:boole
  const headers:Record<string,string>={apikey:key,Authorization:`Bearer ${key}`};
  if(count)headers.Prefer='count=exact';
  const response=await fetch(`${url}${path}`,{headers,next:{revalidate,tags:['madar-store']}});
- if(!response.ok)throw new Error('تعذر تحميل بيانات المتجر.');
+ if(!response.ok){console.error('Store API request failed',{path:path.split('?')[0],status:response.status});throw new Error('تعذر تحميل بيانات المتجر.');}
  return {data:await response.json(),count:Number(response.headers.get('content-range')?.split('/')[1]||0)};
 }
 
@@ -58,10 +58,16 @@ function appendFilters(params:URLSearchParams,filters:StoreSearchFilters,entityT
 
 function typeFields(entityType:StoreEntityType){return entityType==='product'?',price,compare_at_price,product_type':entityType==='service'?',price_from,compare_at_price,service_type':',price,compare_at_price,plan_type,billing_interval,trial_days'}
 function table(entityType:StoreEntityType){return entityType==='product'?'products':entityType==='service'?'services':'plans'}
+function selectFields(entityType:StoreEntityType,filters:StoreSearchFilters={}){
+ let value=`${commonSelect}${typeFields(entityType)}`;
+ if(filters.category)value=value.replace('categories(','categories!inner(');
+ if(filters.subcategory)value=value.replace('subcategories(','subcategories!inner(');
+ return value;
+}
 
 async function queryEntity(entityType:StoreEntityType,filters:StoreSearchFilters){
  const page=Math.max(1,filters.page||1),pageSize=Math.min(48,Math.max(1,filters.pageSize||12)),offset=(page-1)*pageSize;
- const params=new URLSearchParams();params.set('select',`${commonSelect}${typeFields(entityType)}`);appendFilters(params,filters,entityType);params.set('limit',String(pageSize));params.set('offset',String(offset));
+ const params=new URLSearchParams();params.set('select',selectFields(entityType,filters));appendFilters(params,filters,entityType);params.set('limit',String(pageSize));params.set('offset',String(offset));
  const {data,count}=await publicFetch(`/rest/v1/${table(entityType)}?${params.toString()}`,{count:true});
  return {items:(data as RawItem[]).map(item=>mapItem(item,entityType)),count};
 }
@@ -85,7 +91,7 @@ export async function searchStore(filters:StoreSearchFilters={}):Promise<StoreSe
 }
 
 export async function getStoreItem(entityType:StoreEntityType,slug:string){
- const params=new URLSearchParams();params.set('select',`${commonSelect}${typeFields(entityType)}`);appendPublic(params);params.set('slug',`eq.${slug}`);params.set('limit','1');
+ const params=new URLSearchParams();params.set('select',selectFields(entityType));appendPublic(params);params.set('slug',`eq.${slug}`);params.set('limit','1');
  const {data}=await publicFetch(`/rest/v1/${table(entityType)}?${params.toString()}`);
  return (data as RawItem[])[0]?mapItem((data as RawItem[])[0],entityType):null;
 }
