@@ -7,8 +7,8 @@
     <linearGradient id="wordmark" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#CBD5E1"/><stop offset=".5" stop-color="#94A3B8"/><stop offset="1" stop-color="#CBD5E1"/></linearGradient>
   </defs>
   <g transform="translate(48 48)" fill="none" stroke-width="13" stroke-linecap="round">
-    <path d="M-5-27A28 28 0 0 0-5 27" stroke="url(#mint)"/>
-    <path d="M5-27A28 28 0 0 1 5 27" stroke="url(#violet)"/>
+    <path d="M-11-27A28 28 0 0 0-11 27" stroke="url(#mint)"/>
+    <path d="M11-27A28 28 0 0 1 11 27" stroke="url(#violet)"/>
   </g>
   <text x="94" y="59" fill="url(#wordmark)" font-family="Arial, Tahoma, sans-serif" font-size="34" font-weight="800">مَدار</text>
   <text x="184" y="58" fill="#64748B" font-family="Arial, Tahoma, sans-serif" font-size="27" font-weight="600">|</text>
