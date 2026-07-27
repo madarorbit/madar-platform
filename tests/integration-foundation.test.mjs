@@ -50,8 +50,11 @@ test('tenant isolation and secret denial are explicit in the migration',async()=
 
 test('connection secret rotation is atomic and serialized per connection',async()=>{
  const [manager,migration]=await Promise.all([read('src/lib/integration/connection-manager.ts'),read('supabase/migrations/20260727215500_integration_secret_rotation_rpc.sql')]);
- assert.match(manager,/integration_rotate_connection_secret/);
- assert.doesNotMatch(manager,/insert<\{id:string\}>\('integration_connection_secrets'.*rotation:true/s);
+ const start=manager.indexOf('async rotateSecret'),end=manager.indexOf('async enqueueSync');
+ assert.ok(start>=0&&end>start);
+ const rotationMethod=manager.slice(start,end);
+ assert.match(rotationMethod,/integration_rotate_connection_secret/);
+ assert.doesNotMatch(rotationMethod,/database\.insert/);
  assert.match(migration,/pg_advisory_xact_lock/);
  assert.match(migration,/update public\.integration_connection_secrets[\s\S]*insert into public\.integration_connection_secrets/i);
  assert.match(migration,/grant execute on function public\.integration_rotate_connection_secret.*to service_role/i);
