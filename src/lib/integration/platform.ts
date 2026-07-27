@@ -43,8 +43,8 @@ export class SecretsManager {
  }
 }
 
-export type IntegrationFeatureFlag='integration_engine_enabled'|'integration_worker_enabled'|'integration_scheduler_enabled'|'integration_write_enabled'|'integration_pipeline_enabled'|'integration_quality_center_enabled';
-const DEFAULT_FLAGS:Record<IntegrationFeatureFlag,boolean>={integration_engine_enabled:false,integration_worker_enabled:false,integration_scheduler_enabled:false,integration_write_enabled:false,integration_pipeline_enabled:false,integration_quality_center_enabled:false};
+export type IntegrationFeatureFlag='integration_engine_enabled'|'integration_worker_enabled'|'integration_scheduler_enabled'|'integration_write_enabled'|'integration_pipeline_enabled'|'integration_quality_center_enabled'|'integration_readiness_lab_enabled';
+const DEFAULT_FLAGS:Record<IntegrationFeatureFlag,boolean>={integration_engine_enabled:false,integration_worker_enabled:false,integration_scheduler_enabled:false,integration_write_enabled:false,integration_pipeline_enabled:false,integration_quality_center_enabled:false,integration_readiness_lab_enabled:false};
 type FeatureFlagRow={key:IntegrationFeatureFlag;enabled:boolean;config:JsonObject};
 
 export class FeatureFlagService {

@@ -25,6 +25,7 @@ const common:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin/beta-operations',label:'الدعم التجريبي',icon:'help'},
  {href:'/admin/system-health',label:'صحة المنصة',icon:'check'},
  {href:'/admin/integrations',label:'الاتصالات وجودة البيانات',icon:'automation'},
+ {href:'/admin/integrations/readiness',label:'مختبر جاهزية الموصلات',icon:'check'},
  {href:'/admin/integrations/audit',label:'تدقيق التكاملات',icon:'shield'},
 ];
 const founder:Array<{href:string;label:string;icon:IconName}>=[
