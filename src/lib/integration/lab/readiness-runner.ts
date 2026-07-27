@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-import type {Connector,ConnectorCheckpoint,ConnectorContext,ConnectorLogger,JsonObject} from '../contracts';
+import type {Connector,ConnectorBatch,ConnectorCheckpoint,ConnectorContext,ConnectorLogger,JsonObject} from '../contracts';
 import {asIntegrationError,IntegrationError} from '../errors';
 import {FeatureFlagService,IntegrationDatabase,SecretsManager} from '../platform';
 import {ConnectorRegistry} from '../registry';
@@ -20,17 +20,17 @@ const logger:ConnectorLogger={debug(){},info(){},warn(){},error(){}};
 const allConnectors=[referenceCommerceConnector,...readinessTechnicalConnectors] as const;
 
 function context(connector:Connector,input:{organizationId?:string;connectionId?:string;config?:JsonObject;secret?:JsonObject;authScheme?:ConnectorContext['authScheme'];checkpoints?:MutableCheckpoints}={}):ConnectorContext{
- const validation=connector.validateConfig(input.config||{});if(!validation.valid)throw new IntegrationError('تعذر إنشاء سياق الموصل داخل مختبر الجاهزية.','VALIDATION_ERROR',false,{issues:validation.issues as unknown as JsonObject});
- return {connection:{id:input.connectionId||randomUUID(),organizationId:input.organizationId||randomUUID(),connectorKey:connector.manifest.key,connectorVersion:connector.manifest.version,name:`Readiness ${connector.manifest.displayName}`,status:'active',mode:'READ_ONLY',config:validation.normalizedConfig},authScheme:input.authScheme||connector.manifest.authSchemes[0],secret:input.secret||{},checkpoints:input.checkpoints||{},signal:new AbortController().signal,logger};
+ const validation=connector.validateConfig(input.config||{});if(!validation.valid)throw new IntegrationError('تعذر إنشاء سياق الموصل داخل مختبر الجاهزية.','VALIDATION_ERROR',false,{connector:connector.manifest.key,issueCount:validation.issues.length});
+ return {connection:{id:input.connectionId||randomUUID(),organizationId:input.organizationId||randomUUID(),connectorKey:connector.manifest.key,connectorVersion:connector.manifest.version,name:`Readiness ${connector.manifest.displayName}`,status:'active',mode:'READ_ONLY',config:validation.normalizedConfig},authScheme:input.authScheme||connector.manifest.authSchemes[0]||'none',secret:input.secret||{},checkpoints:input.checkpoints||{},signal:new AbortController().signal,logger};
 }
 
 async function consume(connector:Connector,mode:'initial'|'incremental',ctx:ConnectorContext,streams?:string[]){
- const checkpoints={...(ctx.checkpoints as MutableCheckpoints)},batches:Awaited<ReturnType<Connector['initialSync']>>[]=[] as never[];let error:unknown=null,records=0;
+ const checkpoints={...(ctx.checkpoints as MutableCheckpoints)},batches:ConnectorBatch[]=[];let error:unknown=null,records=0;
  try{
   const iterator=mode==='initial'?connector.initialSync(ctx,{streams}):connector.incrementalSync(ctx,{streams});
-  for await(const batch of iterator){batches.push(batch as never);records+=batch.records.length;const previous=checkpoints[batch.streamKey];checkpoints[batch.streamKey]={streamKey:batch.streamKey,cursor:batch.nextCursor,watermark:batch.watermark,version:(previous?.version||0)+1};}
+  for await(const batch of iterator){batches.push(batch);records+=batch.records.length;const previous=checkpoints[batch.streamKey];checkpoints[batch.streamKey]={streamKey:batch.streamKey,cursor:batch.nextCursor,watermark:batch.watermark,version:(previous?.version||0)+1};}
  }catch(caught){error=caught;}
- return {batches:batches as unknown as Array<{streamKey:string;records:readonly JsonObject[];nextCursor:unknown;watermark:string|null}>,records,checkpoints,error};
+ return {batches,records,checkpoints,error};
 }
 
 function passed(condition:unknown,message:string,details:JsonObject={}):JsonObject{if(!condition)throw new IntegrationError(message,'VALIDATION_ERROR',false,details);return details;}
