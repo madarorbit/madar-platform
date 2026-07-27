@@ -1,5 +1,6 @@
 import {ConnectionManager} from './connection-manager';
 import {diagnosticConnector} from './connectors/diagnostic';
+import {DataPipelineEngine} from './pipeline';
 import {CheckpointStore,FeatureFlagService,IntegrationDatabase,IntegrationQueue,RawBatchStore,SecretsManager} from './platform';
 import {ConnectorRegistry} from './registry';
 import {SyncEngine} from './sync-engine';
@@ -12,9 +13,10 @@ export function createIntegrationRuntime(){
  const queue=new IntegrationQueue(database);
  const checkpoints=new CheckpointStore(database);
  const rawBatches=new RawBatchStore(database);
+ const pipeline=new DataPipelineEngine(database,queue,flags);
  const connections=new ConnectionManager(database,registry,secrets,queue,flags);
- const syncEngine=new SyncEngine(database,registry,secrets,queue,checkpoints,rawBatches,flags);
- return {database,registry,secrets,flags,queue,checkpoints,rawBatches,connections,syncEngine};
+ const syncEngine=new SyncEngine(database,registry,secrets,queue,checkpoints,rawBatches,flags,pipeline);
+ return {database,registry,secrets,flags,queue,checkpoints,rawBatches,pipeline,connections,syncEngine};
 }
 
 export type IntegrationRuntime=ReturnType<typeof createIntegrationRuntime>;
@@ -22,3 +24,4 @@ export * from './contracts';
 export * from './errors';
 export * from './auth';
 export * from './registry';
+export * from './udm';

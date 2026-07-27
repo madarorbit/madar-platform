@@ -24,6 +24,8 @@ const common:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin/local-payments',label:'الدفع والاشتراكات',icon:'shield'},
  {href:'/admin/beta-operations',label:'الدعم التجريبي',icon:'help'},
  {href:'/admin/system-health',label:'صحة المنصة',icon:'check'},
+ {href:'/admin/integrations',label:'الاتصالات وجودة البيانات',icon:'automation'},
+ {href:'/admin/integrations/audit',label:'تدقيق التكاملات',icon:'shield'},
 ];
 const founder:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin/founder',label:'مركز قيادة المؤسس',icon:'sparkles'},
@@ -35,7 +37,7 @@ const founder:Array<{href:string;label:string;icon:IconName}>=[
 ];
 
 export default function EnterpriseAdminShell({children,displayName,isFounder}:{children:ReactNode;displayName:string;isFounder:boolean}){
- const pathname=usePathname();const active=(href:string)=>href==='/admin'?pathname==='/admin':pathname?.startsWith(href);
+ const pathname=usePathname();const active=(href:string)=>href==='/admin'||href==='/admin/integrations'?pathname===href:pathname?.startsWith(href);
  const link=(item:{href:string;label:string;icon:IconName})=><Link key={item.href} href={item.href} aria-current={active(item.href)?'page':undefined} className={cx('md-sidebar-link',active(item.href)&&'md-sidebar-link-active')}><span className="grid h-7 w-7 place-items-center rounded-md bg-white/[.04]"><Icon name={item.icon} className="h-4 w-4"/></span><span>{item.label}</span></Link>;
  return <div className="md-sidebar-layout md-shell"><aside className="md-sidebar md-no-print" aria-label="تنقل إدارة مَدار | ORBIT"><div className="flex items-center gap-3 border-b border-white/10 pb-4"><Link href="/" className="flex h-10 items-center rounded-lg text-white"><Image src={siteConfig.assets.logo} alt="شعار مَدار | ORBIT" width={156} height={36} className="h-8 w-auto"/></Link></div><div className="mt-4 rounded-xl border border-white/10 bg-white/[.03] p-3"><span className="block text-xs text-slate-500">الحساب الإداري</span><strong className="mt-1 block truncate text-sm">{displayName}</strong>{isFounder&&<span className="md-badge md-badge-brand mt-2">المؤسس</span>}</div><nav className="md-sidebar-nav mt-5">{common.map(link)}</nav>{isFounder&&<><div className="my-5 border-t border-white/10"/><p className="mb-2 px-2 text-xs font-black text-violet-200">صلاحيات المؤسس</p><nav className="md-sidebar-nav">{founder.map(link)}</nav></>}<div className="mt-5 border-t border-white/10 pt-4"><Link href="/account" className="md-sidebar-link"><Icon name="user" className="h-4 w-4"/>العودة إلى حسابي</Link></div></aside><div className="min-w-0"><header className="md-topbar md-no-print"><div className="flex min-h-14 items-center justify-between gap-4 px-4 sm:px-6"><NavigationControls/><div className="flex items-center gap-2"><ThemeToggle/><Link href="/admin/system-health" className="md-button md-button-secondary md-button-sm"><Icon name="check"/>صحة المنصة</Link>{isFounder&&<Link href="/admin/founder" className="md-button md-button-primary md-button-sm"><Icon name="sparkles"/>مركز المؤسس</Link>}</div></div></header><div className="min-w-0">{children}</div></div></div>;
 }

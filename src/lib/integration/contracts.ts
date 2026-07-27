@@ -6,7 +6,7 @@ export type ConnectorAuthScheme='none'|'api_key'|'bearer'|'basic'|'oauth2'|'data
 export type ConnectorSyncMode='initial'|'incremental';
 export type ConnectionMode='READ_ONLY'|'WRITE_LIMITED';
 export type ConnectionStatus='draft'|'verifying'|'active'|'paused'|'error'|'disconnected'|'archived';
-export type IntegrationJobType='connection.test'|'sync.initial'|'sync.incremental';
+export type IntegrationJobType='connection.test'|'sync.initial'|'sync.incremental'|'pipeline.process_batch';
 export type IntegrationJobStatus='queued'|'running'|'succeeded'|'dead'|'cancelled';
 
 export type ConnectorStreamDefinition={
