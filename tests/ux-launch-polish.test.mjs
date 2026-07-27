@@ -42,6 +42,9 @@ test('official identity and supplied ORBY artwork are used without a boxed logo 
  assert.match(config,/name: 'مَدار \| ORBIT'/);
  assert.match(config,/titleTemplate: '%s \| مَدار \| ORBIT'/);
  assert.doesNotMatch(logo,/<rect width="1000" height="1000"/);
+ assert.match(logo,/M-11-27A28 28 0 0 0-11 27/);
+ assert.match(logo,/M11-27A28 28 0 0 1 11 27/);
+ assert.doesNotMatch(logo,/M-5-27A28/);
  assert.match(logo,/مَدار/);
  assert.match(logo,/ORBIT/);
  assert.match(orby,/data:image\/webp;base64/);
