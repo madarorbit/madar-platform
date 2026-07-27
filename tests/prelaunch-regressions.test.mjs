@@ -29,6 +29,16 @@ test('refreshed session is propagated to the same request and persisted', async 
   assert.match(source, /SESSION_MAX_AGE=60\*60\*24\*365/);
 });
 
+test('authenticated navigation depends on the verified auth user, not a profile row', async () => {
+  const [navbar,home,server]=await Promise.all([read('components/layout/Navbar.tsx'),read('app/page.tsx'),read('src/lib/supabase/server.ts')]);
+  assert.match(navbar,/const user=await currentUser\(\)/);
+  assert.match(navbar,/authenticated=\{Boolean\(user\)\}/);
+  assert.match(navbar,/profileForUser\(user\.id\)/);
+  assert.match(home,/Boolean\(await currentUser\(\)/);
+  assert.doesNotMatch(home,/Boolean\(await currentProfile\(\)/);
+  assert.match(server,/export async function profileForUser/);
+});
+
 test('prelaunch migration removes unsafe public admin resolution and frontend grants', async () => {
   const source = await read('supabase/migrations/20260726181429_prelaunch_rls_and_grant_stabilization.sql');
   assert.match(source, /private\.is_admin\(\)/);
