@@ -4,6 +4,7 @@ import { supabaseConfig } from '@/src/lib/env';
 
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'CUSTOMER';
 export type Profile = { id:string; email:string|null; full_name:string|null; phone:string|null; avatar_url:string|null; role:Role; status:'active'|'disabled' };
+export type AuthUser = { id:string; email?:string|null; user_metadata?:Record<string,unknown>|null };
 
 type SupabaseErrorPayload={code?:string;message?:string;msg?:string;error_description?:string;details?:string;hint?:string};
 const domainErrorMessages:Record<string,string>={
@@ -47,5 +48,6 @@ export async function supabaseFetch(path:string, init:RequestInit = {}) {
  }
  return response.status===204?null:response.json();
 }
-export async function currentUser(){ const token=await serverToken(); if(!token)return null; try{return await supabaseFetch('/auth/v1/user');}catch{return null;} }
-export async function currentProfile(){ const user=await currentUser(); if(!user)return null; const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=id,email,full_name,phone,avatar_url,role,status`); return rows?.[0] as Profile|undefined; }
+export async function currentUser():Promise<AuthUser|null>{ const token=await serverToken(); if(!token)return null; try{return await supabaseFetch('/auth/v1/user') as AuthUser;}catch{return null;} }
+export async function profileForUser(userId:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status`); return rows?.[0] as Profile|undefined; }
+export async function currentProfile(){ const user=await currentUser(); if(!user)return null; return profileForUser(user.id); }
