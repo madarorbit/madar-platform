@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import type {ConnectorBatch,ConnectorConnection,ConnectorContext,ConnectorLogger,ConnectorSyncRequest,EncryptedSecret,JsonObject,JsonValue,StoredIntegrationConnection,StoredIntegrationJob} from './contracts';
 import {asIntegrationError,IntegrationError,retryAt} from './errors';
+import {DataPipelineEngine} from './pipeline';
 import {ConnectorRegistry} from './registry';
 import {CheckpointStore,FeatureFlagService,IntegrationDatabase,IntegrationQueue,RawBatchStore,SecretsManager} from './platform';
 
@@ -30,6 +31,7 @@ export class SyncEngine {
   private readonly checkpoints:CheckpointStore,
   private readonly rawBatches:RawBatchStore,
   private readonly flags:FeatureFlagService,
+  private readonly pipeline:DataPipelineEngine,
  ){}
  private async loadConnection(job:StoredIntegrationJob){
   if(!job.connection_id)throw new IntegrationError('مهمة الربط لا تحتوي على اتصال محدد.','CONFIGURATION_ERROR',false,{jobId:job.id});
@@ -66,7 +68,8 @@ export class SyncEngine {
    for await(const batch of iterator){
     if(!selected.includes(batch.streamKey))throw new IntegrationError('أعاد الموصل Stream خارج نطاق المهمة.','VALIDATION_ERROR',false,{stream:batch.streamKey});
     const previous=checkpointMap[batch.streamKey],checkpoint={streamKey:batch.streamKey,cursor:batch.nextCursor,watermark:batch.watermark,version:(previous?.version||0)+1};
-    await this.rawBatches.persist({organizationId:connection.organization_id,connectionId:connection.id,syncRunId:run.id,streamKey:batch.streamKey,records:batch.records,cursor:batch.nextCursor,watermark:batch.watermark,idempotencyKey:batchHash(connection.id,batch),metadata:batch.metadata});
+    const [rawBatch]=await this.rawBatches.persist({organizationId:connection.organization_id,connectionId:connection.id,syncRunId:run.id,streamKey:batch.streamKey,records:batch.records,cursor:batch.nextCursor,watermark:batch.watermark,idempotencyKey:batchHash(connection.id,batch),metadata:batch.metadata});
+    if(rawBatch&&(await this.flags.resolve('integration_pipeline_enabled',connection.organization_id)).enabled)await this.queue.enqueue({organizationId:connection.organization_id,connectionId:connection.id,jobType:'pipeline.process_batch',payload:{raw_batch_id:rawBatch.id},idempotencyKey:`pipeline:${rawBatch.id}`,createdBy:job.created_by||undefined});
     await this.checkpoints.save(connection.organization_id,connection.id,checkpoint);checkpointMap[batch.streamKey]=checkpoint;records+=batch.records.length;batches+=1;
     await this.database.update('integration_sync_runs',`id=eq.${run.id}`,{records_received:records,batches_received:batches,checkpoint_after:checkpointMap as unknown as JsonValue});
     await this.queue.heartbeat(job.id,workerId,120);
@@ -74,10 +77,10 @@ export class SyncEngine {
    const finishedAt=new Date().toISOString();await this.database.update('integration_sync_runs',`id=eq.${run.id}`,{status:'succeeded',records_received:records,batches_received:batches,checkpoint_after:checkpointMap as unknown as JsonValue,finished_at:finishedAt});await this.database.update('integration_connections',`id=eq.${connection.id}`,{status:'active',last_success_at:finishedAt,last_error_code:null,last_error_message:null});await this.audit('integration.sync.succeeded',connection,job,{sync_run_id:run.id,sync_mode:mode,records,batches});await this.queue.complete(job.id,workerId,{sync_run_id:run.id,records,batches});
   }catch(error){const normalized=asIntegrationError(error);await this.database.update('integration_sync_runs',`id=eq.${run.id}`,{status:'failed',error_code:normalized.code,error_message:normalized.message,records_received:records,batches_received:batches,finished_at:new Date().toISOString()}).catch(()=>undefined);throw normalized;}finally{clearTimeout(timeout);}
  }
- private async execute(job:StoredIntegrationJob,workerId:string){await this.flags.require('integration_engine_enabled',job.organization_id);if(job.job_type==='connection.test')return this.test(job,workerId);if(job.job_type==='sync.initial')return this.sync(job,workerId,'initial');if(job.job_type==='sync.incremental')return this.sync(job,workerId,'incremental');throw new IntegrationError('نوع مهمة الربط غير مدعوم.','CONFIGURATION_ERROR',false,{jobType:job.job_type});}
+ private async execute(job:StoredIntegrationJob,workerId:string){await this.flags.require('integration_engine_enabled',job.organization_id);if(job.job_type==='connection.test')return this.test(job,workerId);if(job.job_type==='sync.initial')return this.sync(job,workerId,'initial');if(job.job_type==='sync.incremental')return this.sync(job,workerId,'incremental');if(job.job_type==='pipeline.process_batch')return this.pipeline.processBatch(job,workerId);throw new IntegrationError('نوع مهمة الربط غير مدعوم.','CONFIGURATION_ERROR',false,{jobType:job.job_type});}
  async processClaimedJob(job:StoredIntegrationJob,workerId:string){
   try{await this.execute(job,workerId);return {jobId:job.id,status:'succeeded' as const};}
-  catch(error){const normalized=asIntegrationError(error),canRetry=normalized.retryable&&job.attempts<job.max_attempts,next=canRetry?retryAt(job.attempts):null;await this.queue.fail(job.id,workerId,normalized.code,normalized.message,next).catch(()=>undefined);if(job.connection_id)await this.database.update('integration_connections',`id=eq.${job.connection_id}`,{status:canRetry?'verifying':'error',last_error_code:normalized.code,last_error_message:normalized.message}).catch(()=>undefined);return {jobId:job.id,status:canRetry?'retrying' as const:'dead' as const,error:{code:normalized.code,message:normalized.message}};}
+  catch(error){const normalized=asIntegrationError(error),canRetry=normalized.retryable&&job.attempts<job.max_attempts,next=canRetry?retryAt(job.attempts):null;await this.queue.fail(job.id,workerId,normalized.code,normalized.message,next).catch(()=>undefined);if(job.connection_id&&job.job_type!=='pipeline.process_batch')await this.database.update('integration_connections',`id=eq.${job.connection_id}`,{status:canRetry?'verifying':'error',last_error_code:normalized.code,last_error_message:normalized.message}).catch(()=>undefined);return {jobId:job.id,status:canRetry?'retrying' as const:'dead' as const,error:{code:normalized.code,message:normalized.message}};}
  }
  async processNext(workerId:string,limit=5){await this.flags.require('integration_worker_enabled');const jobs=await this.queue.claim(workerId,limit);const results=[];for(const job of jobs)results.push(await this.processClaimedJob(job,workerId));return results;}
 }
