@@ -7,6 +7,27 @@ export function supabaseConfig() {
   return { url: url.replace(/\/$/, ''), key };
 }
 
+export function integrationDatabaseConfig(){
+  const {url}=supabaseConfig();
+  const serviceRoleKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!serviceRoleKey)throw new Error('Integration database access is not configured. Set SUPABASE_SERVICE_ROLE_KEY on the server.');
+  return {url,serviceRoleKey};
+}
+
+export function integrationSecretsConfig(){
+  const masterKey=process.env.MADAR_INTEGRATION_MASTER_KEY;
+  const keyVersion=Number(process.env.MADAR_INTEGRATION_KEY_VERSION||'1');
+  if(!masterKey)throw new Error('Integration secret encryption is not configured. Set MADAR_INTEGRATION_MASTER_KEY.');
+  if(!Number.isInteger(keyVersion)||keyVersion<1)throw new Error('MADAR_INTEGRATION_KEY_VERSION must be a positive integer.');
+  return {masterKey,keyVersion};
+}
+
+export function integrationWorkerConfig(){
+  const secret=process.env.MADAR_INTEGRATION_WORKER_SECRET||process.env.CRON_SECRET;
+  if(!secret)throw new Error('Integration worker authentication is not configured. Set MADAR_INTEGRATION_WORKER_SECRET or CRON_SECRET.');
+  return {secret};
+}
+
 export const siteUrl = () => (
   process.env.NODE_ENV === 'production'
     ? OFFICIAL_SITE_URL
