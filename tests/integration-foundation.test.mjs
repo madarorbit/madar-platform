@@ -48,9 +48,19 @@ test('tenant isolation and secret denial are explicit in the migration',async()=
  assert.match(migration,/grant execute on function public\.integration_claim_jobs.*to service_role/i);
 });
 
+test('connection secret rotation is atomic and serialized per connection',async()=>{
+ const [manager,migration]=await Promise.all([read('src/lib/integration/connection-manager.ts'),read('supabase/migrations/20260727215500_integration_secret_rotation_rpc.sql')]);
+ assert.match(manager,/integration_rotate_connection_secret/);
+ assert.doesNotMatch(manager,/insert<\{id:string\}>\('integration_connection_secrets'.*rotation:true/s);
+ assert.match(migration,/pg_advisory_xact_lock/);
+ assert.match(migration,/update public\.integration_connection_secrets[\s\S]*insert into public\.integration_connection_secrets/i);
+ assert.match(migration,/grant execute on function public\.integration_rotate_connection_secret.*to service_role/i);
+});
+
 test('write operations remain disabled by feature flag and read-only defaults',async()=>{
- const [migration,contracts]=await Promise.all([read('supabase/migrations/20260727213000_integration_foundation_core.sql'),read('src/lib/integration/contracts.ts')]);
+ const [migration,contracts,manager]=await Promise.all([read('supabase/migrations/20260727213000_integration_foundation_core.sql'),read('src/lib/integration/contracts.ts'),read('src/lib/integration/connection-manager.ts')]);
  assert.match(migration,/integration_write_enabled',false/);
  assert.match(migration,/connection_mode text not null default 'READ_ONLY'/);
  assert.match(contracts,/ConnectionMode='READ_ONLY'\|'WRITE_LIMITED'/);
+ assert.match(manager,/connection\.status!=='active'/);
 });
