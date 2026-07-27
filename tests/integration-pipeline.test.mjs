@@ -28,7 +28,7 @@ test('raw batches flow through validation mapping deduplication and unified stor
 });
 
 test('database migration provides lineage quality health foreign keys and guarded admin RPCs',async()=>{
- const migration=await read('supabase/migrations/20260728003000_udm_quality_observability.sql');
+ const [migration,hardening]=await Promise.all([read('supabase/migrations/20260728003000_udm_quality_observability.sql'),read('supabase/migrations/20260728004500_udm_security_performance_hardening.sql')]);
  for(const table of ['integration_mapping_rules','integration_validation_rules','integration_pipeline_runs','integration_pipeline_records','integration_udm_records','integration_udm_source_keys','integration_udm_relations','integration_match_candidates','integration_quality_issues','integration_health_snapshots','integration_audit_events'])assert.match(migration,new RegExp(`create table if not exists public\\.${table}`,'i'));
  assert.match(migration,/Source → Raw → Validate → Transform → Map → Deduplicate → Unified/);
  assert.match(migration,/integration_pipeline_enabled',false/);
@@ -37,16 +37,23 @@ test('database migration provides lineage quality health foreign keys and guarde
  assert.match(migration,/enable row level security/gi);
  assert.match(migration,/^grant execute on function public\.integration_upsert_udm_record[^\n]* to service_role;$/m);
  assert.doesNotMatch(migration,/^grant execute on function public\.integration_upsert_udm_record[^\n]*authenticated[^\n]*;$/m);
+ assert.match(hardening,/alter function public\.integration_quality_dashboard\(\) security invoker/);
+ assert.match(hardening,/revoke all on function public\.integration_admin_enqueue_sync\(uuid,text\) from authenticated/);
+ assert.match(hardening,/grant execute on function public\.integration_admin_enqueue_sync\(uuid,text\) to service_role/);
+ assert.match(hardening,/integration_quality_pipeline_record_idx/);
+ assert.match(hardening,/integration_source_keys_connection_idx/);
 });
 
 test('admin center exposes connection operations, quality issues, mapping and health without touching store features',async()=>{
- const [page,actions,shell]=await Promise.all([read('app/admin/integrations/page.tsx'),read('app/admin/integrations/actions.ts'),read('components/admin/EnterpriseAdminShell.tsx')]);
+ const [page,actions,audit,shell]=await Promise.all([read('app/admin/integrations/page.tsx'),read('app/admin/integrations/actions.ts'),read('app/admin/integrations/audit/page.tsx'),read('components/admin/EnterpriseAdminShell.tsx')]);
  assert.match(page,/integration_quality_dashboard/);
  assert.match(page,/integration_health_snapshots/);
  assert.match(page,/integration_quality_issues/);
  assert.match(page,/integration_mapping_rules/);
+ assert.match(actions,/new IntegrationDatabase\(\)\.rpc/);
  assert.match(actions,/integration_admin_enqueue_sync/);
  assert.match(actions,/integration_admin_backfill_raw_batches/);
- assert.match(shell,/\/admin\/integrations/);
+ assert.match(audit,/integration_audit_events/);
+ assert.match(shell,/\/admin\/integrations\/audit/);
  assert.doesNotMatch(page,/products|store_settings|orders\?/i);
 });
