@@ -4,7 +4,7 @@ import { supabaseConfig } from '@/src/lib/env';
 
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'CUSTOMER';
 export type Profile = { id:string; email:string|null; full_name:string|null; phone:string|null; avatar_url:string|null; role:Role; status:'active'|'disabled' };
-export type AuthUser = { id:string; email?:string|null; user_metadata?:Record<string,unknown>|null };
+export type AuthUser = { id:string; email?:string|null; email_confirmed_at?:string|null; phone?:string|null; created_at?:string; app_metadata?:Record<string,unknown>|null; user_metadata?:Record<string,unknown>|null };
 
 type SupabaseErrorPayload={code?:string;message?:string;msg?:string;error_description?:string;details?:string;hint?:string};
 const domainErrorMessages:Record<string,string>={
