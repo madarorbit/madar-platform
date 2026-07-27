@@ -2,10 +2,11 @@
 
 import {revalidatePath} from 'next/cache';
 import {requireSuperAdmin} from '@/src/lib/auth';
-import {supabaseFetch} from '@/src/lib/supabase/server';
+import type {JsonObject} from '@/src/lib/integration/contracts';
+import {IntegrationDatabase} from '@/src/lib/integration/platform';
 
 function required(formData:FormData,key:string){const value=formData.get(key);if(typeof value!=='string'||!value.trim())throw new Error(`Missing ${key}`);return value.trim();}
-async function rpc(name:string,body:Record<string,unknown>){await requireSuperAdmin();await supabaseFetch(`/rest/v1/rpc/${name}`,{method:'POST',body:JSON.stringify(body)});revalidatePath('/admin/integrations');}
+async function rpc(name:string,body:JsonObject){await requireSuperAdmin();await new IntegrationDatabase().rpc(name,body);revalidatePath('/admin/integrations');revalidatePath('/admin/integrations/audit');}
 
 export async function setIntegrationFlag(formData:FormData){await rpc('integration_admin_set_feature_flag',{flag_key:required(formData,'flag_key'),flag_enabled:required(formData,'flag_enabled')==='true',target_organization:null});}
 export async function setConnectionState(formData:FormData){await rpc('integration_admin_set_connection_state',{target_connection:required(formData,'connection_id'),target_status:required(formData,'status')});}
