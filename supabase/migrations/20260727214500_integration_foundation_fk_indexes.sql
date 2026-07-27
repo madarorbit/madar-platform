@@ -1,0 +1,16 @@
+begin;
+create index if not exists integration_connections_connector_idx on public.integration_connections(connector_key);
+create index if not exists integration_connections_secret_idx on public.integration_connections(secret_id) where secret_id is not null;
+create index if not exists integration_connections_created_by_idx on public.integration_connections(created_by);
+create index if not exists integration_connections_updated_by_idx on public.integration_connections(updated_by) where updated_by is not null;
+create index if not exists integration_secrets_created_by_idx on public.integration_connection_secrets(created_by) where created_by is not null;
+create index if not exists integration_secrets_revoked_by_idx on public.integration_connection_secrets(revoked_by) where revoked_by is not null;
+create index if not exists integration_schedules_organization_idx on public.integration_schedules(organization_id);
+create index if not exists integration_schedules_created_by_idx on public.integration_schedules(created_by) where created_by is not null;
+create index if not exists integration_schedules_updated_by_idx on public.integration_schedules(updated_by) where updated_by is not null;
+create index if not exists integration_jobs_created_by_idx on public.integration_jobs(created_by) where created_by is not null;
+create index if not exists integration_sync_runs_organization_idx on public.integration_sync_runs(organization_id);
+create index if not exists integration_sync_runs_job_idx on public.integration_sync_runs(job_id) where job_id is not null;
+create index if not exists integration_feature_flags_created_by_idx on public.integration_feature_flags(created_by) where created_by is not null;
+create index if not exists integration_feature_flags_updated_by_idx on public.integration_feature_flags(updated_by) where updated_by is not null;
+commit;
