@@ -35,8 +35,8 @@ test('database migration provides lineage quality health foreign keys and guarde
  assert.match(migration,/integration_quality_center_enabled',false/);
  assert.match(migration,/private\.is_admin\(\)/);
  assert.match(migration,/enable row level security/gi);
- assert.match(migration,/grant execute on function public\.integration_upsert_udm_record.*to service_role/is);
- assert.doesNotMatch(migration,/grant .*integration_upsert_udm_record.*authenticated/is);
+ assert.match(migration,/^grant execute on function public\.integration_upsert_udm_record[^\n]* to service_role;$/m);
+ assert.doesNotMatch(migration,/^grant execute on function public\.integration_upsert_udm_record[^\n]*authenticated[^\n]*;$/m);
 });
 
 test('admin center exposes connection operations, quality issues, mapping and health without touching store features',async()=>{
