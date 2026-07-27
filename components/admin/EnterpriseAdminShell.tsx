@@ -24,6 +24,7 @@ const common:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin/local-payments',label:'الدفع والاشتراكات',icon:'shield'},
  {href:'/admin/beta-operations',label:'الدعم التجريبي',icon:'help'},
  {href:'/admin/system-health',label:'صحة المنصة',icon:'check'},
+ {href:'/admin/integrations',label:'الاتصالات وجودة البيانات',icon:'automation'},
 ];
 const founder:Array<{href:string;label:string;icon:IconName}>=[
  {href:'/admin/founder',label:'مركز قيادة المؤسس',icon:'sparkles'},
