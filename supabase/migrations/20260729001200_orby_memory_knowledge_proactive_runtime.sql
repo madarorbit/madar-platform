@@ -214,19 +214,19 @@ returns jsonb
 language plpgsql
 security definer set search_path=''
 as $$
-declare existing public.orby_insights;result public.orby_insights;is_created boolean=false;is_suppressed boolean=false;detected timestamptz;
+declare existing public.orby_proactive_insights;result public.orby_proactive_insights;is_created boolean=false;is_suppressed boolean=false;detected timestamptz;
 begin
  detected=coalesce((signal_payload->>'detectedAt')::timestamptz,now());
- select * into existing from public.orby_insights
+ select * into existing from public.orby_proactive_insights
  where organization_id=(signal_payload->>'organizationId')::uuid and fingerprint=signal_payload->>'fingerprint'
  for update;
  if existing.id is null then
-  insert into public.orby_insights(organization_id,workspace_id,detector,fingerprint,title,description,category,severity,confidence,risk_score,opportunity_score,metrics,evidence,root_causes,recommendations,suggested_actions,cooldown_until,first_detected_at,last_detected_at)
+  insert into public.orby_proactive_insights(organization_id,workspace_id,detector,fingerprint,title,description,category,severity,confidence,risk_score,opportunity_score,metrics,evidence,root_causes,recommendations,suggested_actions,cooldown_until,first_detected_at,last_detected_at)
   values((signal_payload->>'organizationId')::uuid,nullif(signal_payload->>'workspaceId','')::uuid,signal_payload->>'detector',signal_payload->>'fingerprint',signal_payload->>'title',signal_payload->>'description',signal_payload->>'category',signal_payload->>'severity',(signal_payload->>'confidence')::numeric,(signal_payload->>'riskScore')::integer,(signal_payload->>'opportunityScore')::integer,coalesce(signal_payload->'metrics','{}'::jsonb),coalesce(signal_payload->'evidence','[]'::jsonb),coalesce(signal_payload->'rootCauses','[]'::jsonb),coalesce(signal_payload->'recommendations','[]'::jsonb),coalesce(signal_payload->'suggestedActions','[]'::jsonb),detected+make_interval(mins=>greatest(0,cooldown_minutes)),detected,detected)
   returning * into result;is_created=true;
  else
   is_suppressed=existing.cooldown_until is not null and existing.cooldown_until>detected;
-  update public.orby_insights set title=signal_payload->>'title',description=signal_payload->>'description',category=signal_payload->>'category',severity=signal_payload->>'severity',
+  update public.orby_proactive_insights set title=signal_payload->>'title',description=signal_payload->>'description',category=signal_payload->>'category',severity=signal_payload->>'severity',
    confidence=(signal_payload->>'confidence')::numeric,risk_score=(signal_payload->>'riskScore')::integer,opportunity_score=(signal_payload->>'opportunityScore')::integer,
    metrics=coalesce(signal_payload->'metrics','{}'::jsonb),evidence=coalesce(signal_payload->'evidence','[]'::jsonb),root_causes=coalesce(signal_payload->'rootCauses','[]'::jsonb),
    recommendations=coalesce(signal_payload->'recommendations','[]'::jsonb),suggested_actions=coalesce(signal_payload->'suggestedActions','[]'::jsonb),
