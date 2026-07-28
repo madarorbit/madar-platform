@@ -210,7 +210,7 @@ create index if not exists orby_intelligence_schedules_due_idx on public.orby_in
 create index if not exists orby_intelligence_schedules_org_idx on public.orby_intelligence_schedules(organization_id,updated_at desc);
 create index if not exists orby_intelligence_schedules_created_by_idx on public.orby_intelligence_schedules(created_by) where created_by is not null;
 
-create table if not exists public.orby_insights (
+create table if not exists public.orby_proactive_insights (
  id uuid primary key default gen_random_uuid(),
  organization_id uuid not null references public.organizations(id) on delete cascade,
  workspace_id uuid,
@@ -243,9 +243,9 @@ create table if not exists public.orby_insights (
  check (jsonb_typeof(suggested_actions)='array'),
  check (draft_workflow is null or jsonb_typeof(draft_workflow)='object')
 );
-create unique index if not exists orby_insights_fingerprint_uidx on public.orby_insights(organization_id,fingerprint);
-create index if not exists orby_insights_org_status_idx on public.orby_insights(organization_id,status,severity,last_detected_at desc);
-create index if not exists orby_insights_workspace_idx on public.orby_insights(workspace_id,last_detected_at desc) where workspace_id is not null;
+create unique index if not exists orby_proactive_insights_fingerprint_uidx on public.orby_proactive_insights(organization_id,fingerprint);
+create index if not exists orby_proactive_insights_org_status_idx on public.orby_proactive_insights(organization_id,status,severity,last_detected_at desc);
+create index if not exists orby_proactive_insights_workspace_idx on public.orby_proactive_insights(workspace_id,last_detected_at desc) where workspace_id is not null;
 
 create table if not exists public.orby_notification_preferences (
  id uuid primary key default gen_random_uuid(),
@@ -277,7 +277,7 @@ create table if not exists public.orby_proactive_notifications (
  organization_id uuid not null references public.organizations(id) on delete cascade,
  user_id uuid references auth.users(id) on delete cascade,
  workspace_id uuid,
- insight_id uuid references public.orby_insights(id) on delete cascade,
+ insight_id uuid references public.orby_proactive_insights(id) on delete cascade,
  channel text not null check (channel in ('in_app','email','push','webhook')),
  title text not null,
  body text not null,
@@ -325,7 +325,7 @@ alter table public.orby_knowledge_embeddings enable row level security;
 alter table public.orby_intelligence_events enable row level security;
 alter table public.orby_intelligence_jobs enable row level security;
 alter table public.orby_intelligence_schedules enable row level security;
-alter table public.orby_insights enable row level security;
+alter table public.orby_proactive_insights enable row level security;
 alter table public.orby_notification_preferences enable row level security;
 alter table public.orby_proactive_notifications enable row level security;
 alter table public.orby_periodic_reports enable row level security;
