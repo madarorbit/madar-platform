@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {
  createOrbyFoundation,DefaultOrbyPromptCompiler,InMemorySessionStore,MadarIntegrationContextSource,MockOrbyProvider,OrbyError,RedactingLogger,providersFromEnvironment,
  type OrbyContextSource,type OrbyJsonObject,type OrbyLogger,type OrbyModelDescriptor,
-} from '../src/lib/orby';
+} from '../src/lib/orby/index';
 
 async function main(){
 type Check={key:string;status:'passed';details:OrbyJsonObject};
