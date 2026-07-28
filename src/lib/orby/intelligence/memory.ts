@@ -50,7 +50,7 @@ export class OrbyConversationWindowManager {
   const policy=await new OrbyMemoryPolicyEngine().resolve(this.repository,identity.organizationId);
   const messages=policy.allowConversationHistory?await this.repository.listConversationMessages(sessionId,Math.max(1,policy.maximumConversationMessages)):[];
   const summary=policy.allowSummaries?await this.repository.getConversationSummary(sessionId):null;
-  let selected=[...messages],used=estimateCharacters(selected)+(summary?.content.length||0),truncated=false;
+  const selected=[...messages];let used=estimateCharacters(selected)+(summary?.content.length||0),truncated=false;
   while(selected.length>1&&used>maxCharacters){selected.shift();used=estimateCharacters(selected)+(summary?.content.length||0);truncated=true;}
   return {messages:selected,summary:summary?.content,characterCount:used,truncated};
  }
