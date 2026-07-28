@@ -1,4 +1,4 @@
-import type {OrbyJsonObject,OrbyJsonValue} from '../../core/contracts';
+import type {OrbyJsonObject} from '../../core/contracts';
 import type {OrbyBusinessMetricReader,OrbyMetricSnapshot} from '../analytics';
 import type {OrbyCitation,OrbyDetectorInput} from '../contracts';
 import {IntegrationDatabase} from '@/src/lib/integration/platform';
