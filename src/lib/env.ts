@@ -28,6 +28,12 @@ export function integrationWorkerConfig(){
   return {secret};
 }
 
+export function orbyAgentWorkerConfig(){
+  const secret=process.env.MADAR_ORBY_WORKER_SECRET||process.env.MADAR_INTEGRATION_WORKER_SECRET||process.env.CRON_SECRET;
+  if(!secret)throw new Error('ORBY agent worker authentication is not configured. Set MADAR_ORBY_WORKER_SECRET, MADAR_INTEGRATION_WORKER_SECRET or CRON_SECRET.');
+  return {secret};
+}
+
 export const siteUrl = () => (
   process.env.NODE_ENV === 'production'
     ? OFFICIAL_SITE_URL
