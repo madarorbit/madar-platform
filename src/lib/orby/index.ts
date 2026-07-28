@@ -4,6 +4,7 @@ export * from './core/runtime';
 export * from './providers';
 export * from './kernel';
 export * from './adapters/integration';
+export * from './execution';
 
 import type {OrbyConfigurationStore,OrbyContextSource,OrbyLogger,OrbyModelDescriptor,OrbyProvider,OrbyRuntimeConfiguration,OrbySessionStore} from './core/contracts';
 import {
@@ -32,7 +33,7 @@ export function createOrbyFoundation(options:CreateOrbyFoundationOptions={}){
   .register({key:'streaming',version:'1.0.0',enabled:true,description:'البث التدريجي للاستجابات',requiredProviderCapabilities:['text','streaming']})
   .register({key:'embeddings',version:'1.0.0',enabled:true,description:'التضمينات الدلالية',requiredProviderCapabilities:['embeddings']})
   .register({key:'moderation',version:'1.0.0',enabled:true,description:'فحص سلامة المدخلات والمخرجات',requiredProviderCapabilities:['moderation']})
-  .register({key:'tools',version:'0.0.0',enabled:false,description:'تنفيذ الأدوات مؤجل للمرحلة الثانية'})
+  .register({key:'tools',version:'1.0.0',enabled:true,description:'طبقة تنفيذ أدوات ORBY مبنية وتبقى خاضعة لإعدادات التنفيذ وسياساته',metadata:{gatedBy:'orby_execution_config.enabled'}})
   .register({key:'long-term-memory',version:'0.0.0',enabled:false,description:'الذاكرة طويلة المدى مؤجلة للمرحلة الثالثة'});
  const configurationStore=options.configurationStore||new InMemoryConfigurationStore(),configuration=new OrbyConfigurationManager(configurationStore);
  if(options.configuration)configuration.setRuntimeOverride({},options.configuration);

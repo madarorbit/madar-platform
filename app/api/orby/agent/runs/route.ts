@@ -1,0 +1,7 @@
+import {currentUser} from '@/src/lib/supabase/server';
+import {createServerOrbyAgentRuntime} from '@/src/lib/orby/execution/server';
+import type {OrbyTaskPlan} from '@/src/lib/orby/execution';
+import {agentErrorResponse,agentIdentity,agentMetadata} from '@/src/lib/orby/execution/http';
+
+export const runtime='nodejs';export const dynamic='force-dynamic';
+export async function POST(request:Request){try{const user=await currentUser();if(!user)return Response.json({ok:false,error:{code:'AUTH_REQUIRED',message:'يجب تسجيل الدخول أولًا.'}},{status:401});const body=await request.json() as Record<string,unknown>,goal=String(body.goal||'').trim();if(goal.length<5||goal.length>12000)return Response.json({ok:false,error:{code:'PLAN_INVALID',message:'اكتب هدفًا واضحًا بين 5 و12000 حرف.'}},{status:400});const identity=agentIdentity(user,body),plan=body.plan&&typeof body.plan==='object'?body.plan as OrbyTaskPlan:undefined,{runtime:agent}=await createServerOrbyAgentRuntime(),submitted=await agent.submit({goal,identity,reason:String(body.reason||goal),plan,metadata:agentMetadata(body.metadata),signal:request.signal});return Response.json({ok:true,workflowId:submitted.workflow.id,runId:submitted.run.id,status:submitted.run.status},{status:202,headers:{'Cache-Control':'no-store'}});}catch(error){return agentErrorResponse(error);}}
