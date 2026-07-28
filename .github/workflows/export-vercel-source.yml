@@ -1,0 +1,34 @@
+name: Export Vercel Source
+
+on:
+  push:
+    branches:
+      - release/orby-stage-3-production-deploy
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Package deployment source
+        run: |
+          tar \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            --exclude='.vercel' \
+            -czf madar-vercel-source.tar.gz .
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: madar-vercel-source
+          path: madar-vercel-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
