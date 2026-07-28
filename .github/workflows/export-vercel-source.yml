@@ -26,12 +26,12 @@ jobs:
             --exclude='node_modules' \
             --exclude='.next' \
             --exclude='.vercel' \
-            -czf madar-vercel-source.tar.gz .
+            -czf /tmp/madar-vercel-source.tar.gz .
 
       - name: Upload source artifact
         uses: actions/upload-artifact@v4
         with:
           name: madar-vercel-source
-          path: madar-vercel-source.tar.gz
+          path: /tmp/madar-vercel-source.tar.gz
           retention-days: 1
           if-no-files-found: error
