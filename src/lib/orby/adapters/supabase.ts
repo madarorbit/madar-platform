@@ -1,0 +1,32 @@
+import type {
+ OrbyConfigurationScope,OrbyConfigurationStore,OrbyMessage,OrbyModelDescriptor,OrbyProviderHealth,OrbyRuntimeConfiguration,OrbySession,OrbySessionStore,
+} from '../core/contracts';
+import {OrbyError} from '../core/errors';
+import {supabaseFetch} from '../../supabase/server';
+
+type RuntimeConfigRow={id:string;organization_id:string|null;config:Partial<OrbyRuntimeConfiguration>;revision:number};
+type SessionRow={id:string;organization_id:string;user_id:string;workspace_id:string|null;status:OrbySession['status'];metadata:OrbySession['metadata'];expires_at:string|null;created_at:string;updated_at:string};
+type MessageRow={id:string;role:OrbyMessage['role'];content:string;metadata:OrbyMessage['metadata'];created_at:string};
+type ModelRow={id:string;provider_id:string;provider_model:string;display_name:string;enabled:boolean;priority:number;capabilities:OrbyModelDescriptor['capabilities'];limits:{contextWindow?:number;maxOutputTokens?:number};pricing:{inputCostPerMillion?:number;outputCostPerMillion?:number;currency?:string};metadata:OrbyModelDescriptor['metadata']&{tags?:string[]}};
+
+function session(row:SessionRow):OrbySession{return {id:row.id,organizationId:row.organization_id,userId:row.user_id,workspaceId:row.workspace_id||undefined,status:row.status,metadata:row.metadata,expiresAt:row.expires_at||undefined,createdAt:row.created_at,updatedAt:row.updated_at};}
+function message(row:MessageRow):OrbyMessage{return {id:row.id,role:row.role,content:row.content,metadata:row.metadata,createdAt:row.created_at};}
+function scopeQuery(scope:OrbyConfigurationScope){return scope.organizationId?`organization_id=eq.${encodeURIComponent(scope.organizationId)}`:'organization_id=is.null';}
+
+export class SupabaseOrbyConfigurationStore implements OrbyConfigurationStore {
+ async get(scope:OrbyConfigurationScope){const rows=await supabaseFetch(`/rest/v1/orby_runtime_config?${scopeQuery(scope)}&select=id,organization_id,config,revision&limit=1`) as RuntimeConfigRow[];return rows[0]?.config||null;}
+ async set(scope:OrbyConfigurationScope,value:Partial<OrbyRuntimeConfiguration>){const rows=await supabaseFetch(`/rest/v1/orby_runtime_config?${scopeQuery(scope)}&select=id,organization_id,config,revision&limit=1`) as RuntimeConfigRow[];if(rows[0]){await supabaseFetch(`/rest/v1/orby_runtime_config?id=eq.${encodeURIComponent(rows[0].id)}`,{method:'PATCH',body:JSON.stringify({config:value,revision:rows[0].revision+1,updated_at:new Date().toISOString()})});return;}await supabaseFetch('/rest/v1/orby_runtime_config',{method:'POST',body:JSON.stringify({organization_id:scope.organizationId||null,config:value})});}
+}
+
+export class SupabaseOrbySessionStore implements OrbySessionStore {
+ async create(value:OrbySession){const rows=await supabaseFetch('/rest/v1/orby_sessions',{method:'POST',body:JSON.stringify({id:value.id,organization_id:value.organizationId,user_id:value.userId,workspace_id:value.workspaceId||null,status:value.status,metadata:value.metadata||{},expires_at:value.expiresAt||null,created_at:value.createdAt,updated_at:value.updatedAt})}) as SessionRow[];if(!rows[0])throw new OrbyError('تعذر إنشاء جلسة أوربي.','INTERNAL_ERROR');return session(rows[0]);}
+ async get(sessionId:string){const rows=await supabaseFetch(`/rest/v1/orby_sessions?id=eq.${encodeURIComponent(sessionId)}&select=id,organization_id,user_id,workspace_id,status,metadata,expires_at,created_at,updated_at&limit=1`) as SessionRow[];return rows[0]?session(rows[0]):null;}
+ async save(value:OrbySession){const rows=await supabaseFetch(`/rest/v1/orby_sessions?id=eq.${encodeURIComponent(value.id)}`,{method:'PATCH',body:JSON.stringify({status:value.status,metadata:value.metadata||{},expires_at:value.expiresAt||null,updated_at:value.updatedAt})}) as SessionRow[];if(!rows[0])throw new OrbyError('جلسة أوربي غير موجودة.','SESSION_NOT_FOUND');return session(rows[0]);}
+ async listMessages(sessionId:string,limit:number){const safeLimit=Math.min(100,Math.max(1,limit));const rows=await supabaseFetch(`/rest/v1/orby_session_messages?session_id=eq.${encodeURIComponent(sessionId)}&select=id,role,content,metadata,created_at&order=created_at.desc,id.desc&limit=${safeLimit}`) as MessageRow[];return rows.reverse().map(message);}
+ async appendMessages(sessionId:string,messages:readonly OrbyMessage[]){if(!messages.length)return;await supabaseFetch('/rest/v1/orby_session_messages',{method:'POST',body:JSON.stringify(messages.map(item=>({id:item.id,session_id:sessionId,role:item.role,content:item.content,metadata:item.metadata||{},created_at:item.createdAt})))});}
+}
+
+export async function loadSupabaseOrbyModels(){const rows=await supabaseFetch('/rest/v1/orby_model_registry?select=id,provider_id,provider_model,display_name,enabled,priority,capabilities,limits,pricing,metadata&order=priority.desc,id.asc') as ModelRow[];return rows.map((row):OrbyModelDescriptor=>({id:row.id,providerId:row.provider_id,providerModel:row.provider_model,displayName:row.display_name,enabled:row.enabled,priority:row.priority,capabilities:row.capabilities||{},contextWindow:row.limits?.contextWindow,maxOutputTokens:row.limits?.maxOutputTokens,inputCostPerMillion:row.pricing?.inputCostPerMillion,outputCostPerMillion:row.pricing?.outputCostPerMillion,currency:row.pricing?.currency,tags:row.metadata?.tags,metadata:row.metadata||{}}));}
+
+export async function upsertSupabaseOrbyModel(model:OrbyModelDescriptor){const payload={id:model.id,provider_id:model.providerId,provider_model:model.providerModel,display_name:model.displayName,enabled:model.enabled,priority:model.priority,capabilities:model.capabilities,limits:{contextWindow:model.contextWindow,maxOutputTokens:model.maxOutputTokens},pricing:{inputCostPerMillion:model.inputCostPerMillion,outputCostPerMillion:model.outputCostPerMillion,currency:model.currency},metadata:{...(model.metadata||{}),tags:model.tags||[]},updated_at:new Date().toISOString()};await supabaseFetch('/rest/v1/orby_model_registry?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});}
+export async function recordSupabaseOrbyProviderHealth(health:OrbyProviderHealth){await supabaseFetch('/rest/v1/orby_provider_health?on_conflict=provider_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({provider_id:health.providerId,ok:health.ok,latency_ms:health.latencyMs,message:health.message||null,checked_at:health.checkedAt})});}
