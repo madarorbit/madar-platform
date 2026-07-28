@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+
+const root=new URL('../',import.meta.url);
+const read=path=>readFile(new URL(path,root),'utf8');
+
+test('Stage 3 remains a child reference of the MADAR master roadmap',async()=>{const docs=await read('docs/orby-stage-3-memory-knowledge-proactive.md');assert.match(docs,/مرجع فرعي تابع لـ MADAR Integration Master Roadmap، وليس خارطة مستقلة/);});
+
+test('memory, knowledge and proactive database surfaces are RLS protected',async()=>{const [schema,security,runtime]=await Promise.all(['supabase/migrations/20260729001000_orby_memory_knowledge_proactive_schema.sql','supabase/migrations/20260729001100_orby_memory_knowledge_proactive_security.sql','supabase/migrations/20260729001200_orby_memory_knowledge_proactive_runtime.sql'].map(read));for(const table of ['orby_memory_policies','orby_memories','orby_user_preferences','orby_knowledge_sources','orby_knowledge_documents','orby_knowledge_chunks','orby_knowledge_embeddings','orby_intelligence_events','orby_intelligence_jobs','orby_intelligence_schedules','orby_insights','orby_notification_preferences','orby_proactive_notifications','orby_periodic_reports']){assert.match(schema,new RegExp(`create table if not exists public\\.${table}`));assert.match(schema,new RegExp(`alter table public\\.${table} enable row level security`));}assert.match(runtime,/for update skip locked/i);assert.match(runtime,/security definer set search_path=''/i);assert.match(runtime,/orby_search_knowledge/i);assert.match(runtime,/orby_find_memories/i);assert.doesNotMatch(security,/grant all privileges[\s\S]*service_role/i);assert.doesNotMatch(`${schema}\n${security}\n${runtime}`,/\b(api_key|access_token|provider_secret|dynamic_code)\s+(text|jsonb|bytea)/i);});
+
+test('private memory and proactive notifications are user scoped',async()=>{const security=await read('supabase/migrations/20260729001100_orby_memory_knowledge_proactive_security.sql');assert.match(security,/orby_memories_user_select[\s\S]*user_id=\(select auth\.uid\(\)\)/i);assert.match(security,/orby_proactive_notifications_user_select[\s\S]*user_id=\(select auth\.uid\(\)\)/i);assert.doesNotMatch(security,/orby_memories_user_select[\s\S]{0,500}role in \('OWNER','ADMIN'\)/i);});
+
+test('proactive actions are drafts and require approval',async()=>{const [analytics,proactive,activation]=await Promise.all(['src/lib/orby/intelligence/analytics.ts','src/lib/orby/intelligence/proactive.ts','supabase/migrations/20260729001300_orby_memory_knowledge_proactive_activation.sql'].map(read));assert.match(proactive,/type:'approval'/);assert.match(proactive,/requiresApproval:true/);assert.match(analytics,/madar\.business\.action\.draft/g);assert.doesNotMatch(analytics,/madar\.integration\.sync|delete|external_write/i);assert.match(activation,/allowExternalWrites',false/);assert.match(activation,/allowDeletes',false/);assert.match(activation,/planningEnabled',false/);});
+
+test('worker and schedule endpoints use the protected ORBY worker secret',async()=>{const [route,vercel]=await Promise.all(['app/api/orby/intelligence/worker/route.ts','vercel.json'].map(read));assert.match(route,/orbyAgentWorkerConfig/);assert.match(route,/timingSafeEqual/);assert.match(vercel,/api\/orby\/intelligence\/worker/);assert.match(vercel,/0 \* \* \* \*/);});
