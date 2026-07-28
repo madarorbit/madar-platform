@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - release/orby-stage-3-production-deploy
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
