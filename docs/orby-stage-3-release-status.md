@@ -20,3 +20,7 @@ Until then, Stage 3 uses its provider-independent local embedding fallback and g
 - Vercel Cron calls `/api/orby/intelligence/worker` hourly.
 - The worker requires `MADAR_ORBY_WORKER_SECRET`, `MADAR_INTEGRATION_WORKER_SECRET`, or `CRON_SECRET`.
 - No external model or OCR key is required for the deferred operating mode.
+
+## Release marker
+
+This document update is the formal Stage 3 production release marker for the final `main` deployment.
