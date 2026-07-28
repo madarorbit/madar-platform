@@ -78,43 +78,87 @@ alter table public.orby_session_messages enable row level security;
 alter table public.orby_model_registry enable row level security;
 alter table public.orby_provider_health enable row level security;
 
-drop policy if exists orby_runtime_config_select on public.orby_runtime_config;
-create policy orby_runtime_config_select on public.orby_runtime_config for select to authenticated using (
- (organization_id is not null and exists (select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=auth.uid())) or exists (select 1 from public.profiles p where p.id=auth.uid() and p.role='SUPER_ADMIN')
-);
+-- Runtime configuration: members may read their organization; only OWNER/ADMIN may change it.
 drop policy if exists orby_runtime_config_manage on public.orby_runtime_config;
-create policy orby_runtime_config_manage on public.orby_runtime_config for all to authenticated using (
- exists (select 1 from public.profiles p where p.id=auth.uid() and p.role='SUPER_ADMIN') or (organization_id is not null and exists (select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=auth.uid() and m.role in ('OWNER','ADMIN')))
+drop policy if exists orby_runtime_config_select on public.orby_runtime_config;
+drop policy if exists orby_runtime_config_insert on public.orby_runtime_config;
+drop policy if exists orby_runtime_config_update on public.orby_runtime_config;
+drop policy if exists orby_runtime_config_delete on public.orby_runtime_config;
+create policy orby_runtime_config_select on public.orby_runtime_config for select to authenticated using (
+ (organization_id is not null and exists (
+  select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=(select auth.uid())
+ )) or exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role='SUPER_ADMIN')
+);
+create policy orby_runtime_config_insert on public.orby_runtime_config for insert to authenticated with check (
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role='SUPER_ADMIN') or
+ (organization_id is not null and exists (
+  select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=(select auth.uid()) and m.role in ('OWNER','ADMIN')
+ ))
+);
+create policy orby_runtime_config_update on public.orby_runtime_config for update to authenticated using (
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role='SUPER_ADMIN') or
+ (organization_id is not null and exists (
+  select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=(select auth.uid()) and m.role in ('OWNER','ADMIN')
+ ))
 ) with check (
- exists (select 1 from public.profiles p where p.id=auth.uid() and p.role='SUPER_ADMIN') or (organization_id is not null and exists (select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=auth.uid() and m.role in ('OWNER','ADMIN')))
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role='SUPER_ADMIN') or
+ (organization_id is not null and exists (
+  select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=(select auth.uid()) and m.role in ('OWNER','ADMIN')
+ ))
+);
+create policy orby_runtime_config_delete on public.orby_runtime_config for delete to authenticated using (
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role='SUPER_ADMIN') or
+ (organization_id is not null and exists (
+  select 1 from public.organization_members m where m.organization_id=orby_runtime_config.organization_id and m.user_id=(select auth.uid()) and m.role in ('OWNER','ADMIN')
+ ))
 );
 
+-- Sessions and messages are private to the authenticated user, even inside the same organization.
 drop policy if exists orby_sessions_owner on public.orby_sessions;
 create policy orby_sessions_owner on public.orby_sessions for all to authenticated using (
- user_id=auth.uid() and exists (select 1 from public.organization_members m where m.organization_id=orby_sessions.organization_id and m.user_id=auth.uid())
+ user_id=(select auth.uid()) and exists (
+  select 1 from public.organization_members m where m.organization_id=orby_sessions.organization_id and m.user_id=(select auth.uid())
+ )
 ) with check (
- user_id=auth.uid() and exists (select 1 from public.organization_members m where m.organization_id=orby_sessions.organization_id and m.user_id=auth.uid())
+ user_id=(select auth.uid()) and exists (
+  select 1 from public.organization_members m where m.organization_id=orby_sessions.organization_id and m.user_id=(select auth.uid())
+ )
 );
 
 drop policy if exists orby_session_messages_owner on public.orby_session_messages;
 create policy orby_session_messages_owner on public.orby_session_messages for all to authenticated using (
- exists (select 1 from public.orby_sessions s where s.id=orby_session_messages.session_id and s.user_id=auth.uid())
+ exists (select 1 from public.orby_sessions s where s.id=orby_session_messages.session_id and s.user_id=(select auth.uid()))
 ) with check (
- exists (select 1 from public.orby_sessions s where s.id=orby_session_messages.session_id and s.user_id=auth.uid())
+ exists (select 1 from public.orby_sessions s where s.id=orby_session_messages.session_id and s.user_id=(select auth.uid()))
 );
 
+-- Enabled routing metadata is readable by signed-in users; management remains platform-admin only.
 drop policy if exists orby_model_registry_admin on public.orby_model_registry;
-create policy orby_model_registry_admin on public.orby_model_registry for all to authenticated using (
- exists (select 1 from public.profiles p where p.id=auth.uid() and p.role in ('SUPER_ADMIN','ADMIN'))
+drop policy if exists orby_model_registry_select on public.orby_model_registry;
+drop policy if exists orby_model_registry_insert on public.orby_model_registry;
+drop policy if exists orby_model_registry_update on public.orby_model_registry;
+drop policy if exists orby_model_registry_delete on public.orby_model_registry;
+create policy orby_model_registry_select on public.orby_model_registry for select to authenticated using (
+ enabled or exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role in ('SUPER_ADMIN','ADMIN'))
+);
+create policy orby_model_registry_insert on public.orby_model_registry for insert to authenticated with check (
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role in ('SUPER_ADMIN','ADMIN'))
+);
+create policy orby_model_registry_update on public.orby_model_registry for update to authenticated using (
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role in ('SUPER_ADMIN','ADMIN'))
 ) with check (
- exists (select 1 from public.profiles p where p.id=auth.uid() and p.role in ('SUPER_ADMIN','ADMIN'))
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role in ('SUPER_ADMIN','ADMIN'))
+);
+create policy orby_model_registry_delete on public.orby_model_registry for delete to authenticated using (
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role in ('SUPER_ADMIN','ADMIN'))
 );
 
+-- Provider health is operational metadata controlled by platform administrators.
 drop policy if exists orby_provider_health_admin on public.orby_provider_health;
 create policy orby_provider_health_admin on public.orby_provider_health for all to authenticated using (
- exists (select 1 from public.profiles p where p.id=auth.uid() and p.role in ('SUPER_ADMIN','ADMIN'))
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role in ('SUPER_ADMIN','ADMIN'))
 ) with check (
- exists (select 1 from public.profiles p where p.id=auth.uid() and p.role in ('SUPER_ADMIN','ADMIN'))
+ exists (select 1 from public.profiles p where p.id=(select auth.uid()) and p.role in ('SUPER_ADMIN','ADMIN'))
 );
 
 revoke all on public.orby_runtime_config,public.orby_sessions,public.orby_session_messages,public.orby_model_registry,public.orby_provider_health from anon;
