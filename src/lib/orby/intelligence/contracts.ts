@@ -113,7 +113,7 @@ export interface OrbyDocumentTextExtractor { supports(mimeType:string):boolean;e
 export interface OrbyOcrService { extract(input:{bytes:Uint8Array;mimeType:string;fileName?:string;signal?:AbortSignal}):Promise<{text:string;language?:string;metadata?:OrbyJsonObject}>; }
 export interface OrbyNotificationDeliveryAdapter { readonly channel:OrbyDeliveryChannel;deliver(notification:OrbyProactiveNotification,signal?:AbortSignal):Promise<{providerMessageId?:string;metadata?:OrbyJsonObject}>; }
 export interface OrbyProactiveDetector { readonly key:OrbyDetectorKey;detect(input:OrbyDetectorInput):Promise<readonly OrbyDetectorSignal[]>; }
-export interface OrbyIntelligenceContextSource extends OrbyContextSource {}
+export type OrbyIntelligenceContextSource=OrbyContextSource;
 
 export interface OrbyIntelligenceRepository {
  resolveMemoryPolicy(organizationId:string):Promise<OrbyMemoryPolicy>;
