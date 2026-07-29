@@ -30,6 +30,14 @@ export type OrbyUsage={
  currency?:string;
 };
 
+export type OrbyReasoningEffort='max'|'xhigh'|'high'|'medium'|'low'|'minimal'|'none';
+export type OrbyReasoningOptions={
+ enabled?:boolean;
+ effort?:OrbyReasoningEffort;
+ maxTokens?:number;
+ exclude?:boolean;
+};
+
 export type OrbyGenerationOptions={
  temperature?:number;
  maxOutputTokens?:number;
@@ -37,6 +45,7 @@ export type OrbyGenerationOptions={
  stop?:readonly string[];
  responseFormat?:'text'|'json';
  timeoutMs?:number;
+ reasoning?:OrbyReasoningOptions;
  metadata?:OrbyJsonObject;
 };
 
@@ -178,72 +187,4 @@ export type OrbyEventMap={
  'request.failed':{requestId:string;organizationId:string;userId:string;sessionId?:string;errorCode:string;durationMs:number};
  'provider.failed':{requestId:string;providerId:string;modelId:string;attempt:number;errorCode:string};
  'provider.switched':{requestId:string;fromProviderId:string;toProviderId:string;fromModelId:string;toModelId:string};
- 'session.created':{sessionId:string;organizationId:string;userId:string};
- 'session.closed':{sessionId:string;organizationId:string;userId:string};
- 'health.checked':{providerId:string;ok:boolean;latencyMs:number};
-};
-
-export type OrbyEventName=keyof OrbyEventMap;
-export type OrbyEventListener<K extends OrbyEventName>=(payload:OrbyEventMap[K])=>void|Promise<void>;
-
-export interface OrbyEventBus {
- on<K extends OrbyEventName>(event:K,listener:OrbyEventListener<K>):()=>void;
- emit<K extends OrbyEventName>(event:K,payload:OrbyEventMap[K]):Promise<void>;
-}
-
-export interface OrbyLogger {
- debug(message:string,metadata?:OrbyJsonObject):void;
- info(message:string,metadata?:OrbyJsonObject):void;
- warn(message:string,metadata?:OrbyJsonObject):void;
- error(message:string,metadata?:OrbyJsonObject):void;
-}
-
-export type OrbyRuntimeConfiguration={
- enabled:boolean;
- defaultModelId?:string;
- maxContextCharacters:number;
- sessionHistoryLimit:number;
- sessionTtlSeconds:number;
- requestTimeoutMs:number;
- maxAttempts:number;
- retryBaseDelayMs:number;
- logLevel:'debug'|'info'|'warn'|'error'|'silent';
- allowedProviderIds?:readonly string[];
- allowedModelIds?:readonly string[];
- systemPolicies:readonly string[];
-};
-
-export type OrbyConfigurationScope={organizationId?:string};
-
-export interface OrbyConfigurationStore {
- get(scope:OrbyConfigurationScope):Promise<Partial<OrbyRuntimeConfiguration>|null>;
- set(scope:OrbyConfigurationScope,value:Partial<OrbyRuntimeConfiguration>):Promise<void>;
-}
-
-export type OrbyKernelRequest={
- requestId?:string;
- identity:OrbyIdentity;
- sessionId?:string;
- message:string;
- preferredModelId?:string;
- requiredCapabilities?:readonly OrbyProviderCapability[];
- metadata?:OrbyJsonObject;
- signal?:AbortSignal;
-};
-
-export type OrbyKernelStreamEvent=
- |{type:'start';requestId:string;sessionId:string;providerId:string;modelId:string}
- |{type:'delta';text:string}
- |{type:'usage';usage:OrbyUsage}
- |{type:'end';response:OrbyKernelResponse};
-
-export type OrbyKernelResponse={
- requestId:string;
- sessionId:string;
- text:string;
- providerId:string;
- modelId:string;
- usage?:OrbyUsage;
- attempts:readonly OrbyRoutingAttempt[];
- durationMs:number;
 };
