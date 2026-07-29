@@ -23,3 +23,13 @@ test('integration database accepts only an explicit server fallback',async()=>{
  assert.match(platform,/deploymentSupabaseServiceRoleKey/);
  assert.match(platform,/integrationDatabaseConfig\(deploymentSupabaseServiceRoleKey\)/);
 });
+
+test('deployment key broker uses a digest and never stores the raw build token',async()=>{
+ const broker=await read('supabase/functions/orby-stage-3-deployment-key/index.ts');
+ assert.match(broker,/EXPECTED_BUILD_TOKEN_SHA256='[0-9a-f]{64}'/);
+ assert.match(broker,/crypto\.subtle\.digest\('SHA-256'/);
+ assert.match(broker,/x-madar-purpose/);
+ assert.match(broker,/SUPABASE_SERVICE_ROLE_KEY/);
+ assert.match(broker,/SUPABASE_SECRET_KEYS/);
+ assert.doesNotMatch(broker,/olwKmVWgaLFiKwG7uCysSibmbICEyVyVakU5Ds4W2E6_V_Xtd13BQT4I0-aKCtSx/);
+});
