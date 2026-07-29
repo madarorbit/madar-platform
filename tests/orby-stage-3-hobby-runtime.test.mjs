@@ -23,8 +23,12 @@ test('Stage 3 worker drains more than the legacy five-job batch safely',()=>{
  assert.doesNotMatch(worker,/runCycle\(workerId,5\)/);
 });
 
-test('Stage 3 worker remains protected by an explicit secret',()=>{
+test('Stage 3 worker supports configured secrets and a deployment-only token digest',()=>{
  assert.match(worker,/orbyAgentWorkerConfig\(\)\.secret/);
  assert.match(worker,/authorization\.startsWith\('Bearer '\)/);
+ assert.match(worker,/DEPLOYMENT_CRON_TOKEN_SHA256='[0-9a-f]{64}'/);
+ assert.match(worker,/createHash\('sha256'\)/);
+ assert.match(worker,/searchParams\.get\('cron_token'\)/);
  assert.match(worker,/status:401/);
+ assert.doesNotMatch(worker,/dsSWVIwS-ibToX2bOqeGuHJxx8Rxi2JDgYTIHtR663p3XVIZVCkk9TTl8bMBMhru/);
 });
