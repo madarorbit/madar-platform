@@ -7,9 +7,11 @@ test('OpenRouter is isolated behind server-only environment configuration',async
  const [provider,index,env]=await Promise.all([read('src/lib/orby/providers/openrouter.ts'),read('src/lib/orby/providers/index.ts'),read('src/lib/env.ts')]);
  assert.match(provider,/https:\/\/openrouter\.ai\/api\/v1/);
  assert.match(provider,/X-OpenRouter-Title/);
+ assert.match(provider,/X-OpenRouter-Metadata/);
  assert.match(provider,/allow_fallbacks:true/);
  assert.match(provider,/require_parameters:true/);
  assert.match(provider,/data_collection:'deny'/);
+ assert.match(provider,/reasoning:\{effort:'none',exclude:true\}/);
  assert.match(index,/ORBY_OPENROUTER_API_KEY/);
  assert.doesNotMatch(`${provider}\n${index}\n${env}`,/sk-or-v1-[A-Za-z0-9_-]{20,}/);
 });
@@ -49,6 +51,8 @@ test('admin activation probes both services before opening runtime gates',async(
  assert.match(actions,/provider\.health\(\)/);
  assert.match(actions,/deepseek\/deepseek-v4-flash/);
  assert.match(actions,/ORBY_RUNTIME_OK/);
+ assert.match(actions,/maxOutputTokens:64/);
+ assert.match(actions,/reasoning:\{effort:'none',exclude:true\}/);
  assert.match(actions,/MistralOcrService/);
  assert.match(actions,/ocrHealth\.ok/);
  assert.match(actions,/orby_os_activate_external_runtime/);
@@ -71,4 +75,14 @@ test('provider activation failures are safe, explicit and never render a generic
  assert.match(page,/رصيد OpenRouter غير كافٍ/);
  assert.match(page,/خطة Mistral لا تسمح بطلب OCR/);
  assert.match(page,/role="status"/);
+});
+
+test('OpenAI-compatible adapter handles reasoning controls and embedded OpenRouter errors',async()=>{
+ const [contracts,adapter]=await Promise.all([read('src/lib/orby/core/contracts.ts'),read('src/lib/orby/providers/openai.ts')]);
+ assert.match(contracts,/OrbyReasoningEffort/);
+ assert.match(contracts,/reasoning\?:OrbyReasoningOptions/);
+ assert.match(adapter,/payload\.reasoning=reasoning/);
+ assert.match(adapter,/embeddedProviderError/);
+ assert.match(adapter,/reasoningOnly/);
+ assert.match(adapter,/responseText/);
 });
