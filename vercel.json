@@ -1,4 +1,5 @@
 {
+  "buildCommand": "node -e \"console.log('MADAR_OIDC_PRESENT=' + Boolean(process.env.VERCEL_OIDC_TOKEN))\" && npm run build",
   "crons": [
     { "path": "/api/orby/intelligence/worker", "schedule": "15 0 * * *" }
   ]
