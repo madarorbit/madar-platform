@@ -1,5 +1,5 @@
 {
   "crons": [
-    { "path": "/api/orby/intelligence/worker", "schedule": "0 * * * *" }
+    { "path": "/api/orby/intelligence/worker", "schedule": "15 0 * * *" }
   ]
 }
