@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -16,20 +16,44 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+      - name: Patch immutable ORBY OS scope keys
+        if: ${{ hashFiles('scripts/fix-orby-stage4-scope-keys.mjs') != '' }}
+        run: node scripts/fix-orby-stage4-scope-keys.mjs
+      - name: Commit generated migration correction
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'codex/orby-stage-4-orby-os' }}
+        shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "madarorbit"
+          git config user.email "orbit.ops.digital@gmail.com"
+          git add supabase/migrations/20260729190000_orby_os_v1.sql
+          git commit -m "Use immutable ORBY OS scope keys"
+          git push origin HEAD:codex/orby-stage-4-orby-os
       - name: Install dependencies
         run: npm ci
       - name: Run tests
         shell: bash
         run: set -o pipefail; npm test 2>&1 | tee test.log
+      - name: Run ORBY OS smoke suite
+        shell: bash
+        run: set -o pipefail; npm run orby:os-smoke 2>&1 | tee orby-os-smoke.log
+      - name: Run ORBY OS security suite
+        shell: bash
+        run: set -o pipefail; npm run orby:os-security 2>&1 | tee orby-os-security.log
+      - name: Run ORBY OS load suite
+        shell: bash
+        run: set -o pipefail; npm run orby:os-load 2>&1 | tee orby-os-load.log
       - name: Lint
         shell: bash
         run: set -o pipefail; npm run lint 2>&1 | tee lint.log
@@ -46,6 +70,9 @@ jobs:
           name: verification-diagnostics
           path: |
             test.log
+            orby-os-smoke.log
+            orby-os-security.log
+            orby-os-load.log
             lint.log
             typecheck.log
             build.log

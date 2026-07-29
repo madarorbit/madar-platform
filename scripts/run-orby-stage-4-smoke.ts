@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {builtinPluginManifests,builtinWorkflowTemplates,defaultGovernanceRules,OrbyBudgetEngine,OrbyEvaluationEngine,OrbyFeatureFlagEngine,OrbyGovernanceEngine,OrbyMultiModelRouter,OrbyObservability,OrbyPluginRegistry,OrbyReleaseManager,OrbyWorkflowCatalog,orbyOsBenchmarkSuite,validateWorkflow} from '../src/lib/orby/os';
+
+async function main(){
+ const templates=builtinWorkflowTemplates();assert.equal(templates.length,4);for(const template of templates)assert.equal(validateWorkflow(template.definition).valid,true);
+ const catalog=new OrbyWorkflowCatalog();for(const template of templates)catalog.registerTemplate(template);assert.equal(catalog.listTemplates().length,4);assert.equal(catalog.get('business.sales-drop-analysis')?.version,1);
+ const plugins=new OrbyPluginRegistry();for(const manifest of builtinPluginManifests())plugins.register(manifest);assert.equal(plugins.manifestsList().length,4);plugins.install('orby.business','1.0.0',{organizationId:'org-1'},{});assert.equal(plugins.installationsList()[0]?.status,'active');
+ const context={identity:{organizationId:'org-1',userId:'user-1'},environment:'production' as const,action:'business.read',executionType:'read' as const,riskLevel:'low' as const,permissions:['data.read']};const decision=new OrbyGovernanceEngine(defaultGovernanceRules()).decide(context);assert.equal(decision.effect,'allow');
+ const external=new OrbyGovernanceEngine().decide({...context,action:'channel.external.send',channelKey:'whatsapp'});assert.equal(external.effect,'deny');
+ const flags=new OrbyFeatureFlagEngine([{key:'orby_os_enabled',enabled:true,scope:{},rolloutPercentage:100,configuration:{}}]);assert.equal(flags.resolve('orby_os_enabled',context).enabled,true);
+ const router=new OrbyMultiModelRouter();const selected=router.select([{id:'fast',providerId:'p1',providerModel:'fast',displayName:'Fast',enabled:true,priority:1,capabilities:{text:true},inputCostPerMillion:1,outputCostPerMillion:2,tags:['arabic']},{id:'down',providerId:'p2',providerModel:'down',displayName:'Down',enabled:true,priority:0,capabilities:{text:true}}],{purpose:'chat',requiredCapabilities:['text'],language:'ar'},[],[{providerId:'p2',state:'open',failureCount:5,successCount:0}]);assert.equal(selected.model.id,'fast');
+ const observability=new OrbyObservability(),trace=observability.startTrace({requestId:'r1',identity:{organizationId:'org-1',userId:'user-1'},operation:'smoke',metadata:{}}),span=observability.startSpan(trace.id,{name:'workflow',kind:'workflow'});observability.finishSpan(span.id,'succeeded');observability.finishTrace(trace.id,'succeeded');assert.equal(observability.snapshot().traces[0]?.status,'succeeded');
+ const budget=new OrbyBudgetEngine().evaluate({traceId:trace.id,identity:{organizationId:'org-1',userId:'user-1'},taskType:'chat',amount:11,currency:'USD',occurredAt:new Date().toISOString(),metadata:{}},[{scope:{organizationId:'org-1'},period:'month',limit:10,currency:'USD',warningPercentage:80,hardStop:true,enabled:true}],0);assert.equal(budget.allowed,false);
+ const releases=new OrbyReleaseManager(),release=releases.create({component:'core',componentKey:'orby-os',version:'1.1.0',status:'draft',rolloutPercentage:0,previousVersion:'1.0.0',metadata:{}});releases.activate(release.id,10);assert.equal(release.status,'canary');assert.equal(releases.rollback(release.id).version,'1.0.0');
+ const evaluation=await new OrbyEvaluationEngine().run(orbyOsBenchmarkSuite().slice(0,2),async test=>({score:1,dimensionScores:Object.fromEntries(test.dimensions.map(item=>[item,1]))}));assert.equal(evaluation.passed,true);
+ console.log('ORBY OS v1 smoke: 12/12 passed');
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

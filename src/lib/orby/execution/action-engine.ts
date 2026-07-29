@@ -6,6 +6,7 @@ import {OrbyApprovalEngine,OrbyExecutionLimitsManager,OrbyPermissionEngine,OrbyP
 import {OrbyToolDispatcher} from './tools';
 import {OrbySandboxRunner} from './sandbox';
 import {now,sleep,template} from './workflow-helpers';
+import {assertSafeOrbyToolPayload} from '../os/payload-security';
 
 export class OrbyActionEngine {
  constructor(
@@ -22,7 +23,7 @@ export class OrbyActionEngine {
  private async policy(identity:OrbyIdentity,manifest:OrbyToolManifest,configuration:OrbyExecutionConfiguration,mode:OrbyExecutionMode){const membership=await this.permissions.authorize(identity,manifest),decision=this.policies.evaluate({manifest,configuration,mode,membership});if(decision.effect==='deny')throw new OrbyExecutionError(decision.reason,'POLICY_DENIED',false,{toolName:manifest.name,policyId:decision.policyId});return decision;}
  async execute(input:{run:OrbyWorkflowRun;stepKey:string;node:Extract<OrbyWorkflowNode,{type:'action'}>;configuration:OrbyExecutionConfiguration;environment:OrbyJsonObject;signal?:AbortSignal}){
   const identity:OrbyIdentity={organizationId:input.run.organizationId,userId:input.run.userId,workspaceId:input.run.workspaceId};let action=await this.repository.actionByStep(input.run.id,input.stepKey);if(action?.status==='completed'||action?.status==='compensated')return action.result?.data??null;if(action?.status==='cancelled')throw new OrbyExecutionError('الإجراء ملغى.','WORKFLOW_CANCELLED');
-  const tool=this.dispatcher.registry.get(input.node.toolName),manifest=tool.metadata(),payload=template(input.node.input,input.environment) as OrbyJsonObject,retry=this.retryPolicy(input.configuration,input.node),mode=input.node.mode||'production';
+  const tool=this.dispatcher.registry.get(input.node.toolName),manifest=tool.metadata(),payload=assertSafeOrbyToolPayload(template(input.node.input,input.environment) as OrbyJsonObject),retry=this.retryPolicy(input.configuration,input.node),mode=input.node.mode||'production';
   if(!action){const timestamp=now();action=await this.repository.createAction({id:randomUUID(),runId:input.run.id,organizationId:input.run.organizationId,userId:input.run.userId,stepKey:input.stepKey,toolName:manifest.name,operation:manifest.operation,status:'pending',input:payload,attempt:0,maxAttempts:retry.maxAttempts,riskLevel:manifest.riskLevel,executionMode:mode,compensation:input.node.compensation,createdAt:timestamp,updatedAt:timestamp});}
   const decision=await this.policy(identity,manifest,input.configuration,mode);await this.repository.appendAudit({runId:input.run.id,actionId:action.id,organizationId:input.run.organizationId,actorId:input.run.userId,eventType:'policy.evaluated',reason:decision.reason,outcome:decision.effect,metadata:{policyId:decision.policyId,toolName:manifest.name}});
   if(decision.requireSandbox&&mode!=='sandbox'&&!action.result?.metrics?.sandboxPassed){const preview=await this.sandbox.execute({action,identity,reason:input.run.reason,timeoutMs:this.limits.toolTimeout(input.configuration,manifest),signal:input.signal});action=await this.repository.updateAction(action.id,{result:{...preview,metrics:{...(preview.metrics||{}),sandboxPassed:true}},updatedAt:now()});}
