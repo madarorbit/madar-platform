@@ -1,0 +1,4 @@
+import type {OrbyJsonObject} from '../core/contracts';
+const forbidden=/(api[_-]?key|password|secret|access[_-]?token|refresh[_-]?token|credential|authorization|private[_-]?key)/i;
+function find(value:unknown,path:string):string|null{if(Array.isArray(value)){for(let index=0;index<value.length;index+=1){const hit=find(value[index],`${path}[${index}]`);if(hit)return hit;}return null;}if(value&&typeof value==='object'){for(const [key,item] of Object.entries(value as Record<string,unknown>)){const next=path?`${path}.${key}`:key;if(forbidden.test(key))return next;const hit=find(item,next);if(hit)return hit;}}return null;}
+export function assertSafeOrbyToolPayload(payload:OrbyJsonObject){const hit=find(payload,'');if(hit)throw new Error(`ORBY_SECRET_BEARING_PAYLOAD_DENIED:${hit}`);return payload;}
