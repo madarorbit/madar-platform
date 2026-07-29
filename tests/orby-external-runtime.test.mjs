@@ -55,3 +55,20 @@ test('admin activation probes both services before opening runtime gates',async(
  assert.match(page,/فحص المفاتيح وتفعيل التشغيل/);
  assert.match(page,/المفاتيح تبقى داخل متغيرات Vercel المشفرة/);
 });
+
+test('provider activation failures are safe, explicit and never render a generic error page',async()=>{
+ const [common,ocr,actions,page]=await Promise.all([read('src/lib/orby/providers/common.ts'),read('src/lib/orby/intelligence/mistral-ocr.ts'),read('app/admin/orby-os/actions.ts'),read('app/admin/orby-os/models/page.tsx')]);
+ assert.match(common,/status===402/);
+ assert.match(common,/رصيد مزود أوربي غير كافٍ/);
+ assert.match(common,/await response\.text\(\)/);
+ assert.match(common,/body===null/);
+ assert.match(ocr,/MISTRAL_PAYMENT_REQUIRED/);
+ assert.match(ocr,/MISTRAL_EMPTY_RESPONSE/);
+ assert.match(ocr,/safePayload/);
+ assert.match(actions,/externalRuntimeFailureCode/);
+ assert.match(actions,/activation=error&code=/);
+ assert.match(actions,/openrouter-credit-required/);
+ assert.match(page,/رصيد OpenRouter غير كافٍ/);
+ assert.match(page,/خطة Mistral لا تسمح بطلب OCR/);
+ assert.match(page,/role="status"/);
+});

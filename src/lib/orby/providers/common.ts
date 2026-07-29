@@ -12,21 +12,42 @@ export function timedProviderSignal(timeoutMs:number|undefined,external?:AbortSi
  return {signal:controller.signal,dispose(){clearTimeout(timeout);external?.removeEventListener('abort',abort);}};
 }
 
+function providerErrorText(body:unknown){
+ if(typeof body==='string'&&body.trim())return body.slice(0,300);
+ if(typeof body==='object'&&body){
+  if('error' in body){
+   const error=(body as {error?:unknown}).error;
+   if(typeof error==='string')return error.slice(0,300);
+   if(typeof error==='object'&&error&&'message' in error&&typeof (error as {message?:unknown}).message==='string')return String((error as {message:string}).message).slice(0,300);
+   return JSON.stringify(error).slice(0,300);
+  }
+  if('message' in body&&typeof (body as {message?:unknown}).message==='string')return String((body as {message:string}).message).slice(0,300);
+ }
+ return '';
+}
+
 export function providerHttpError(status:number,body:unknown){
  const metadata={status} as OrbyJsonObject;
+ if(status===401)return new OrbyError('مفتاح مزود أوربي غير صالح أو أُلغي.','PROVIDER_BAD_RESPONSE',false,metadata);
+ if(status===402)return new OrbyError('رصيد مزود أوربي غير كافٍ لتشغيل النموذج.','PROVIDER_BAD_RESPONSE',false,metadata);
+ if(status===403)return new OrbyError('المفتاح لا يملك صلاحية تشغيل النموذج المطلوب.','PROVIDER_BAD_RESPONSE',false,metadata);
  if(status===429)return new OrbyError('بلغ مزود أوربي حد الطلبات المؤقت.','PROVIDER_RATE_LIMITED',true,metadata);
  if(status===408||status===504)return new OrbyError('انتهت مهلة استجابة مزود أوربي.','PROVIDER_TIMEOUT',true,metadata);
  if(status>=500)return new OrbyError('مزود أوربي غير متاح مؤقتًا.','PROVIDER_UNAVAILABLE',true,metadata);
- const message=typeof body==='object'&&body&&'error' in body?JSON.stringify((body as {error:unknown}).error).slice(0,300):'استجابة المزود غير صالحة.';
- return new OrbyError(message,'PROVIDER_BAD_RESPONSE',false,metadata);
+ return new OrbyError(providerErrorText(body)||'استجابة المزود غير صالحة.','PROVIDER_BAD_RESPONSE',false,metadata);
 }
 
 export async function providerJsonRequest(url:string,init:RequestInit,timeoutMs?:number,external?:AbortSignal){
  const timed=timedProviderSignal(timeoutMs,external),started=Date.now();
  try{
   const response=await fetch(url,{...init,signal:timed.signal,cache:'no-store'});
-  const body=await response.json().catch(()=>null) as unknown;
+  const raw=await response.text();
+  let body:unknown=null;
+  if(raw.trim()){
+   try{body=JSON.parse(raw);}catch{body=raw.slice(0,1000);}
+  }
   if(!response.ok)throw providerHttpError(response.status,body);
+  if(body===null)throw new OrbyError('مزود أوربي أعاد استجابة فارغة.','PROVIDER_BAD_RESPONSE',true,{status:response.status});
   return {response,body,latencyMs:Date.now()-started};
  }catch(error){if(error instanceof DOMException&&error.name==='AbortError')throw new OrbyError('انتهت مهلة اتصال مزود أوربي.','PROVIDER_TIMEOUT',true,{}, {cause:error});throw error;}finally{timed.dispose();}
 }
