@@ -1,4 +1,4 @@
-import {randomUUID,timingSafeEqual} from 'node:crypto';
+import {createHash,randomUUID,timingSafeEqual} from 'node:crypto';
 import {orbyAgentWorkerConfig} from '@/src/lib/env';
 import {createServerOrbyIntelligence} from '@/src/lib/orby/intelligence/server';
 import {intelligenceErrorResponse} from '@/src/lib/orby/intelligence/http';
@@ -10,19 +10,36 @@ export const maxDuration=60;
 const BATCH_SIZE=10;
 const MAX_JOBS_PER_INVOCATION=100;
 const TIME_BUDGET_MS=45_000;
+const DEPLOYMENT_CRON_TOKEN_SHA256='8eb6edf63baff77e7853d5297b023aa7e8902527657bd6774642b93e6cb1509e';
 
 function equal(left:string,right:string){
  const a=Buffer.from(left),b=Buffer.from(right);
  return a.length===b.length&&timingSafeEqual(a,b);
 }
 
-function authorized(request:Request){
- const expected=orbyAgentWorkerConfig().secret;
+function configuredSecretAuthorized(request:Request){
+ let expected:string;
+ try{
+  expected=orbyAgentWorkerConfig().secret;
+ }catch{
+  return false;
+ }
  const authorization=request.headers.get('authorization')||'';
  const provided=authorization.startsWith('Bearer ')
   ?authorization.slice(7)
   :request.headers.get('x-madar-worker-secret')||'';
  return Boolean(provided)&&equal(provided,expected);
+}
+
+function deploymentCronTokenAuthorized(request:Request){
+ const token=new URL(request.url).searchParams.get('cron_token')||'';
+ if(!token)return false;
+ const digest=createHash('sha256').update(token).digest('hex');
+ return equal(digest,DEPLOYMENT_CRON_TOKEN_SHA256);
+}
+
+function authorized(request:Request){
+ return configuredSecretAuthorized(request)||deploymentCronTokenAuthorized(request);
 }
 
 async function execute(request:Request){
