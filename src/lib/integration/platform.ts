@@ -80,7 +80,7 @@ export class CheckpointStore {
 export class RawBatchStore {
  constructor(private readonly database:IntegrationDatabase){}
  async persist(input:{organizationId:string;connectionId:string;syncRunId:string;streamKey:string;records:readonly JsonObject[];cursor:JsonValue|null;watermark:string|null;idempotencyKey:string;metadata?:JsonObject}){
-  const value={organization_id:input.organizationId,connection_id:input.connectionId,sync_run_id:input.syncRunId,stream_key:input.streamKey,records:input.records as JsonValue,record_count:input.records.length,cursor:input.cursor,watermark:input.watermark,version:input.version,idempotency_key:input.idempotencyKey,metadata:input.metadata||{}} satisfies JsonObject;
+  const value={organization_id:input.organizationId,connection_id:input.connectionId,sync_run_id:input.syncRunId,stream_key:input.streamKey,records:input.records as JsonValue,record_count:input.records.length,cursor:input.cursor,watermark:input.watermark,idempotency_key:input.idempotencyKey,metadata:input.metadata||{}} satisfies JsonObject;
   return this.database.upsert<{id:string}>('integration_raw_batches',value,'connection_id,idempotency_key','resolution=ignore-duplicates,return=representation');
  }
 }
