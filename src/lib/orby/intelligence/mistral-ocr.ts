@@ -37,6 +37,31 @@ function pageText(page:MistralOcrPage){
  return[page.header||'',page.markdown||'',tables,page.footer||''].map(value=>value.trim()).filter(Boolean).join('\n\n');
 }
 
+async function safePayload(response:Response){
+ const raw=await response.text();
+ if(!raw.trim())return null;
+ try{return JSON.parse(raw) as unknown;}catch{return{raw:raw.slice(0,1000)};}
+}
+
+function responseMessage(payload:unknown){
+ if(typeof payload==='object'&&payload){
+  for(const key of ['message','detail','error']){
+   const value=(payload as Record<string,unknown>)[key];
+   if(typeof value==='string'&&value.trim())return value.trim().slice(0,300);
+   if(typeof value==='object'&&value&&'message' in value&&typeof (value as {message?:unknown}).message==='string')return String((value as {message:string}).message).slice(0,300);
+  }
+ }
+ return 'unknown';
+}
+
+function mistralFailure(status:number,payload:unknown){
+ if(status===401)return'MISTRAL_API_KEY_INVALID';
+ if(status===402)return'MISTRAL_PAYMENT_REQUIRED';
+ if(status===403)return'MISTRAL_ACCESS_FORBIDDEN';
+ if(status===429)return'MISTRAL_RATE_LIMITED';
+ return`MISTRAL_HTTP_${status}:${responseMessage(payload)}`;
+}
+
 export class MistralOcrService implements OrbyOcrService {
  readonly model:string;
  private readonly baseUrl:string;
@@ -54,9 +79,10 @@ export class MistralOcrService implements OrbyOcrService {
   const started=Date.now(),timed=timedSignal(signal,Math.min(this.timeoutMs,15_000));
   try{
    const response=await fetch(`${this.baseUrl}/models`,{headers:this.headers(),signal:timed.signal,cache:'no-store'});
-   if(!response.ok)return{ok:false,latencyMs:Date.now()-started,message:`MISTRAL_HTTP_${response.status}`,modelAvailable:false};
-   const payload=await response.json() as {data?:Array<{id?:string}>};
-   const ids=(payload.data||[]).flatMap(item=>item.id?[item.id]:[]);
+   const payload=await safePayload(response);
+   if(!response.ok)return{ok:false,latencyMs:Date.now()-started,message:mistralFailure(response.status,payload),modelAvailable:false};
+   if(!payload)return{ok:false,latencyMs:Date.now()-started,message:'MISTRAL_EMPTY_RESPONSE',modelAvailable:false};
+   const ids=(Array.isArray((payload as {data?:unknown}).data)?(payload as {data:Array<{id?:string}>}).data:[]).flatMap(item=>item.id?[item.id]:[]);
    const modelAvailable=ids.includes(this.model)||ids.includes('mistral-ocr-latest');
    return{ok:modelAvailable,latencyMs:Date.now()-started,message:modelAvailable?undefined:'MISTRAL_OCR_MODEL_UNAVAILABLE',modelAvailable};
   }catch(error){return{ok:false,latencyMs:Date.now()-started,message:error instanceof Error?error.message:'MISTRAL_OCR_HEALTH_FAILED',modelAvailable:false};}
@@ -85,11 +111,10 @@ export class MistralOcrService implements OrbyOcrService {
      confidence_scores_granularity:'page',
     }),
    });
-   if(!response.ok){
-    const payload=await response.json().catch(()=>null) as {message?:string;detail?:string}|null;
-    throw new Error(`ORBY_MISTRAL_OCR_FAILED:${response.status}:${payload?.message||payload?.detail||'unknown'}`);
-   }
-   const payload=await response.json() as MistralOcrResponse;
+   const raw=await safePayload(response);
+   if(!response.ok)throw new Error(`ORBY_MISTRAL_OCR_FAILED:${mistralFailure(response.status,raw)}`);
+   if(!raw)throw new Error('ORBY_MISTRAL_OCR_EMPTY_RESPONSE');
+   const payload=raw as MistralOcrResponse;
    const pages=payload.pages||[],text=pages.map(pageText).filter(Boolean).join('\n\n---\n\n').trim();
    if(!text)throw new Error('ORBY_OCR_EMPTY');
    return{
