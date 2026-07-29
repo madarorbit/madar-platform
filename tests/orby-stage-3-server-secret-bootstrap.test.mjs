@@ -28,11 +28,30 @@ test('integration database accepts only an explicit backend fallback',async()=>{
  assert.match(platform,/from 'node:crypto'/);
 });
 
-test('deployment key broker uses a digest and never stores the raw build token',async()=>{
+test('Vercel production bootstrap uses a short-lived OIDC token',async()=>{
+ const [bootstrap,packageJson]=await Promise.all([
+  read('scripts/bootstrap-orby-vercel-secrets.mjs'),
+  read('package.json'),
+ ]);
+ assert.match(bootstrap,/process\.env\.VERCEL_OIDC_TOKEN/);
+ assert.match(bootstrap,/environment!=='production'/);
+ assert.match(bootstrap,/x-madar-purpose':'vercel-oidc-build/);
+ assert.match(bootstrap,/deployment-secrets\.ts/);
+ assert.match(packageJson,/"prebuild": "node scripts\/bootstrap-orby-vercel-secrets\.mjs"/);
+ assert.doesNotMatch(bootstrap,/olwKmVWgaLFiKwG7uCysSibmbICEyVyVakU5Ds4W2E6_V_Xtd13BQT4I0-aKCtSx/);
+});
+
+test('deployment key broker verifies signed Vercel production identity',async()=>{
  const broker=await read('supabase/functions/orby-stage-3-deployment-key/index.ts');
  assert.match(broker,/EXPECTED_BUILD_TOKEN_SHA256='[0-9a-f]{64}'/);
  assert.match(broker,/crypto\.subtle\.digest\('SHA-256'/);
- assert.match(broker,/x-madar-purpose/);
+ assert.match(broker,/ALLOWED_ISSUERS/);
+ assert.match(broker,/EXPECTED_AUDIENCE/);
+ assert.match(broker,/EXPECTED_SUBJECT/);
+ assert.match(broker,/project_id/);
+ assert.match(broker,/environment!=='production'/);
+ assert.match(broker,/\.well-known\/jwks/);
+ assert.match(broker,/crypto\.subtle\.verify/);
  assert.match(broker,/SUPABASE_SERVICE_ROLE_KEY/);
  assert.match(broker,/SUPABASE_SECRET_KEYS/);
  assert.doesNotMatch(broker,/olwKmVWgaLFiKwG7uCysSibmbICEyVyVakU5Ds4W2E6_V_Xtd13BQT4I0-aKCtSx/);

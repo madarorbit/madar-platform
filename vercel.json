@@ -1,5 +1,1 @@
-{
-  "crons": [
-    { "path": "/api/orby/intelligence/worker", "schedule": "15 0 * * *" }
-  ]
-}
+{}

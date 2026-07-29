@@ -10,7 +10,7 @@ export const maxDuration=60;
 const BATCH_SIZE=10;
 const MAX_JOBS_PER_INVOCATION=100;
 const TIME_BUDGET_MS=45_000;
-const DEPLOYMENT_CRON_TOKEN_SHA256='8eb6edf63baff77e7853d5297b023aa7e8902527657bd6774642b93e6cb1509e';
+const DEPLOYMENT_CRON_TOKEN_SHA256='5c790f438eae6854ed32c7738af08d50efdb12b9b63437759b389e490e5009a4';
 
 function equal(left:string,right:string){
  const a=Buffer.from(left),b=Buffer.from(right);
@@ -32,7 +32,9 @@ function configuredSecretAuthorized(request:Request){
 }
 
 function deploymentCronTokenAuthorized(request:Request){
- const token=new URL(request.url).searchParams.get('cron_token')||'';
+ const token=request.headers.get('x-madar-cron-token')
+  ||new URL(request.url).searchParams.get('cron_token')
+  ||'';
  if(!token)return false;
  const digest=createHash('sha256').update(token).digest('hex');
  return equal(digest,DEPLOYMENT_CRON_TOKEN_SHA256);
