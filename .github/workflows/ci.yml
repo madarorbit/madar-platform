@@ -25,31 +25,6 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Generate ORBY Stage 4 sources
-        if: ${{ hashFiles('scripts/bootstrap-orby-stage4.mjs') != '' }}
-        run: node scripts/bootstrap-orby-stage4.mjs
-      - name: Pack generated ORBY Stage 4 sources
-        if: ${{ hashFiles('scripts/bootstrap-orby-stage4.mjs') != '' }}
-        shell: bash
-        run: |
-          tar -czf orby-stage4-generated.tar.gz \
-            package.json \
-            components/admin/EnterpriseAdminShell.tsx \
-            src/lib/orby/index.ts \
-            src/lib/orby/os \
-            supabase/migrations/20260729190000_orby_os_v1.sql \
-            app/admin/orby-os \
-            app/api/orby/os \
-            scripts/run-orby-stage-4-smoke.ts \
-            tests/orby-stage-4-orby-os.test.mjs \
-            docs/orby-stage-4-orby-os.md
-      - name: Upload generated ORBY Stage 4 sources
-        if: ${{ hashFiles('orby-stage4-generated.tar.gz') != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: orby-stage4-generated
-          path: orby-stage4-generated.tar.gz
-          retention-days: 3
       - name: Install dependencies
         run: npm ci
       - name: Run tests
