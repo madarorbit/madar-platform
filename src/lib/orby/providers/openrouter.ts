@@ -19,9 +19,11 @@ export class OpenRouterProvider extends OpenAICompatibleProvider {
    headers:{
     'HTTP-Referer':options.siteUrl||'https://www.orbitmadar.com',
     'X-OpenRouter-Title':options.appName||'MADAR | ORBIT',
+    'X-OpenRouter-Metadata':'enabled',
     ...(options.headers||{}),
    },
    requestDefaults:{
+    reasoning:{effort:'none',exclude:true},
     provider:{
      allow_fallbacks:true,
      require_parameters:true,

@@ -30,6 +30,14 @@ export type OrbyUsage={
  currency?:string;
 };
 
+export type OrbyReasoningEffort='max'|'xhigh'|'high'|'medium'|'low'|'minimal'|'none';
+export type OrbyReasoningOptions={
+ enabled?:boolean;
+ effort?:OrbyReasoningEffort;
+ maxTokens?:number;
+ exclude?:boolean;
+};
+
 export type OrbyGenerationOptions={
  temperature?:number;
  maxOutputTokens?:number;
@@ -37,6 +45,7 @@ export type OrbyGenerationOptions={
  stop?:readonly string[];
  responseFormat?:'text'|'json';
  timeoutMs?:number;
+ reasoning?:OrbyReasoningOptions;
  metadata?:OrbyJsonObject;
 };
 

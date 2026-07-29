@@ -28,6 +28,7 @@ function externalRuntimeFailureCode(error:unknown){
   if(error.code==='PROVIDER_RATE_LIMITED')return'openrouter-rate-limited';
   if(error.code==='PROVIDER_TIMEOUT')return'provider-timeout';
   if(error.code==='PROVIDER_UNAVAILABLE')return'provider-unavailable';
+  if(error.message.includes('الاستدلال'))return'provider-reasoning-exhausted';
   if(error.message.includes('استجابة فارغة'))return'provider-empty-response';
  }
  const message=error instanceof Error?error.message:String(error||'');
@@ -75,7 +76,7 @@ export async function activateOrbyExternalRuntime(){
    requestId:randomUUID(),
    model:'deepseek/deepseek-v4-flash',
    messages:[{role:'user',content:'Return exactly: ORBY_RUNTIME_OK'}],
-   options:{temperature:0,maxOutputTokens:24,responseFormat:'text',timeoutMs:30_000},
+   options:{temperature:0,maxOutputTokens:64,responseFormat:'text',timeoutMs:30_000,reasoning:{effort:'none',exclude:true}},
   });
   if(!probe.text.includes('ORBY_RUNTIME_OK'))throw new Error('ORBY_OPENROUTER_MODEL_PROBE_FAILED');
   const ocr=orbyOcrConfig();
