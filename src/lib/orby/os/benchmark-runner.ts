@@ -1,3 +1,4 @@
+import type {OrbyJsonObject} from '../core/contracts';
 import type {OrbyEvaluationCase,OrbyEvaluationResult} from './contracts';
 import {orbyOsBenchmarkSuite} from './benchmark';
 import {OrbyBudgetEngine,OrbyEvaluationEngine,OrbyMultiModelRouter,OrbyReleaseManager} from './operations';
@@ -8,7 +9,7 @@ import {SupabaseOrbyOsRepository} from './repository';
 
 const dimensions=(test:OrbyEvaluationCase,score:number)=>Object.fromEntries(test.dimensions.map(item=>[item,score])) as OrbyEvaluationResult['dimensionScores'];
 export async function runOrbyOsProductionBenchmark(repository=new SupabaseOrbyOsRepository()){
- const self=await repository.database.rpc<Record<string,unknown>>('orby_os_self_test',{}),templates=builtinWorkflowTemplates();
+ const self=await repository.database.rpc<OrbyJsonObject>('orby_os_self_test',{}),templates=builtinWorkflowTemplates();
  const governance=new OrbyGovernanceEngine(defaultGovernanceRules()),router=new OrbyMultiModelRouter(),budgetEngine=new OrbyBudgetEngine();
  const catalog=new OrbyWorkflowCatalog();for(const template of templates)catalog.registerTemplate(template);
  const plugins=new OrbyPluginRegistry();for(const manifest of builtinPluginManifests())plugins.register(manifest);
@@ -35,7 +36,7 @@ export async function runOrbyOsProductionBenchmark(repository=new SupabaseOrbyOs
     default:findings.push('Unknown benchmark case');
    }
   }catch(error){findings.push(error instanceof Error?error.message:'Benchmark failure');passed=false;}
-  const score=passed?1:0;return{score,dimensionScores:dimensions(test,score),findings,cost:0,metadata:{selfTestGeneratedAt:self.generated_at||null}};
+  const score=passed?1:0;return{score,dimensionScores:dimensions(test,score),findings,cost:0,metadata:{selfTestGeneratedAt:typeof self.generated_at==='string'?self.generated_at:null}};
  };
  const startedAt=new Date().toISOString(),evaluation=await new OrbyEvaluationEngine().run(orbyOsBenchmarkSuite(),execute),completedAt=new Date().toISOString();
  const suite=(await repository.database.select<{id:string}>('orby_evaluation_suites',new URLSearchParams({select:'id',key:'eq.orby-os-v1',limit:'1'})))[0];if(!suite)throw new Error('ORBY_EVALUATION_SUITE_NOT_FOUND');
