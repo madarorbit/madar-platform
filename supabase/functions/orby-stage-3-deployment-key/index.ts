@@ -1,5 +1,10 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 
+declare const Deno:{
+ env:{get(name:string):string|undefined};
+ serve(handler:(request:Request)=>Response|Promise<Response>):void;
+};
+
 const EXPECTED_BUILD_TOKEN_SHA256='89169d50ee0d2d6aa723d4d6a4f043def7df5e65b87a20e593bf315be38cba17';
 const encoder=new TextEncoder();
 
@@ -15,7 +20,7 @@ function equal(left:string,right:string){
  return difference===0;
 }
 
-Deno.serve(async request=>{
+Deno.serve(async (request:Request)=>{
  if(request.method!=='POST')return Response.json({ok:false,error:'METHOD_NOT_ALLOWED'},{status:405,headers:{Allow:'POST','Cache-Control':'no-store'}});
  const authorization=request.headers.get('authorization')||'';
  const token=authorization.startsWith('Bearer ')?authorization.slice(7):'';
