@@ -1,12 +1,14 @@
+import 'server-only';
 import {createCipheriv,createDecipheriv,randomBytes} from 'node:crypto';
 import {integrationDatabaseConfig,integrationSecretsConfig} from '@/src/lib/env';
+import {deploymentSupabaseServiceRoleKey} from './deployment-secrets';
 import type {ConnectorCheckpoint,EncryptedSecret,JsonObject,JsonValue,StoredIntegrationJob} from './contracts';
 import {IntegrationError} from './errors';
 
 export class IntegrationDatabase {
  private readonly url:string;
  private readonly key:string;
- constructor(config=integrationDatabaseConfig()){this.url=config.url;this.key=config.serviceRoleKey;}
+ constructor(config=integrationDatabaseConfig(deploymentSupabaseServiceRoleKey)){this.url=config.url;this.key=config.serviceRoleKey;}
  private async request<T>(path:string,init:RequestInit={}){
   const headers=new Headers(init.headers);headers.set('apikey',this.key);headers.set('Authorization',`Bearer ${this.key}`);headers.set('Content-Type','application/json');headers.set('Prefer',headers.get('Prefer')||'return=representation');
   const response=await fetch(`${this.url}${path}`,{...init,headers,cache:'no-store'});
@@ -78,7 +80,7 @@ export class CheckpointStore {
 export class RawBatchStore {
  constructor(private readonly database:IntegrationDatabase){}
  async persist(input:{organizationId:string;connectionId:string;syncRunId:string;streamKey:string;records:readonly JsonObject[];cursor:JsonValue|null;watermark:string|null;idempotencyKey:string;metadata?:JsonObject}){
-  const value={organization_id:input.organizationId,connection_id:input.connectionId,sync_run_id:input.syncRunId,stream_key:input.streamKey,records:input.records as JsonValue,record_count:input.records.length,cursor:input.cursor,watermark:input.watermark,idempotency_key:input.idempotencyKey,metadata:input.metadata||{}} satisfies JsonObject;
+  const value={organization_id:input.organizationId,connection_id:input.connectionId,sync_run_id:input.syncRunId,stream_key:input.streamKey,records:input.records as JsonValue,record_count:input.records.length,cursor:input.cursor,watermark:input.watermark,version:input.version,idempotency_key:input.idempotencyKey,metadata:input.metadata||{}} satisfies JsonObject;
   return this.database.upsert<{id:string}>('integration_raw_batches',value,'connection_id,idempotency_key','resolution=ignore-duplicates,return=representation');
  }
 }
