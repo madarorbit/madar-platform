@@ -17,7 +17,8 @@ const encoder=new TextEncoder();
 
 type JwtHeader={alg?:unknown;kid?:unknown;typ?:unknown};
 type JwtPayload={iss?:unknown;aud?:unknown;sub?:unknown;exp?:unknown;nbf?:unknown;nfb?:unknown;iat?:unknown;owner?:unknown;owner_id?:unknown;project?:unknown;project_id?:unknown;environment?:unknown};
-type JwksResponse={keys?:JsonWebKey[]};
+type Jwk=JsonWebKey&{kid?:string;alg?:string;use?:string};
+type JwksResponse={keys?:Jwk[]};
 
 async function sha256(value:string){
  const digest=await crypto.subtle.digest('SHA-256',encoder.encode(value));
