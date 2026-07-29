@@ -26,7 +26,7 @@ create table if not exists public.orby_feature_flags (
  id uuid primary key default gen_random_uuid(),
  key text not null,
  organization_id uuid references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete cascade,
+ workspace_id uuid,
  user_id uuid references auth.users(id) on delete cascade,
  environment text check(environment is null or environment in ('development','preview','production')),
  enabled boolean not null default false,
@@ -128,7 +128,7 @@ create table if not exists public.orby_plugin_installations (
  id uuid primary key default gen_random_uuid(),
  plugin_version_id uuid not null references public.orby_plugin_versions(id) on delete restrict,
  organization_id uuid references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete cascade,
+ workspace_id uuid,
  status text not null default 'draft' check(status in ('draft','testing','canary','active','paused','deprecated','archived')),
  configuration jsonb not null default '{}'::jsonb check(jsonb_typeof(configuration)='object'),
  installed_by uuid references auth.users(id) on delete set null,
@@ -177,7 +177,7 @@ create table if not exists public.orby_governance_policies (
  id uuid primary key default gen_random_uuid(),
  key text not null,
  organization_id uuid references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete cascade,
+ workspace_id uuid,
  name text not null,
  description text not null,
  priority integer not null default 100,
@@ -202,7 +202,7 @@ create table if not exists public.orby_traces (
  id uuid primary key default gen_random_uuid(),
  request_id text not null,
  organization_id uuid not null references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete set null,
+ workspace_id uuid,
  user_id uuid references auth.users(id) on delete set null,
  operation text not null,
  status text not null check(status in ('running','succeeded','failed','cancelled')),
@@ -244,7 +244,7 @@ create table if not exists public.orby_cost_events (
  id uuid primary key default gen_random_uuid(),
  trace_id uuid references public.orby_traces(id) on delete set null,
  organization_id uuid not null references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete set null,
+ workspace_id uuid,
  user_id uuid references auth.users(id) on delete set null,
  provider_id text,
  model_id text,
@@ -267,7 +267,7 @@ create index if not exists orby_cost_events_user_idx on public.orby_cost_events(
 create table if not exists public.orby_budgets (
  id uuid primary key default gen_random_uuid(),
  organization_id uuid references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete cascade,
+ workspace_id uuid,
  user_id uuid references auth.users(id) on delete cascade,
  period text not null check(period in ('day','month')),
  limit_amount numeric(18,8) not null check(limit_amount>=0),
@@ -384,7 +384,7 @@ create table if not exists public.orby_channel_bindings (
  id uuid primary key default gen_random_uuid(),
  channel_id uuid not null references public.orby_channels(id) on delete cascade,
  organization_id uuid not null references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete cascade,
+ workspace_id uuid,
  enabled boolean not null default false,
  configuration jsonb not null default '{}'::jsonb check(jsonb_typeof(configuration)='object'),
  created_by uuid references auth.users(id) on delete set null,
@@ -401,7 +401,7 @@ create index if not exists orby_channel_bindings_created_by_idx on public.orby_c
 create table if not exists public.orby_data_governance_requests (
  id uuid primary key default gen_random_uuid(),
  organization_id uuid not null references public.organizations(id) on delete cascade,
- workspace_id uuid references public.workspaces(id) on delete cascade,
+ workspace_id uuid,
  user_id uuid references auth.users(id) on delete set null,
  request_type text not null check(request_type in ('export_user','delete_user','export_workspace','delete_workspace','export_knowledge','delete_memory')),
  status text not null default 'pending' check(status in ('pending','approved','rejected','processing','completed','failed','cancelled')),
@@ -577,7 +577,7 @@ begin
  if record.id is null or record.status not in ('ready','restored') then raise exception 'Backup unavailable' using errcode='P0002'; end if;
  computed:=encode(extensions.digest(record.snapshot::text,'sha256'),'hex');
  if computed<>record.checksum then raise exception 'Backup checksum mismatch' using errcode='P0001'; end if;
- if dry_run then return jsonb_build_object('valid',true,'dry_run',true,'backup_id',record.id,'organization_id',record.organization_id,'sections',jsonb_object_keys(record.snapshot)); end if;
+ if dry_run then return jsonb_build_object('valid',true,'dry_run',true,'backup_id',record.id,'organization_id',record.organization_id,'sections',(select coalesce(jsonb_agg(key),'[]'::jsonb) from jsonb_object_keys(record.snapshot) as key)); end if;
  update public.orby_backups set status='restored',restored_at=now() where id=record.id;
  return jsonb_build_object('valid',true,'dry_run',false,'backup_id',record.id,'status','restored','message','Snapshot validated. Configuration writes require explicit section-level approval.');
 end $$;
