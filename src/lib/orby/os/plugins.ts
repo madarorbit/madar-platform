@@ -1,0 +1,26 @@
+import type {OrbyDomainPlugin,OrbyPluginInstallation,OrbyPluginManifest,OrbyOsScope} from './contracts';
+
+const ENTRYPOINTS=new Set(['@madar/orby-business','@madar/orby-store','@madar/orby-finance','@madar/orby-student']);
+function versionParts(value:string){const match=/^(\d+)\.(\d+)\.(\d+)$/.exec(value);if(!match)throw new Error('ORBY_PLUGIN_VERSION_INVALID');return match.slice(1).map(Number);}
+export function pluginCompatible(coreVersion:string,range:string){const [major]=versionParts(coreVersion);const match=/^\^(\d+)\.(\d+)\.(\d+)$/.exec(range);return Boolean(match&&Number(match[1])===major);}
+function scopeKey(scope:OrbyOsScope){return[scope.environment||'*',scope.organizationId||'*',scope.workspaceId||'*',scope.userId||'*'].join(':');}
+
+export class OrbyPluginRegistry{
+ private readonly manifests=new Map<string,Map<string,OrbyPluginManifest>>();
+ private readonly installations=new Map<string,OrbyPluginInstallation>();
+ constructor(private readonly coreVersion='1.0.0'){}
+ register(manifest:OrbyPluginManifest){if(!ENTRYPOINTS.has(manifest.entrypoint))throw new Error('ORBY_PLUGIN_ENTRYPOINT_NOT_COMPILED');if(!pluginCompatible(this.coreVersion,manifest.compatibleCore))throw new Error('ORBY_PLUGIN_CORE_INCOMPATIBLE');versionParts(manifest.version);const versions=this.manifests.get(manifest.key)||new Map<string,OrbyPluginManifest>();if(versions.has(manifest.version))throw new Error('ORBY_PLUGIN_VERSION_EXISTS');versions.set(manifest.version,Object.freeze({...manifest}));this.manifests.set(manifest.key,versions);return manifest;}
+ install(pluginKey:string,version:string,scope:OrbyOsScope,configuration={}){const manifest=this.manifests.get(pluginKey)?.get(version);if(!manifest)throw new Error('ORBY_PLUGIN_NOT_FOUND');for(const [dependency,required] of Object.entries(manifest.dependencies)){const installed=[...this.installations.values()].find(item=>item.pluginKey===dependency&&item.status==='active'&&scopeKey(item.scope)===scopeKey(scope));if(!installed||!pluginCompatible(installed.version,required))throw new Error(`ORBY_PLUGIN_DEPENDENCY_MISSING:${dependency}`);}const installation:OrbyPluginInstallation={pluginKey,version,scope,status:'active',configuration,installedAt:new Date().toISOString(),updatedAt:new Date().toISOString()};this.installations.set(`${scopeKey(scope)}:${pluginKey}`,installation);return installation;}
+ disable(pluginKey:string,scope:OrbyOsScope){const key=`${scopeKey(scope)}:${pluginKey}`,current=this.installations.get(key);if(!current)throw new Error('ORBY_PLUGIN_INSTALLATION_NOT_FOUND');const updated={...current,status:'paused' as const,updatedAt:new Date().toISOString()};this.installations.set(key,updated);return updated;}
+ rollback(pluginKey:string,targetVersion:string,scope:OrbyOsScope){const current=this.installations.get(`${scopeKey(scope)}:${pluginKey}`);if(!current)throw new Error('ORBY_PLUGIN_INSTALLATION_NOT_FOUND');return this.install(pluginKey,targetVersion,scope,current.configuration);}
+ manifestsList(){return[...this.manifests.values()].flatMap(item=>[...item.values()]);}
+ installationsList(){return[...this.installations.values()];}
+}
+
+export function builtinDomainPlugins():readonly OrbyDomainPlugin[]{return[
+ {key:'business',name:'ORBY Business',description:'المبيعات والعملاء والأداء والعمليات والفرص والمخاطر والتقارير الإدارية.',permissions:['data.read','intelligence.analyze','business.action.draft'],tools:['madar.data.search','orby.intelligence.analyze','madar.business.action.draft'],workflows:['business.sales-drop-analysis'],knowledgeNamespaces:['business','customers','operations'],policyKeys:['business-draft-approval']},
+ {key:'store',name:'ORBY Store',description:'المنتجات والطلبات والمخزون والمبيعات الإلكترونية وسلوك العملاء.',permissions:['data.read','intelligence.analyze'],tools:['madar.data.search','orby.intelligence.analyze'],workflows:['store.inventory-review'],knowledgeNamespaces:['store','products','orders','inventory'],policyKeys:['store-read-analysis']},
+ {key:'finance',name:'ORBY Finance',description:'الإيرادات والمصروفات والأرباح والتدفقات والفواتير والمدفوعات.',permissions:['data.read','intelligence.analyze','business.action.draft'],tools:['madar.data.search','orby.intelligence.analyze','madar.business.action.draft'],workflows:['finance.overdue-payments-review'],knowledgeNamespaces:['finance','payments','expenses'],policyKeys:['finance-draft-approval']},
+ {key:'student',name:'ORBY Student',description:'المهام والجداول والملاحظات والمكتبة والتنظيم والتحليل الأكاديمي.',permissions:['data.read','intelligence.analyze'],tools:['madar.data.search','orby.intelligence.analyze'],workflows:['student.weekly-plan'],knowledgeNamespaces:['student','library','academic'],policyKeys:['student-private-data']},
+ ];}
+export function builtinPluginManifests():readonly OrbyPluginManifest[]{return builtinDomainPlugins().map(domain=>({id:`orby.${domain.key}`,key:`orby.${domain.key}`,name:domain.name,description:domain.description,kind:'domain',version:'1.0.0',compatibleCore:'^1.0.0',entrypoint:`@madar/orby-${domain.key}`,permissions:domain.permissions,tools:domain.tools,events:[],workflows:domain.workflows,knowledgeSources:domain.knowledgeNamespaces,dependencies:{},requirements:['orby-os-v1'],isolation:'data',enabledByDefault:true,metadata:{domain:domain.key}}));}
