@@ -37,7 +37,7 @@ create table if not exists public.orby_feature_flags (
  updated_by uuid references auth.users(id) on delete set null,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- scope_key text generated always as (concat_ws(':',coalesce(environment,'*'),coalesce(organization_id::text,'*'),coalesce(workspace_id::text,'*'),coalesce(user_id::text,'*'))) stored,
+ scope_key text generated always as (coalesce(environment,'*')||':'||coalesce(organization_id::text,'*')||':'||coalesce(workspace_id::text,'*')||':'||coalesce(user_id::text,'*')) stored,
  unique(key,scope_key),
  check(ends_at is null or starts_at is null or ends_at>starts_at)
 );
@@ -134,7 +134,7 @@ create table if not exists public.orby_plugin_installations (
  installed_by uuid references auth.users(id) on delete set null,
  installed_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- scope_key text generated always as (concat_ws(':',coalesce(organization_id::text,'global'),coalesce(workspace_id::text,'*'))) stored,
+ scope_key text generated always as (coalesce(organization_id::text,'global')||':'||coalesce(workspace_id::text,'*')) stored,
  unique(plugin_version_id,scope_key)
 );
 create index if not exists orby_plugin_installations_org_idx on public.orby_plugin_installations(organization_id,status) where organization_id is not null;
@@ -191,7 +191,7 @@ create table if not exists public.orby_governance_policies (
  updated_by uuid references auth.users(id) on delete set null,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- scope_key text generated always as (concat_ws(':',coalesce(organization_id::text,'global'),coalesce(workspace_id::text,'*'))) stored,
+ scope_key text generated always as (coalesce(organization_id::text,'global')||':'||coalesce(workspace_id::text,'*')) stored,
  unique(key,scope_key)
 );
 create index if not exists orby_governance_policies_org_idx on public.orby_governance_policies(organization_id,enabled,priority desc) where organization_id is not null;
@@ -278,7 +278,7 @@ create table if not exists public.orby_budgets (
  updated_by uuid references auth.users(id) on delete set null,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- scope_key text generated always as (concat_ws(':',coalesce(organization_id::text,'global'),coalesce(workspace_id::text,'*'),coalesce(user_id::text,'*'))) stored,
+ scope_key text generated always as (coalesce(organization_id::text,'global')||':'||coalesce(workspace_id::text,'*')||':'||coalesce(user_id::text,'*')) stored,
  unique(scope_key,period,currency)
 );
 create index if not exists orby_budgets_org_idx on public.orby_budgets(organization_id,enabled) where organization_id is not null;
