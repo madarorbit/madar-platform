@@ -1,6 +1,6 @@
 import {OpenAICompatibleProvider,type OpenAICompatibleProviderOptions} from './openai';
 
-export type OpenRouterProviderOptions=Omit<OpenAICompatibleProviderOptions,'id'|'displayName'|'baseUrl'|'headers'> & {
+export type OpenRouterProviderOptions=Omit<OpenAICompatibleProviderOptions,'id'|'displayName'|'baseUrl'|'headers'|'requestDefaults'> & {
  id?:string;
  displayName?:string;
  baseUrl?:string;
@@ -18,8 +18,15 @@ export class OpenRouterProvider extends OpenAICompatibleProvider {
    baseUrl:options.baseUrl||'https://openrouter.ai/api/v1',
    headers:{
     'HTTP-Referer':options.siteUrl||'https://www.orbitmadar.com',
-    'X-Title':options.appName||'MADAR | ORBIT',
+    'X-OpenRouter-Title':options.appName||'MADAR | ORBIT',
     ...(options.headers||{}),
+   },
+   requestDefaults:{
+    provider:{
+     allow_fallbacks:true,
+     require_parameters:true,
+     data_collection:'deny',
+    },
    },
   });
  }
