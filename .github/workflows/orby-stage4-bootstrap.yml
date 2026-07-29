@@ -1,0 +1,33 @@
+name: Bootstrap ORBY Stage 4
+
+on:
+  push:
+    branches:
+      - codex/orby-stage-4-orby-os
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: ${{ !contains(github.event.head_commit.message, 'Generate ORBY Stage 4 sources') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/orby-stage-4-orby-os
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Generate ORBY OS sources
+        run: node scripts/bootstrap-orby-stage4.mjs
+      - name: Remove bootstrap files and commit
+        shell: bash
+        run: |
+          rm -f scripts/bootstrap-orby-stage4.mjs .github/workflows/orby-stage4-bootstrap.yml
+          git config user.name "madarorbit"
+          git config user.email "orbit.ops.digital@gmail.com"
+          git add -A
+          git commit -m "Generate ORBY Stage 4 sources"
+          git push origin HEAD:codex/orby-stage-4-orby-os
