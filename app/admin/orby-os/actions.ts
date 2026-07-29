@@ -1,9 +1,14 @@
 'use server';
 
+import {randomUUID} from 'node:crypto';
 import {revalidatePath} from 'next/cache';
 import {requireSuperAdmin} from '@/src/lib/auth';
+import {orbyOcrConfig} from '@/src/lib/env';
 import {supabaseFetch} from '@/src/lib/supabase/server';
 import type {OrbyJsonObject} from '@/src/lib/orby/core/contracts';
+import {recordSupabaseOrbyProviderHealth} from '@/src/lib/orby/adapters/supabase';
+import {providersFromEnvironment} from '@/src/lib/orby/providers';
+import {MistralOcrService} from '@/src/lib/orby/intelligence/mistral-ocr';
 import type {OrbyWorkflowNode} from '@/src/lib/orby/execution/contracts';
 import {validateWorkflow} from '@/src/lib/orby/os/workflow';
 import {runOrbyOsProductionBenchmark} from '@/src/lib/orby/os/benchmark-runner';
@@ -30,3 +35,34 @@ export async function publishPromptVersion(form:FormData){await requireSuperAdmi
 export async function runOrbyOsBenchmark(){await requireSuperAdmin();await runOrbyOsProductionBenchmark();refresh();}
 export async function promoteOrbyRelease(form:FormData){await requireSuperAdmin();const release=text(form,'release_id'),rollout=Math.max(1,Math.min(100,Number(text(form,'rollout')||100)));if(!release)throw new Error('ORBY_RELEASE_REQUIRED');await supabaseFetch('/rest/v1/rpc/orby_os_promote_release',{method:'POST',body:JSON.stringify({target_release:release,target_rollout:rollout})});refresh();}
 export async function rollbackOrbyRelease(form:FormData){await requireSuperAdmin();const release=text(form,'release_id'),confirmed=text(form,'confirmed')==='true';if(!release||!confirmed)throw new Error('ORBY_RELEASE_ROLLBACK_CONFIRMATION_REQUIRED');await supabaseFetch('/rest/v1/rpc/orby_os_rollback_release',{method:'POST',body:JSON.stringify({target_release:release})});refresh();}
+
+export async function activateOrbyExternalRuntime(){
+ await requireSuperAdmin();
+ const provider=providersFromEnvironment().find(item=>item.id==='openrouter');
+ if(!provider)throw new Error('ORBY_OPENROUTER_API_KEY_MISSING');
+ const health=await provider.health();
+ await recordSupabaseOrbyProviderHealth(health);
+ if(!health.ok)throw new Error(`ORBY_OPENROUTER_HEALTH_FAILED:${health.message||'unknown'}`);
+ const probe=await provider.generate({
+  requestId:randomUUID(),
+  model:'deepseek/deepseek-v4-flash',
+  messages:[{role:'user',content:'Return exactly: ORBY_RUNTIME_OK'}],
+  options:{temperature:0,maxOutputTokens:24,responseFormat:'text',timeoutMs:30_000},
+ });
+ if(!probe.text.includes('ORBY_RUNTIME_OK'))throw new Error('ORBY_OPENROUTER_MODEL_PROBE_FAILED');
+ const ocr=orbyOcrConfig();
+ if(!ocr||ocr.provider!=='mistral')throw new Error('ORBY_MISTRAL_OCR_API_KEY_MISSING');
+ const ocrHealth=await new MistralOcrService({apiKey:ocr.apiKey,model:ocr.model,baseUrl:ocr.baseUrl,timeoutMs:ocr.timeoutMs,maxBytes:ocr.maxBytes}).health();
+ if(!ocrHealth.ok)throw new Error(`ORBY_MISTRAL_OCR_HEALTH_FAILED:${ocrHealth.message||'unknown'}`);
+ await supabaseFetch('/rest/v1/rpc/orby_os_activate_external_runtime',{
+  method:'POST',
+  body:JSON.stringify({target_provider:'openrouter',target_model:'deepseek-v4-flash',target_ocr_model:ocr.model}),
+ });
+ refresh();
+}
+
+export async function deactivateOrbyExternalRuntime(){
+ await requireSuperAdmin();
+ await supabaseFetch('/rest/v1/rpc/orby_os_deactivate_external_runtime',{method:'POST',body:'{}'});
+ refresh();
+}
