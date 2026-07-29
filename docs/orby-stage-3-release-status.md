@@ -26,4 +26,4 @@ Until then, Stage 3 uses its provider-independent local embedding fallback and g
 
 ## Release marker
 
-This document update is the formal Stage 3 production release marker for the final `main` deployment.
+Stage 3 was merged through PR #54 at commit `706b5b3c982c8566e31c830125f7975028599a19`. This document update is the explicit production deployment marker from `main`.
