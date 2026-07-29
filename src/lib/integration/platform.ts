@@ -1,4 +1,3 @@
-import 'server-only';
 import {createCipheriv,createDecipheriv,randomBytes} from 'node:crypto';
 import {integrationDatabaseConfig,integrationSecretsConfig} from '@/src/lib/env';
 import {deploymentSupabaseServiceRoleKey} from './deployment-secrets';
