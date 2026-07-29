@@ -32,7 +32,9 @@ function configuredSecretAuthorized(request:Request){
 }
 
 function deploymentCronTokenAuthorized(request:Request){
- const token=new URL(request.url).searchParams.get('cron_token')||'';
+ const token=request.headers.get('x-madar-cron-token')
+  ||new URL(request.url).searchParams.get('cron_token')
+  ||'';
  if(!token)return false;
  const digest=createHash('sha256').update(token).digest('hex');
  return equal(digest,DEPLOYMENT_CRON_TOKEN_SHA256);
