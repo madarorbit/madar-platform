@@ -16,7 +16,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +48,12 @@ jobs:
       - name: Run ORBY OS smoke suite
         shell: bash
         run: set -o pipefail; npm run orby:os-smoke 2>&1 | tee orby-os-smoke.log
+      - name: Run ORBY OS security suite
+        shell: bash
+        run: set -o pipefail; npm run orby:os-security 2>&1 | tee orby-os-security.log
+      - name: Run ORBY OS load suite
+        shell: bash
+        run: set -o pipefail; npm run orby:os-load 2>&1 | tee orby-os-load.log
       - name: Lint
         shell: bash
         run: set -o pipefail; npm run lint 2>&1 | tee lint.log
@@ -65,6 +71,8 @@ jobs:
           path: |
             test.log
             orby-os-smoke.log
+            orby-os-security.log
+            orby-os-load.log
             lint.log
             typecheck.log
             build.log
