@@ -8,6 +8,7 @@ import {IntegrationDatabase} from '@/src/lib/integration/platform';
 import {orbyOcrConfig} from '@/src/lib/env';
 import {createEmbeddingService} from './embedding';
 import {HttpOcrService,OcrTextExtractor,OrbyKnowledgeEngine} from './knowledge';
+import {MistralOcrService} from './mistral-ocr';
 import {OrbyConversationWindowManager,OrbyMemoryEngine} from './memory';
 import {OrbyRagEngine,type OrbyRagAnswerModel} from './rag';
 import {createStandardDetectors} from './analytics';
@@ -28,7 +29,9 @@ let promise:ReturnType<typeof build>|undefined;
 async function build(){
  const database=new IntegrationDatabase(),repository=new SupabaseOrbyIntelligenceRepository(database),foundation=await createServerOrbyFoundation(),memberships=new SupabaseOrbyMembershipResolver(database);
  const providers=foundation.providers.list(),models=foundation.models.list({enabledOnly:true}),embeddings=createEmbeddingService(providers as readonly OrbyProvider[],models as readonly OrbyModelDescriptor[]),knowledge=new OrbyKnowledgeEngine(repository,embeddings);
- const ocr=orbyOcrConfig();if(ocr)knowledge.registerExtractor(new OcrTextExtractor(new HttpOcrService(ocr.endpoint,ocr.apiKey)));
+ const ocr=orbyOcrConfig();
+ if(ocr?.provider==='mistral')knowledge.registerExtractor(new OcrTextExtractor(new MistralOcrService({apiKey:ocr.apiKey,model:ocr.model,baseUrl:ocr.baseUrl,timeoutMs:ocr.timeoutMs,maxBytes:ocr.maxBytes})));
+ else if(ocr)knowledge.registerExtractor(new OcrTextExtractor(new HttpOcrService(ocr.endpoint,ocr.apiKey)));
  const memory=new OrbyMemoryEngine(repository),windows=new OrbyConversationWindowManager(repository),rag=new OrbyRagEngine(knowledge,new KernelRagAnswerModel(foundation));
  const notifications=new OrbyNotificationEngine(repository),insights=new OrbyInsightEngine(repository,notifications),reports=new OrbyPeriodicReportEngine(repository),detection=createStandardDetectors(new SupabaseOrbyBusinessMetricReader(database));
  const proactive=new OrbyProactiveRuntime(repository,detection,insights,reports),scheduler=new OrbyScheduler(repository),events=new OrbyPersistentEventBus(repository),actions=new OrbyInsightActionPlanner(repository,new AgentExecutionBridge());

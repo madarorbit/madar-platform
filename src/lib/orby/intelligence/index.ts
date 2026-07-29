@@ -2,6 +2,7 @@ export * from './contracts';
 export * from './embedding';
 export * from './memory';
 export * from './knowledge';
+export * from './mistral-ocr';
 export * from './rag';
 export * from './analytics';
 export * from './proactive';
