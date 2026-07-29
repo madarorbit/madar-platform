@@ -9,7 +9,7 @@ export class IntegrationDatabase {
  private readonly key:string;
  constructor(config=integrationDatabaseConfig(deploymentSupabaseServiceRoleKey)){this.url=config.url;this.key=config.serviceRoleKey;}
  private async request<T>(path:string,init:RequestInit={}){
-  const headers=new Headers(init.headers);headers.set('apikey',this.key);headers.set('Authorization',`Bearer ${this.key}`);headers.set('Content-Type','application/json');headers.set('Prefer',headers.get('Prefer')||'return=representation');
+  const headers=new Headers(init.headers);headers.set('apikey',this.key);if(!this.key.startsWith('sb_secret_'))headers.set('Authorization',`Bearer ${this.key}`);headers.set('Content-Type','application/json');headers.set('Prefer',headers.get('Prefer')||'return=representation');
   const response=await fetch(`${this.url}${path}`,{...init,headers,cache:'no-store'});
   if(!response.ok){const payload=await response.json().catch(()=>null) as {code?:string;message?:string;details?:string}|null;throw new IntegrationError('تعذر تنفيذ عملية قاعدة بيانات محرك الربط.','DATABASE_ERROR',response.status>=500||response.status===429,{status:response.status,code:payload?.code||null,path:path.split('?')[0]},payload);}
   if(response.status===204)return undefined as T;
