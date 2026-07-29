@@ -17,9 +17,11 @@ Until then, Stage 3 uses its provider-independent local embedding fallback and g
 
 ## Runtime activation
 
-- Vercel Cron calls `/api/orby/intelligence/worker` hourly.
+- Vercel Cron calls `/api/orby/intelligence/worker` once daily at 00:15 UTC (03:15 Asia/Aden), which is compatible with the current Hobby plan.
+- Each invocation drains jobs in batches, up to 100 jobs or a 45-second execution budget, instead of stopping after five jobs.
 - The worker requires `MADAR_ORBY_WORKER_SECRET`, `MADAR_INTEGRATION_WORKER_SECRET`, or `CRON_SECRET`.
 - No external model or OCR key is required for the deferred operating mode.
+- Hourly execution can be restored later without architectural changes if the Vercel plan permits higher-frequency Cron Jobs.
 
 ## Release marker
 
