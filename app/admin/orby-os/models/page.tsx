@@ -15,10 +15,11 @@ type SearchParams=Promise<Record<string,string|string[]|undefined>>;
 const activationMessages:Record<string,{title:string;body:string}>={
  'openrouter-key-missing':{title:'مفتاح OpenRouter غير موجود',body:'تأكد من إضافة ORBY_OPENROUTER_API_KEY إلى بيئة Production في Vercel ثم أعد النشر.'},
  'openrouter-key-invalid':{title:'مفتاح OpenRouter غير صالح',body:'المفتاح موجود لكنه مرفوض أو ملغى. أنشئ مفتاحًا جديدًا واستبدله داخل Vercel.'},
- 'openrouter-credit-required':{title:'رصيد OpenRouter غير كافٍ',body:'المفتاح صحيح، لكن الحساب أو المفتاح لا يملك رصيدًا لتشغيل DeepSeek V4 Flash. اشحن الرصيد من صفحة Credits ثم أعد الفحص.'},
+ 'openrouter-credit-required':{title:'رصيد OpenRouter غير كافٍ',body:'المفتاح صحيح، لكن الحساب أو المفتاح لا يملك رصيدًا لتشغيل DeepSeek V3.2. اشحن الرصيد من صفحة Credits ثم أعد الفحص.'},
  'openrouter-access-forbidden':{title:'صلاحية OpenRouter غير كافية',body:'المفتاح صحيح لكن إعداداته أو حدوده تمنع تشغيل النموذج المختار.'},
  'openrouter-rate-limited':{title:'حد OpenRouter المؤقت',body:'المفتاح يعمل، لكن المزود رفض الطلب مؤقتًا بسبب حدود الاستخدام. أعد المحاولة بعد قليل.'},
  'openrouter-model-probe-failed':{title:'اختبار DeepSeek لم ينجح',body:'اتصال OpenRouter يعمل، لكن النموذج لم يُرجع استجابة الاختبار المتوقعة. لم تُفتح بوابة التشغيل.'},
+ 'provider-reasoning-exhausted':{title:'استهلك النموذج الإخراج في الاستدلال',body:'لم ينتج النموذج جوابًا نهائيًا. يستخدم أوربي الآن DeepSeek V3.2 مع تعطيل الاستدلال للطلبات السريعة.'},
  'mistral-key-missing':{title:'مفتاح Mistral غير موجود',body:'تأكد من إضافة ORBY_MISTRAL_OCR_API_KEY واختيار ORBY_OCR_PROVIDER=mistral في Vercel.'},
  'mistral-key-invalid':{title:'مفتاح Mistral غير صالح',body:'مفتاح Mistral مرفوض أو انتهت صلاحيته. أنشئ مفتاحًا جديدًا داخل Workspace الصحيح.'},
  'mistral-payment-required':{title:'خطة Mistral لا تسمح بطلب OCR',body:'فعّل Free mode أو أضف وسيلة دفع وارفع الخطة إلى Scale بحسب حدود حسابك، ثم أعد الفحص.'},
@@ -57,8 +58,8 @@ export default async function Page({searchParams}:{searchParams:SearchParams}){
    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
     <div>
      <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-black">حزمة التشغيل المختارة</h2><Status active={fullyActive} label={fullyActive?'نشطة بالكامل':'بانتظار نجاح الفحص والتفعيل'}/></div>
-     <p className="mt-3 leading-7 text-slate-300"><strong>OpenRouter</strong> للتوجيه، <strong>DeepSeek V4 Flash</strong> كنموذج أساسي سريع ومنخفض التكلفة، و<strong>Mistral OCR 3</strong> لاستخراج النص والجداول من الصور وPDF الممسوح.</p>
-     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400"><Tag>1M Context</Tag><Tag>Streaming</Tag><Tag>JSON</Tag><Tag>Arabic</Tag><Tag>OCR + Tables</Tag><Tag>External channels remain off</Tag></div>
+     <p className="mt-3 leading-7 text-slate-300"><strong>OpenRouter</strong> للتوجيه، <strong>DeepSeek V3.2</strong> كنموذج أساسي موثوق وسريع ومنخفض التكلفة، و<strong>Mistral OCR 3</strong> لاستخراج النص والجداول من الصور وPDF الممسوح. يبقى V4 Flash خيارًا يدويًا للمهام الثقيلة بعد استقرار التشغيل.</p>
+     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400"><Tag>Long Context</Tag><Tag>Streaming</Tag><Tag>JSON</Tag><Tag>Arabic</Tag><Tag>Reasoning Toggle</Tag><Tag>OCR + Tables</Tag><Tag>External channels remain off</Tag></div>
     </div>
     <div className="flex flex-col gap-3 sm:flex-row">
      <form action={activateOrbyExternalRuntime}><button className="md-button md-button-primary" type="submit">فحص المفاتيح وتفعيل التشغيل</button></form>
@@ -66,7 +67,7 @@ export default async function Page({searchParams}:{searchParams:SearchParams}){
     </div>
    </div>
    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-    <Gate title="النموذج الخارجي" active={providerActive} detail="OpenRouter · DeepSeek V4 Flash"/>
+    <Gate title="النموذج الخارجي" active={providerActive} detail="OpenRouter · DeepSeek V3.2"/>
     <Gate title="استخراج المستندات" active={ocrActive} detail="Mistral OCR 3 · الصور وPDF الممسوح"/>
    </div>
   </section>
