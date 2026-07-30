@@ -23,10 +23,8 @@ export class OpenRouterProvider extends OpenAICompatibleProvider {
     ...(options.headers||{}),
    },
    requestDefaults:{
-    reasoning:{enabled:false,exclude:true},
     provider:{
      allow_fallbacks:true,
-     require_parameters:true,
      data_collection:'deny',
     },
    },
