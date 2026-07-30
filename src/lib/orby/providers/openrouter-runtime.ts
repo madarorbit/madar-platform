@@ -115,6 +115,8 @@ export async function selectOpenRouterRuntime(options:{apiKey:string;baseUrl?:st
   attempts.push({model:candidate.providerModel,status:200,result:text.trim()?'unexpected-text':'empty-content',finishReason:value?.choices?.[0]?.finish_reason});
  }
  console.warn('ORBY OpenRouter governed model selection failed',{key,attempts});
+ const routedAttempts=attempts.filter(item=>item.status!==404);
+ if(routedAttempts.length&&routedAttempts.every(item=>item.status===503))throw new Error('ORBY_OPENROUTER_NO_ELIGIBLE_PROVIDER');
  throw new Error('ORBY_OPENROUTER_NO_WORKING_MODEL');
 }
 
