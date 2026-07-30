@@ -10,6 +10,7 @@ import {isOrbyError} from '@/src/lib/orby/core/errors';
 import {recordSupabaseOrbyProviderHealth} from '@/src/lib/orby/adapters/supabase';
 import {selectOpenRouterRuntime} from '@/src/lib/orby/providers/openrouter-runtime';
 import {MistralOcrService} from '@/src/lib/orby/intelligence/mistral-ocr';
+import {orbyOcrProbeInput} from '@/src/lib/orby/intelligence/ocr-probe';
 import type {OrbyWorkflowNode} from '@/src/lib/orby/execution/contracts';
 import {validateWorkflow} from '@/src/lib/orby/os/workflow';
 import {runOrbyOsProductionBenchmark} from '@/src/lib/orby/os/benchmark-runner';
@@ -47,6 +48,8 @@ function externalRuntimeFailureCode(error:unknown){
  if(message.includes('MISTRAL_RATE_LIMITED'))return'mistral-rate-limited';
  if(message.includes('MISTRAL_OCR_MODEL_UNAVAILABLE'))return'mistral-model-unavailable';
  if(message.includes('MISTRAL_EMPTY_RESPONSE'))return'mistral-empty-response';
+ if(message.includes('ORBY_MISTRAL_OCR_PROBE_FAILED')||message.includes('ORBY_OCR_EMPTY')||message.includes('ORBY_MISTRAL_OCR_EMPTY_RESPONSE'))return'mistral-probe-failed';
+ if(message.includes('ORBY_MISTRAL_OCR_FAILED'))return'mistral-probe-failed';
  if(message.includes('ORBY_MISTRAL_OCR_API_KEY_MISSING'))return'mistral-key-missing';
  if(message.includes('Unexpected end of JSON input'))return'provider-empty-response';
  return'external-runtime-check-failed';
@@ -87,8 +90,12 @@ export async function activateOrbyExternalRuntime(){
   await recordSupabaseOrbyProviderHealth({providerId:'openrouter',ok:true,latencyMs:selection.latencyMs,checkedAt:new Date().toISOString(),message:`selected:${selection.id}`});
   const ocr=orbyOcrConfig();
   if(!ocr||ocr.provider!=='mistral')throw new Error('ORBY_MISTRAL_OCR_API_KEY_MISSING');
-  const ocrHealth=await new MistralOcrService({apiKey:ocr.apiKey,model:ocr.model,baseUrl:ocr.baseUrl,timeoutMs:ocr.timeoutMs,maxBytes:ocr.maxBytes}).health();
+  const ocrService=new MistralOcrService({apiKey:ocr.apiKey,model:ocr.model,baseUrl:ocr.baseUrl,timeoutMs:ocr.timeoutMs,maxBytes:ocr.maxBytes});
+  const ocrHealth=await ocrService.health();
   if(!ocrHealth.ok)throw new Error(`ORBY_MISTRAL_OCR_HEALTH_FAILED:${ocrHealth.message||'unknown'}`);
+  const ocrProbe=await ocrService.extract(orbyOcrProbeInput());
+  const normalizedOcr=ocrProbe.text.toUpperCase().replace(/[^A-Z0-9]+/g,' ');
+  if(!normalizedOcr.includes('ORBY')||!normalizedOcr.includes('OCR'))throw new Error('ORBY_MISTRAL_OCR_PROBE_FAILED');
   await supabaseFetch('/rest/v1/rpc/orby_os_activate_external_runtime',{
    method:'POST',
    body:JSON.stringify({target_provider:'openrouter',target_model:selection.id,target_ocr_model:ocr.model}),
