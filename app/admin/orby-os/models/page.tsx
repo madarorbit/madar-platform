@@ -38,6 +38,7 @@ const activationMessages:Record<string,{title:string;body:string}>={
  'mistral-rate-limited':{title:'حد Mistral المؤقت',body:'تم الوصول إلى حد Workspace. راجع صفحة Limits أو أعد المحاولة لاحقًا.'},
  'mistral-model-unavailable':{title:'نموذج OCR غير متاح للحساب',body:'الحساب يعمل، لكن نموذج Mistral OCR المحدد غير ظاهر ضمن النماذج المسموحة للخطة الحالية.'},
  'mistral-empty-response':{title:'استجابة Mistral فارغة',body:'وصل الطلب إلى Mistral لكنه لم يُرجع بيانات صالحة. لم يتم التفعيل.'},
+ 'mistral-probe-failed':{title:'اختبار OCR الفعلي لم ينجح',body:'اتصل أوربي بـMistral، لكن صورة الاختبار لم تُستخرج بالنص المتوقع. راجع خطة OCR والنموذج المحدد ثم أعد الفحص.'},
  'provider-timeout':{title:'انتهت مهلة الاتصال',body:'لم يستجب أحد المزودين خلال المهلة المحددة. أعد المحاولة دون تغيير المفاتيح.'},
  'provider-unavailable':{title:'المزود غير متاح مؤقتًا',body:'المفاتيح لم تُرفض، لكن الخدمة الخارجية غير متاحة حاليًا.'},
  'provider-empty-response':{title:'استجابة خارجية غير مكتملة',body:'أعاد المزود استجابة فارغة أو غير مكتملة. عالج النظام الخطأ بأمان ولم يفتح أي بوابة.'},
@@ -68,9 +69,9 @@ export default async function Page({searchParams}:{searchParams:SearchParams}){
  return <main className="mx-auto max-w-[1400px] p-5 py-8 sm:p-8">
   <p className="font-bold text-violet-200">ORBY OS · External Runtime</p>
   <h1 className="mt-2 text-3xl font-black">المزودات والنماذج وOCR</h1>
-  <p className="mt-3 max-w-4xl leading-8 text-slate-400">المفاتيح تبقى داخل متغيرات Vercel المشفرة. يفحص أوربي نوع مفتاح OpenRouter ورصيده وقيوده، ثم يجرّب مجموعة نماذج منخفضة التكلفة ويختار أول مسار ناجح قبل فحص Mistral OCR وفتح البوابات.</p>
+  <p className="mt-3 max-w-4xl leading-8 text-slate-400">المفاتيح تبقى داخل متغيرات Vercel المشفرة. يفحص أوربي نوع مفتاح OpenRouter ورصيده وقيوده، ثم يجرّب مجموعة نماذج منخفضة التكلفة ويختار أول مسار ناجح، ويستخرج صورة OCR تجريبية فعلية قبل فتح البوابات.</p>
   <OrbyOsSubnav/>
-  {activation==='success'?<Notice kind="success" title="اكتمل التفعيل" body={`نجح OpenRouter عبر ${selectedLabel}، ونجح فحص Mistral OCR، وفُتحت بوابات التشغيل الخارجي.`}/>:null}
+  {activation==='success'?<Notice kind="success" title="اكتمل التفعيل" body={`نجح OpenRouter عبر ${selectedLabel}، ونجح استخراج صورة OCR التجريبية عبر Mistral، وفُتحت بوابات التشغيل الخارجي.`}/>:null}
   {activation==='stopped'?<Notice kind="neutral" title="تم إيقاف التشغيل الخارجي" body="أُغلقت بوابات المزود وOCR مع الاحتفاظ بالمفاتيح داخل Vercel."/>:null}
   {notice?<Notice kind="error" title={notice.title} body={notice.body}/>:null}
   <section className="mt-8 rounded-3xl border border-violet-300/20 bg-violet-300/[.04] p-6">
@@ -78,7 +79,7 @@ export default async function Page({searchParams}:{searchParams:SearchParams}){
     <div>
      <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-black">حزمة التشغيل التلقائية</h2><Status active={fullyActive} label={fullyActive?'نشطة بالكامل':'بانتظار نجاح الفحص والتفعيل'}/></div>
      <p className="mt-3 leading-7 text-slate-300"><strong>OpenRouter</strong> للتوجيه، مع اختيار تلقائي بين <strong>Gemini 2.5 Flash Lite</strong> و<strong>GPT-4.1 Nano</strong> و<strong>DeepSeek V3.2</strong> حسب الإتاحة الفعلية، و<strong>Mistral OCR 3</strong> للصور وPDF الممسوح.</p>
-     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400"><Tag>Low Cost</Tag><Tag>Automatic Fallback</Tag><Tag>Streaming</Tag><Tag>JSON</Tag><Tag>Arabic</Tag><Tag>OCR + Tables</Tag><Tag>Privacy Routing</Tag></div>
+     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400"><Tag>Low Cost</Tag><Tag>Automatic Fallback</Tag><Tag>Streaming</Tag><Tag>JSON</Tag><Tag>Arabic</Tag><Tag>Real OCR Probe</Tag><Tag>Privacy Routing</Tag></div>
     </div>
     <div className="flex flex-col gap-3 sm:flex-row">
      <form action={activateOrbyExternalRuntime}><button className="md-button md-button-primary" type="submit">فحص شامل واختيار النموذج والتفعيل</button></form>
