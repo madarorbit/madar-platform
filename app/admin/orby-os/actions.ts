@@ -74,9 +74,9 @@ export async function activateOrbyExternalRuntime(){
   if(!health.ok)throw new Error(`ORBY_OPENROUTER_HEALTH_FAILED:${health.message||'unknown'}`);
   const probe=await provider.generate({
    requestId:randomUUID(),
-   model:'deepseek/deepseek-v4-flash',
+   model:'deepseek/deepseek-v3.2',
    messages:[{role:'user',content:'Return exactly: ORBY_RUNTIME_OK'}],
-   options:{temperature:0,maxOutputTokens:64,responseFormat:'text',timeoutMs:30_000,reasoning:{effort:'none',exclude:true}},
+   options:{temperature:0,maxOutputTokens:64,responseFormat:'text',timeoutMs:30_000,reasoning:{enabled:false,exclude:true}},
   });
   if(!probe.text.includes('ORBY_RUNTIME_OK'))throw new Error('ORBY_OPENROUTER_MODEL_PROBE_FAILED');
   const ocr=orbyOcrConfig();
@@ -85,7 +85,7 @@ export async function activateOrbyExternalRuntime(){
   if(!ocrHealth.ok)throw new Error(`ORBY_MISTRAL_OCR_HEALTH_FAILED:${ocrHealth.message||'unknown'}`);
   await supabaseFetch('/rest/v1/rpc/orby_os_activate_external_runtime',{
    method:'POST',
-   body:JSON.stringify({target_provider:'openrouter',target_model:'deepseek-v4-flash',target_ocr_model:ocr.model}),
+   body:JSON.stringify({target_provider:'openrouter',target_model:'deepseek-v3.2',target_ocr_model:ocr.model}),
   });
   refresh();
  }catch(error){
