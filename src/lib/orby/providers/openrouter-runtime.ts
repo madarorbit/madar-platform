@@ -11,6 +11,7 @@ export type OrbyOpenRouterSelection={
  id:string;
  providerModel:string;
  displayName:string;
+ latencyMs:number;
  key:{isManagementKey:boolean;isProvisioningKey:boolean;isFreeTier:boolean;limitRemaining:number|null};
 };
 
@@ -58,6 +59,7 @@ function statusCode(status:number){
 }
 
 export async function selectOpenRouterRuntime(options:{apiKey:string;baseUrl?:string;siteUrl?:string;appName?:string}){
+ const started=Date.now();
  const baseUrl=(options.baseUrl||'https://openrouter.ai/api/v1').replace(/\/$/,'');
  const headers={
   'Authorization':`Bearer ${options.apiKey}`,
@@ -109,7 +111,7 @@ export async function selectOpenRouterRuntime(options:{apiKey:string;baseUrl?:st
   const embedded=value?.error||value?.choices?.[0]?.error;
   if(embedded){attempts.push({model:candidate.providerModel,status:502,result:errorMessage({error:embedded})});continue;}
   const text=responseText(value?.choices?.[0]?.message?.content);
-  if(text.includes('ORBY_RUNTIME_OK'))return{...candidate,key} satisfies OrbyOpenRouterSelection;
+  if(text.includes('ORBY_RUNTIME_OK'))return{...candidate,key,latencyMs:Date.now()-started} satisfies OrbyOpenRouterSelection;
   attempts.push({model:candidate.providerModel,status:200,result:text.trim()?'unexpected-text':'empty-content',finishReason:value?.choices?.[0]?.finish_reason});
  }
  console.warn('ORBY OpenRouter governed model selection failed',{key,attempts});
