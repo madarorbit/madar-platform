@@ -31,6 +31,8 @@ test('OpenRouter activation validates key type and auto-selects a working low-co
  assert.match(selector,/routedAttempts\.every\(item=>item\.status===503\)/);
  assert.match(selector,/ORBY_OPENROUTER_NO_ELIGIBLE_PROVIDER/);
  assert.match(selector,/ORBY_OPENROUTER_NO_WORKING_MODEL/);
+ assert.match(selector,/ORBY_OPENROUTER_TIMEOUT/);
+ assert.match(selector,/runtimeFetch/);
  assert.doesNotMatch(selector,/sk-or-v1-[A-Za-z0-9_-]{20,}/);
 });
 
@@ -67,9 +69,11 @@ test('database catalog starts disabled and activation is founder guarded',async(
 });
 
 test('automatic selection migration registers only vetted activation candidates',async()=>{
- const sql=await read('supabase/migrations/20260731113000_orby_external_runtime_auto_selection.sql');
+ const [sql,priority]=await Promise.all([read('supabase/migrations/20260731113000_orby_external_runtime_auto_selection.sql'),read('supabase/migrations/20260731120100_orby_model_priority_alignment.sql')]);
  assert.match(sql,/'gemini-2\.5-flash-lite','openrouter','google\/gemini-2\.5-flash-lite'/);
  assert.match(sql,/'gpt-4\.1-nano','openrouter','openai\/gpt-4\.1-nano'/);
+ assert.match(priority,/when id='gemini-2\.5-flash-lite' then 400/);
+ assert.match(priority,/when id='gpt-4\.1-nano' then 300/);
  assert.match(sql,/target_model not in \('gemini-2\.5-flash-lite','gpt-4\.1-nano','deepseek-v3\.2'\)/);
  assert.match(sql,/modelSelectionMode','governed-auto-probe'/);
  assert.match(sql,/candidateModels/);
@@ -100,7 +104,7 @@ test('admin activation runs live model and OCR probes before opening runtime gat
 });
 
 test('provider activation failures are safe, explicit and never render a generic error page',async()=>{
- const [common,ocr,actions,page]=await Promise.all([read('src/lib/orby/providers/common.ts'),read('src/lib/orby/intelligence/mistral-ocr.ts'),read('app/admin/orby-os/actions.ts'),read('app/admin/orby-os/models/page.tsx')]);
+ const [common,ocr,actions,page,supabase]=await Promise.all([read('src/lib/orby/providers/common.ts'),read('src/lib/orby/intelligence/mistral-ocr.ts'),read('app/admin/orby-os/actions.ts'),read('app/admin/orby-os/models/page.tsx'),read('src/lib/supabase/server.ts')]);
  assert.match(common,/status===402/);
  assert.match(common,/رصيد مزود أوربي غير كافٍ/);
  assert.match(common,/await response\.text\(\)/);
@@ -113,11 +117,18 @@ test('provider activation failures are safe, explicit and never render a generic
  assert.match(actions,/openrouter-management-key/);
  assert.match(actions,/openrouter-guardrail-blocked/);
  assert.match(actions,/mistral-probe-failed/);
+ assert.match(actions,/runtime-state-persistence-failed/);
+ assert.match(actions,/code,stage/);
+ assert.doesNotMatch(actions,/Unexpected end of JSON input/);
  assert.match(page,/المفتاح من نوع Management Key/);
  assert.match(page,/قيود OpenRouter تمنع النماذج/);
  assert.match(page,/خطة Mistral لا تسمح بطلب OCR/);
  assert.match(page,/اختبار OCR الفعلي لم ينجح/);
+ assert.match(page,/تعذر حفظ حالة التفعيل/);
  assert.match(page,/role="status"/);
+ assert.match(supabase,/const raw=await response\.text\(\)/);
+ assert.match(supabase,/if\(!raw\.trim\(\)\)return null/);
+ assert.doesNotMatch(supabase,/response\.status===204\?null:response\.json\(\)/);
 });
 
 test('OpenAI-compatible adapter handles reasoning controls and embedded OpenRouter errors',async()=>{

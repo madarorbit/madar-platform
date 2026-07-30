@@ -11,9 +11,10 @@ import {SupabaseOrbyIntelligenceRepository} from './intelligence/adapters/supaba
 export * from './index';
 export * from './adapters/supabase';
 
-export async function createServerOrbyFoundation(options:Omit<CreateOrbyFoundationOptions,'providers'|'models'|'sessionStore'|'configurationStore'>={}){
- const providers=providersFromEnvironment(),models=await loadSupabaseOrbyModels(),repository=new SupabaseOrbyIntelligenceRepository(new IntegrationDatabase()),baseSessions=new SupabaseOrbySessionStore();
- const memory=new OrbyMemoryEngine(repository),contextSources=[...(options.contextSources||[]),new OrbyMemoryContextSource(memory)];
+type CreateServerOrbyFoundationOptions=Omit<CreateOrbyFoundationOptions,'providers'|'models'|'sessionStore'|'configurationStore'>&{database?:IntegrationDatabase};
+export async function createServerOrbyFoundation(options:CreateServerOrbyFoundationOptions={}){
+ const{database,...foundationOptions}=options,providers=providersFromEnvironment(),models=await loadSupabaseOrbyModels(database),repositoryDatabase=database||new IntegrationDatabase(),repository=new SupabaseOrbyIntelligenceRepository(repositoryDatabase),baseSessions=new SupabaseOrbySessionStore(database);
+ const memory=new OrbyMemoryEngine(repository),contextSources=[...(foundationOptions.contextSources||[]),new OrbyMemoryContextSource(memory)];
  const embeddings=createEmbeddingService(providers,models),knowledge=new OrbyKnowledgeEngine(repository,embeddings);contextSources.push(new OrbyKnowledgeContextSource(knowledge));
- return createOrbyFoundation({...options,contextSources,providers,models,sessionStore:new IntelligenceAwareSessionStore(baseSessions,repository),configurationStore:new SupabaseOrbyConfigurationStore()});
+ return createOrbyFoundation({...foundationOptions,contextSources,providers,models,sessionStore:new IntelligenceAwareSessionStore(baseSessions,repository),configurationStore:new SupabaseOrbyConfigurationStore(database)});
 }

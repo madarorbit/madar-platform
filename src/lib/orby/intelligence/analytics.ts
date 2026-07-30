@@ -1,5 +1,5 @@
 import {createHash,randomUUID} from 'node:crypto';
-import type {OrbyIdentity,OrbyJsonObject} from '../core/contracts';
+import type {OrbyJsonObject} from '../core/contracts';
 import type {OrbyCitation,OrbyDetectorInput,OrbyDetectorKey,OrbyDetectorSignal,OrbyProactiveDetector,OrbySuggestedAction} from './contracts';
 
 export type OrbyMetricSnapshot={

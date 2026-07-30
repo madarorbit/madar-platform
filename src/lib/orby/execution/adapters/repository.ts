@@ -1,5 +1,5 @@
 import type {OrbyIdentity,OrbyJsonObject,OrbyJsonValue} from '../../core/contracts';
-import type {OrbyActionRecord,OrbyApprovalRecord,OrbyExecutionConfiguration,OrbyExecutionRepository,OrbyToolManifest,OrbyToolResult,OrbyWorkflowRecord,OrbyWorkflowRun} from '../contracts';
+import type {OrbyActionRecord,OrbyApprovalRecord,OrbyExecutionRepository,OrbyToolManifest,OrbyToolResult,OrbyWorkflowRecord,OrbyWorkflowRun} from '../contracts';
 import {defaultExecutionConfiguration} from '../governance';
 import {OrbyExecutionError} from '../errors';
 import {IntegrationDatabase} from '@/src/lib/integration/platform';

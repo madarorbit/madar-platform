@@ -179,7 +179,7 @@ export class DefaultOrbyPromptCompiler implements OrbyPromptCompiler {
 
 function hasCapability(model:OrbyModelDescriptor,provider:OrbyProvider,capability:OrbyProviderCapability){return model.capabilities[capability]!==false&&provider.capabilities[capability]===true;}
 function estimatedCost(model:OrbyModelDescriptor,request:OrbyProviderRequest){const inputTokens=Math.ceil(request.messages.reduce((sum,item)=>sum+item.content.length,0)/4),outputTokens=request.options.maxOutputTokens||512;return inputTokens*(model.inputCostPerMillion||0)/1_000_000+outputTokens*(model.outputCostPerMillion||0)/1_000_000;}
-function abortableDelay(ms:number,signal?:AbortSignal){return new Promise<void>((resolve,reject)=>{if(ms<=0)return resolve();const timer=setTimeout(resolve,ms);signal?.addEventListener('abort',()=>{clearTimeout(timer);reject(new DOMException('Aborted','AbortError'));},{once:true});});}
+function abortableDelay(ms:number,signal?:AbortSignal){return new Promise<void>((resolve,reject)=>{if(ms<=0)return resolve();const abort=()=>{clearTimeout(timer);reject(new DOMException('Aborted','AbortError'));},timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},ms);if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});});}
 
 export class OrbyHealthMonitor {
  private readonly latest=new Map<string,OrbyProviderHealth>();

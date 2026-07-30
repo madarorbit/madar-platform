@@ -4,7 +4,7 @@ import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {requireSuperAdmin} from '@/src/lib/auth';
 import {orbyOcrConfig} from '@/src/lib/env';
-import {supabaseFetch} from '@/src/lib/supabase/server';
+import {SupabaseRequestError,supabaseFetch} from '@/src/lib/supabase/server';
 import type {OrbyJsonObject} from '@/src/lib/orby/core/contracts';
 import {isOrbyError} from '@/src/lib/orby/core/errors';
 import {recordSupabaseOrbyProviderHealth} from '@/src/lib/orby/adapters/supabase';
@@ -20,6 +20,7 @@ const json=(form:FormData,key:string,fallback:unknown)=>{const value=text(form,k
 const refresh=()=>{for(const path of ['/admin/orby-os','/admin/orby-os/workflows','/admin/orby-os/prompts','/admin/orby-os/models','/admin/orby-os/evaluations','/admin/orby-os/observability','/admin/orby-os/data','/admin/orby-os/releases'])revalidatePath(path);};
 
 function externalRuntimeFailureCode(error:unknown){
+ if(error instanceof SupabaseRequestError)return'runtime-state-persistence-failed';
  if(isOrbyError(error)){
   const status=Number(error.metadata.status);
   if(status===401)return'openrouter-key-invalid';
@@ -40,6 +41,7 @@ function externalRuntimeFailureCode(error:unknown){
  if(message.includes('ORBY_OPENROUTER_CREDIT_REQUIRED'))return'openrouter-credit-required';
  if(message.includes('ORBY_OPENROUTER_GUARDRAIL_BLOCKED'))return'openrouter-guardrail-blocked';
  if(message.includes('ORBY_OPENROUTER_RATE_LIMITED'))return'openrouter-rate-limited';
+ if(message.includes('ORBY_OPENROUTER_TIMEOUT')||message.includes('ORBY_OCR_TIMEOUT'))return'provider-timeout';
  if(message.includes('ORBY_OPENROUTER_NO_ELIGIBLE_PROVIDER'))return'openrouter-no-eligible-provider';
  if(message.includes('ORBY_OPENROUTER_NO_WORKING_MODEL'))return'openrouter-no-working-model';
  if(message.includes('MISTRAL_API_KEY_INVALID'))return'mistral-key-invalid';
@@ -51,7 +53,6 @@ function externalRuntimeFailureCode(error:unknown){
  if(message.includes('ORBY_MISTRAL_OCR_PROBE_FAILED')||message.includes('ORBY_OCR_EMPTY')||message.includes('ORBY_MISTRAL_OCR_EMPTY_RESPONSE'))return'mistral-probe-failed';
  if(message.includes('ORBY_MISTRAL_OCR_FAILED'))return'mistral-probe-failed';
  if(message.includes('ORBY_MISTRAL_OCR_API_KEY_MISSING'))return'mistral-key-missing';
- if(message.includes('Unexpected end of JSON input'))return'provider-empty-response';
  return'external-runtime-check-failed';
 }
 
@@ -77,6 +78,7 @@ export async function rollbackOrbyRelease(form:FormData){await requireSuperAdmin
 export async function activateOrbyExternalRuntime(){
  await requireSuperAdmin();
  let selectedModel='';
+ let stage='openrouter-selection';
  try{
   const apiKey=process.env.ORBY_OPENROUTER_API_KEY?.trim();
   if(!apiKey)throw new Error('ORBY_OPENROUTER_API_KEY_MISSING');
@@ -87,15 +89,20 @@ export async function activateOrbyExternalRuntime(){
    appName:process.env.ORBY_OPENROUTER_APP_NAME,
   });
   selectedModel=selection.id;
+  stage='openrouter-health-persistence';
   await recordSupabaseOrbyProviderHealth({providerId:'openrouter',ok:true,latencyMs:selection.latencyMs,checkedAt:new Date().toISOString(),message:`selected:${selection.id}`});
+  stage='mistral-configuration';
   const ocr=orbyOcrConfig();
   if(!ocr||ocr.provider!=='mistral')throw new Error('ORBY_MISTRAL_OCR_API_KEY_MISSING');
   const ocrService=new MistralOcrService({apiKey:ocr.apiKey,model:ocr.model,baseUrl:ocr.baseUrl,timeoutMs:ocr.timeoutMs,maxBytes:ocr.maxBytes});
+  stage='mistral-health';
   const ocrHealth=await ocrService.health();
   if(!ocrHealth.ok)throw new Error(`ORBY_MISTRAL_OCR_HEALTH_FAILED:${ocrHealth.message||'unknown'}`);
+  stage='mistral-probe';
   const ocrProbe=await ocrService.extract(orbyOcrProbeInput());
   const normalizedOcr=ocrProbe.text.toUpperCase().replace(/[^A-Z0-9]+/g,' ');
   if(!normalizedOcr.includes('ORBY')||!normalizedOcr.includes('OCR'))throw new Error('ORBY_MISTRAL_OCR_PROBE_FAILED');
+  stage='runtime-activation';
   await supabaseFetch('/rest/v1/rpc/orby_os_activate_external_runtime',{
    method:'POST',
    body:JSON.stringify({target_provider:'openrouter',target_model:selection.id,target_ocr_model:ocr.model}),
@@ -103,7 +110,7 @@ export async function activateOrbyExternalRuntime(){
   refresh();
  }catch(error){
   const code=externalRuntimeFailureCode(error);
-  console.warn('ORBY external runtime activation rejected',{code});
+  console.warn('ORBY external runtime activation rejected',{code,stage});
   redirect(`/admin/orby-os/models?activation=error&code=${encodeURIComponent(code)}`);
  }
  redirect(`/admin/orby-os/models?activation=success&model=${encodeURIComponent(selectedModel)}`);

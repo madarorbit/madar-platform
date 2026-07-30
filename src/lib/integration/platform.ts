@@ -11,9 +11,13 @@ export class IntegrationDatabase {
  private async request<T>(path:string,init:RequestInit={}){
   const headers=new Headers(init.headers);headers.set('apikey',this.key);if(!this.key.startsWith('sb_secret_'))headers.set('Authorization',`Bearer ${this.key}`);headers.set('Content-Type','application/json');headers.set('Prefer',headers.get('Prefer')||'return=representation');
   const response=await fetch(`${this.url}${path}`,{...init,headers,cache:'no-store'});
-  if(!response.ok){const payload=await response.json().catch(()=>null) as {code?:string;message?:string;details?:string}|null;throw new IntegrationError('تعذر تنفيذ عملية قاعدة بيانات محرك الربط.','DATABASE_ERROR',response.status>=500||response.status===429,{status:response.status,code:payload?.code||null,path:path.split('?')[0]},payload);}
-  if(response.status===204)return undefined as T;
-  return response.json() as Promise<T>;
+  const raw=await response.text();
+  let payload:unknown=null;
+  if(raw.trim()){try{payload=JSON.parse(raw);}catch{payload=null;}}
+  if(!response.ok){const errorPayload=payload as {code?:string;message?:string;details?:string}|null;throw new IntegrationError('تعذر تنفيذ عملية قاعدة بيانات محرك الربط.','DATABASE_ERROR',response.status>=500||response.status===429,{status:response.status,code:errorPayload?.code||null,path:path.split('?')[0]},errorPayload);}
+  if(!raw.trim())return undefined as T;
+  if(payload===null)throw new IntegrationError('أعادت قاعدة البيانات استجابة غير صالحة.','DATABASE_ERROR',false,{status:response.status,path:path.split('?')[0]});
+  return payload as T;
  }
  select<T>(table:string,params:URLSearchParams){return this.request<T[]>(`/rest/v1/${table}?${params.toString()}`);}
  insert<T>(table:string,value:JsonObject|JsonObject[],prefer='return=representation'){return this.request<T[]>(`/rest/v1/${table}`,{method:'POST',headers:{Prefer:prefer},body:JSON.stringify(value)});}

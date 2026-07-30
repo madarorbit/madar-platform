@@ -3,7 +3,7 @@ import type {OrbyWorkflowNode} from './contracts';
 import {OrbyExecutionError} from './errors';
 
 export function now(){return new Date().toISOString();}
-export function sleep(ms:number,signal?:AbortSignal){return new Promise<void>((resolve,reject)=>{if(ms<=0)return resolve();const timer=setTimeout(resolve,ms);const abort=()=>{clearTimeout(timer);reject(new DOMException('Aborted','AbortError'));};if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});});}
+export function sleep(ms:number,signal?:AbortSignal){return new Promise<void>((resolve,reject)=>{if(ms<=0)return resolve();const abort=()=>{clearTimeout(timer);reject(new DOMException('Aborted','AbortError'));},timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},ms);if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});});}
 export function errorResult(error:OrbyExecutionError){return{ok:false,data:null,error:{code:error.code,message:error.message,retryable:error.retryable,details:error.details}} as const;}
 
 export function getPath(root:unknown,path:string):unknown{let current=root;for(const part of path.split('.').filter(Boolean)){if(current===null||current===undefined)return undefined;if(Array.isArray(current)&&/^\d+$/.test(part))current=current[Number(part)];else if(typeof current==='object')current=(current as Record<string,unknown>)[part];else return undefined;}return current;}

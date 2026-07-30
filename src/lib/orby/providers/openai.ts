@@ -1,6 +1,6 @@
 import type {OrbyEmbeddingRequest,OrbyEmbeddingResponse,OrbyGenerationOptions,OrbyJsonObject,OrbyModerationRequest,OrbyModerationResult,OrbyModelSummary,OrbyProvider,OrbyProviderRequest,OrbyProviderResponse,OrbyProviderStreamEvent} from '../core/contracts';
 import {OrbyError,normalizeOrbyError} from '../core/errors';
-import {providerCapabilities,providerHttpError,providerJsonRequest,providerNow,providerSseData,timedProviderSignal} from './common';
+import {providerCapabilities,providerHttpError,providerJsonRequest,providerNow,providerSseData,providerSseJson,timedProviderSignal} from './common';
 
 function messages(request:OrbyProviderRequest){return request.messages.map(message=>({role:message.role,content:message.content}));}
 
@@ -79,7 +79,7 @@ export class OpenAICompatibleProvider implements OrbyProvider {
    yield {type:'start'};
    for await(const data of providerSseData(response)){
     if(data==='[DONE]')break;
-    const event=JSON.parse(data) as {error?:unknown;choices?:Array<{delta?:{content?:unknown};finish_reason?:string;error?:unknown}>;usage?:{prompt_tokens?:number;completion_tokens?:number;total_tokens?:number}};
+    const event=providerSseJson(data,this.id) as {error?:unknown;choices?:Array<{delta?:{content?:unknown};finish_reason?:string;error?:unknown}>;usage?:{prompt_tokens?:number;completion_tokens?:number;total_tokens?:number}};
     const embedded=embeddedProviderError(event);if(embedded)throw providerHttpError(embeddedErrorStatus(embedded),{error:embedded});
     const delta=responseText(event.choices?.[0]?.delta?.content);if(delta)yield {type:'delta',text:delta};
     if(event.usage)yield {type:'usage',usage:{inputTokens:event.usage.prompt_tokens,outputTokens:event.usage.completion_tokens,totalTokens:event.usage.total_tokens}};

@@ -58,6 +58,13 @@ function statusCode(status:number){
  return`ORBY_OPENROUTER_HTTP_${status}`;
 }
 
+async function runtimeFetch(url:string,init:RequestInit={},timeoutMs=20_000){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+ try{return await fetch(url,{...init,signal:controller.signal});}
+ catch(error){if(controller.signal.aborted)throw new Error('ORBY_OPENROUTER_TIMEOUT',{cause:error});throw error;}
+ finally{clearTimeout(timer);}
+}
+
 export async function selectOpenRouterRuntime(options:{apiKey:string;baseUrl?:string;siteUrl?:string;appName?:string}){
  const started=Date.now();
  const baseUrl=(options.baseUrl||'https://openrouter.ai/api/v1').replace(/\/$/,'');
@@ -68,7 +75,7 @@ export async function selectOpenRouterRuntime(options:{apiKey:string;baseUrl?:st
   'X-OpenRouter-Title':options.appName||'MADAR | ORBIT',
   'X-OpenRouter-Metadata':'enabled',
  };
- const keyResponse=await fetch(`${baseUrl}/key`,{headers,cache:'no-store'});
+ const keyResponse=await runtimeFetch(`${baseUrl}/key`,{headers,cache:'no-store'},15_000);
  const keyBody=await payload(keyResponse);
  if(!keyResponse.ok)throw new Error(`${statusCode(keyResponse.status)}:${errorMessage(keyBody)}`);
  const keyData=(keyBody&&typeof keyBody==='object'&&'data' in keyBody?(keyBody as {data?:unknown}).data:null) as Record<string,unknown>|null;
@@ -83,7 +90,7 @@ export async function selectOpenRouterRuntime(options:{apiKey:string;baseUrl?:st
  if(key.isProvisioningKey)throw new Error('ORBY_OPENROUTER_PROVISIONING_KEY');
  if(key.limitRemaining!==null&&key.limitRemaining<=0)throw new Error('ORBY_OPENROUTER_CREDIT_REQUIRED');
 
- const modelResponse=await fetch(`${baseUrl}/models`,{headers,cache:'no-store'});
+ const modelResponse=await runtimeFetch(`${baseUrl}/models`,{headers,cache:'no-store'},15_000);
  const modelBody=await payload(modelResponse);
  if(!modelResponse.ok)throw new Error(`${statusCode(modelResponse.status)}:${errorMessage(modelBody)}`);
  const rows=modelBody&&typeof modelBody==='object'&&Array.isArray((modelBody as {data?:unknown}).data)?(modelBody as {data:Array<{id?:string}>}).data:[];
@@ -100,7 +107,7 @@ export async function selectOpenRouterRuntime(options:{apiKey:string;baseUrl?:st
    provider:{allow_fallbacks:true,data_collection:'deny'},
   };
   if(candidate.reasoningDisabled)body.reasoning={enabled:false};
-  const response=await fetch(`${baseUrl}/chat/completions`,{method:'POST',headers,cache:'no-store',body:JSON.stringify(body)});
+  const response=await runtimeFetch(`${baseUrl}/chat/completions`,{method:'POST',headers,cache:'no-store',body:JSON.stringify(body)},30_000);
   const result=await payload(response);
   if(!response.ok){
    attempts.push({model:candidate.providerModel,status:response.status,result:errorMessage(result)});

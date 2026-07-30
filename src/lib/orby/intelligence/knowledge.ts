@@ -40,7 +40,9 @@ export class HttpOcrService implements OrbyOcrService {
  async extract(input:{bytes:Uint8Array;mimeType:string;fileName?:string;signal?:AbortSignal}){
   const response=await fetch(this.endpoint,{method:'POST',signal:input.signal,headers:{'Content-Type':'application/json',...(this.apiKey?{'Authorization':`Bearer ${this.apiKey}`}:{})},body:JSON.stringify({mimeType:input.mimeType,fileName:input.fileName||null,contentBase64:Buffer.from(input.bytes).toString('base64')})});
   if(!response.ok)throw new Error(`ORBY_OCR_FAILED:${response.status}`);
-  const payload=await response.json() as {text?:string;language?:string;metadata?:OrbyJsonObject};
+  const raw=await response.text();if(!raw.trim())throw new Error('ORBY_OCR_EMPTY_RESPONSE');
+  let payload:{text?:string;language?:string;metadata?:OrbyJsonObject};
+  try{payload=JSON.parse(raw) as typeof payload;}catch{throw new Error('ORBY_OCR_INVALID_RESPONSE');}
   if(!payload.text?.trim())throw new Error('ORBY_OCR_EMPTY');return{text:payload.text,language:payload.language,metadata:payload.metadata};
  }
 }

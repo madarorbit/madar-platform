@@ -8,6 +8,8 @@ const api=fs.readFileSync('app/api/orby/route.ts','utf8');
 const orby=fs.readFileSync('src/lib/orby.ts','utf8');
 const page=fs.readFileSync('app/workspace/orby/page.tsx','utf8');
 const actions=fs.readFileSync('app/actions/orby.ts','utf8');
+const runtimeResolver=fs.readFileSync('supabase/migrations/20260731120000_orby_runtime_config_resolver.sql','utf8');
+const coreAdapter=fs.readFileSync('src/lib/orby/adapters/supabase.ts','utf8');
 
 test('ORBY memory is isolated by user and organization',()=>{
  for(const table of ['orby_conversations','orby_messages','orby_usage_daily','orby_insights','orby_action_drafts']){
@@ -26,7 +28,7 @@ test('ORBY enforces daily quotas before generation',()=>{
  assert.match(migration,/100000/);
  assert.match(migration,/ORBY_DAILY_LIMIT/);
  assert.match(api,/rpc\/consume_orby_quota/);
- assert.ok(api.indexOf('rpc/consume_orby_quota')<api.indexOf('const result=await generateText'));
+ assert.ok(api.indexOf('rpc/consume_orby_quota')<api.indexOf('kernelResponse=await executeOrbyCore'));
 });
 
 test('ORBY context comes from checked workspace analytics only',()=>{
@@ -44,6 +46,26 @@ test('AI provider failure falls back without leaking provider details',()=>{
  assert.match(api,/provider_unavailable:providerUnavailable/);
  assert.doesNotMatch(api,/provider_error/);
  assert.match(orby,/هذا رد تشغيلي تلقائي من بيانات مَدار/);
+});
+
+test('ORBY business chat runs through the governed core and preserves its session',()=>{
+ assert.match(api,/createServerOrbyFoundation/);
+ assert.match(api,/foundation\.kernel\.execute/);
+ assert.match(api,/kernel_session_id/);
+ assert.match(api,/provider_id:kernelResponse\?\.providerId/);
+ assert.match(api,/model_id:kernelResponse\?\.modelId/);
+ assert.doesNotMatch(api,/generateText/);
+ assert.doesNotMatch(api,/google\/gemini-3-flash/);
+});
+
+test('members receive only safe resolved runtime settings without provider credentials',()=>{
+ assert.match(runtimeResolver,/private\.is_admin\(\)/);
+ assert.match(runtimeResolver,/organization_members/);
+ assert.match(runtimeResolver,/jsonb_build_object\(/);
+ assert.match(runtimeResolver,/'allowedProviderIds'/);
+ assert.match(runtimeResolver,/'allowedModelIds'/);
+ assert.doesNotMatch(runtimeResolver,/\b(api_key|provider_secret|credential)\b\s+(text|jsonb|bytea)/i);
+ assert.match(coreAdapter,/rpc\/orby_resolve_runtime_config/);
 });
 
 test('proactive insights are deterministic and actionable',()=>{

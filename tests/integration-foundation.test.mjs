@@ -38,6 +38,14 @@ test('queue and sync engine provide leases, backoff, checkpoints and idempotency
  assert.match(migration,/unique\(connection_id,stream_key\)/i);
 });
 
+test('database adapter accepts successful minimal responses without parsing an empty body',async()=>{
+ const platform=await read('src/lib/integration/platform.ts');
+ assert.match(platform,/const raw=await response\.text\(\)/);
+ assert.match(platform,/if\(!raw\.trim\(\)\)return undefined as T/);
+ assert.doesNotMatch(platform,/response\.status===204/);
+ assert.doesNotMatch(platform,/return response\.json\(\)/);
+});
+
 test('tenant isolation and secret denial are explicit in the migration',async()=>{
  const migration=await read('supabase/migrations/20260727213000_integration_foundation_core.sql');
  assert.match(migration,/private\.is_organization_member\(organization_id\)/);

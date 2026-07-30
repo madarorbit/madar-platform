@@ -27,7 +27,7 @@ function identity(job:{organizationId:string;workspaceId?:string;payload:OrbyJso
 
 let promise:ReturnType<typeof build>|undefined;
 async function build(){
- const database=new IntegrationDatabase(),repository=new SupabaseOrbyIntelligenceRepository(database),foundation=await createServerOrbyFoundation(),memberships=new SupabaseOrbyMembershipResolver(database);
+ const database=new IntegrationDatabase(),repository=new SupabaseOrbyIntelligenceRepository(database),foundation=await createServerOrbyFoundation({database}),memberships=new SupabaseOrbyMembershipResolver(database);
  const providers=foundation.providers.list(),models=foundation.models.list({enabledOnly:true}),embeddings=createEmbeddingService(providers as readonly OrbyProvider[],models as readonly OrbyModelDescriptor[]),knowledge=new OrbyKnowledgeEngine(repository,embeddings);
  const ocr=orbyOcrConfig();
  if(ocr?.provider==='mistral')knowledge.registerExtractor(new OcrTextExtractor(new MistralOcrService({apiKey:ocr.apiKey,model:ocr.model,baseUrl:ocr.baseUrl,timeoutMs:ocr.timeoutMs,maxBytes:ocr.maxBytes})));

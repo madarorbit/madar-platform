@@ -34,19 +34,28 @@ function requestErrorMessage(status:number,payload:SupabaseErrorPayload|null){
 export class SupabaseRequestError extends Error {
  constructor(public status:number,public code:string|undefined,message:string){super(message);this.name='SupabaseRequestError';}
 }
+async function responsePayload(response:Response){
+ const raw=await response.text();
+ if(!raw.trim())return null;
+ try{return JSON.parse(raw);}
+ catch{
+  if(response.ok)throw new SupabaseRequestError(response.status,'INVALID_JSON_RESPONSE','أعادت قاعدة البيانات استجابة غير صالحة.');
+  return null;
+ }
+}
 export async function serverToken() { return (await cookies()).get('madar-access-token')?.value; }
 export async function supabaseFetch(path:string, init:RequestInit = {}) {
  const {url,key}=supabaseConfig(); const token=await serverToken();
  const headers = new Headers(init.headers); headers.set('apikey', key); headers.set('Content-Type','application/json'); if(token) headers.set('Authorization',`Bearer ${token}`); headers.set('Prefer', headers.get('Prefer') || 'return=representation');
  const response=await fetch(`${url}${path}`, {...init, headers, cache:'no-store'});
  if(!response.ok) {
-  const payload=await response.json().catch(()=>null) as SupabaseErrorPayload|null;
+  const payload=await responsePayload(response) as SupabaseErrorPayload|null;
   const context={path:path.split('?')[0],status:response.status,code:payload?.code};
   if(response.status>=500)console.error('Supabase request failed',context);
   else if(payload?.code!=='P0001')console.warn('Supabase request rejected',context);
   throw new SupabaseRequestError(response.status,payload?.code,requestErrorMessage(response.status,payload));
  }
- return response.status===204?null:response.json();
+ return responsePayload(response);
 }
 export async function currentUser():Promise<AuthUser|null>{ const token=await serverToken(); if(!token)return null; try{return await supabaseFetch('/auth/v1/user') as AuthUser;}catch{return null;} }
 export async function profileForUser(userId:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status`); return rows?.[0] as Profile|undefined; }

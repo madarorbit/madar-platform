@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 
 function runReadinessSmoke(){return new Promise((resolve,reject)=>{
- const child=spawn(process.platform==='win32'?'npx.cmd':'npx',['tsx','scripts/run-integration-readiness-smoke.ts'],{cwd:new URL('..',import.meta.url),env:{...process.env,NODE_ENV:'test'},stdio:['ignore','pipe','pipe']});let stdout='',stderr='';
+ const child=spawn(process.execPath,['--import','tsx','scripts/run-integration-readiness-smoke.ts'],{cwd:new URL('..',import.meta.url),env:{...process.env,NODE_ENV:'test'},stdio:['ignore','pipe','pipe']});let stdout='',stderr='';
  child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');child.stdout.on('data',chunk=>stdout+=chunk);child.stderr.on('data',chunk=>stderr+=chunk);child.on('error',reject);child.on('close',code=>code===0?resolve({stdout,stderr}):reject(new Error(`Readiness smoke exited ${code}\n${stderr}\n${stdout}`)));
  });}
 

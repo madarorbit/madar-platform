@@ -20,7 +20,7 @@ class KernelPlanningModel implements OrbyPlanningModel {
 let serverRuntimePromise:ReturnType<typeof buildServerRuntime>|undefined;
 async function buildServerRuntime(){
  const database=new IntegrationDatabase(),repository=new SupabaseOrbyExecutionRepository(database),queue=new SupabaseOrbyExecutionQueue(database),memberships=new SupabaseOrbyMembershipResolver(database),events=new InMemoryExecutionEventBus(),contextReader=new SupabaseMadarIntegrationContextReader(database);
- const foundation=await createServerOrbyFoundation({contextSources:[new MadarIntegrationContextSource(contextReader)]});
+ const foundation=await createServerOrbyFoundation({database,contextSources:[new MadarIntegrationContextSource(contextReader)]});
  const gateway=new SupabaseMadarToolGateway(database,async input=>{const response=await foundation.kernel.execute({identity:input.identity,sessionId:input.sessionId,message:input.prompt,requiredCapabilities:['text'],signal:input.signal,metadata:{purpose:'agent-tool-analysis',toolsDisabled:true}});return{text:response.text,sessionId:response.sessionId,providerId:response.providerId,modelId:response.modelId};});
  await repository.syncToolCatalog(MADAR_EXECUTION_TOOL_MANIFESTS);
  const enabledNames=await repository.enabledToolNames(),registry=new OrbyToolRegistry();await new OrbyToolLoader(registry).load(createMadarExecutionTools(gateway,enabledNames).map(tool=>()=>tool));

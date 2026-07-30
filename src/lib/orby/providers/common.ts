@@ -8,7 +8,7 @@ export function unsupportedProviderCapability(providerId:string,capability:strin
 
 export function timedProviderSignal(timeoutMs:number|undefined,external?:AbortSignal){
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),timeoutMs||45000);
- const abort=()=>controller.abort();external?.addEventListener('abort',abort,{once:true});
+ const abort=()=>controller.abort(external?.reason);if(external?.aborted)abort();else external?.addEventListener('abort',abort,{once:true});
  return {signal:controller.signal,dispose(){clearTimeout(timeout);external?.removeEventListener('abort',abort);}};
 }
 
@@ -42,14 +42,20 @@ export async function providerJsonRequest(url:string,init:RequestInit,timeoutMs?
  try{
   const response=await fetch(url,{...init,signal:timed.signal,cache:'no-store'});
   const raw=await response.text();
-  let body:unknown=null;
+  let body:unknown=null,invalidJson=false;
   if(raw.trim()){
-   try{body=JSON.parse(raw);}catch{body=raw.slice(0,1000);}
+   try{body=JSON.parse(raw);}catch{body=raw.slice(0,1000);invalidJson=true;}
   }
   if(!response.ok)throw providerHttpError(response.status,body);
   if(body===null)throw new OrbyError('مزود أوربي أعاد استجابة فارغة.','PROVIDER_BAD_RESPONSE',true,{status:response.status});
+  if(invalidJson)throw new OrbyError('مزود أوربي أعاد استجابة غير صالحة.','PROVIDER_BAD_RESPONSE',true,{status:response.status});
   return {response,body,latencyMs:Date.now()-started};
  }catch(error){if(error instanceof DOMException&&error.name==='AbortError')throw new OrbyError('انتهت مهلة اتصال مزود أوربي.','PROVIDER_TIMEOUT',true,{}, {cause:error});throw error;}finally{timed.dispose();}
+}
+
+export function providerSseJson(data:string,providerId:string){
+ try{return JSON.parse(data) as unknown;}
+ catch{throw new OrbyError('مزود أوربي أعاد حدث بث غير صالح.','PROVIDER_BAD_RESPONSE',true,{providerId});}
 }
 
 export async function* providerSseData(response:Response):AsyncIterable<string>{

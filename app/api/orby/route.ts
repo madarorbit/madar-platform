@@ -1,10 +1,59 @@
-import {generateText} from 'ai';
 import {NextResponse} from 'next/server';
 import {currentUser,supabaseFetch} from '@/src/lib/supabase/server';
 import {deterministicOrbyResponse,orbyModes,orbySystemPrompt,type OrbyContext,type OrbyMode} from '@/src/lib/orby';
+import type {OrbyContextSource,OrbyKernelResponse} from '@/src/lib/orby/core/contracts';
+import {isOrbyError} from '@/src/lib/orby/core/errors';
+import {createServerOrbyFoundation} from '@/src/lib/orby/server';
 
 export const runtime='nodejs';
 const scalar=<T,>(value:unknown)=>Array.isArray(value)?value[0] as T:value as T;
+const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type LegacyMessageMetadata={metadata?:{kernel_session_id?:unknown}};
+
+function businessContextSource(mode:OrbyMode,context:OrbyContext):OrbyContextSource{
+ return{
+  key:'madar.business-context',
+  priority:100,
+  async load(){
+   return{
+    key:'madar.business-context',
+    title:'سياق الأعمال الموثق من مَدار',
+    content:JSON.stringify({task:orbyModes[mode],businessContext:context}),
+    priority:100,
+    trusted:false,
+    sensitive:true,
+    metadata:{source:'madar-read-only-analytics',mode},
+   };
+  },
+ };
+}
+
+async function legacyKernelSession(organizationId:string,userId:string,conversationId:string|null){
+ if(!conversationId||!uuidPattern.test(conversationId))return undefined;
+ const rows=await supabaseFetch(`/rest/v1/orby_messages?conversation_id=eq.${encodeURIComponent(conversationId)}&organization_id=eq.${encodeURIComponent(organizationId)}&user_id=eq.${encodeURIComponent(userId)}&role=eq.assistant&select=metadata&order=created_at.desc,id.desc&limit=20`) as LegacyMessageMetadata[];
+ const value=rows.map(row=>row.metadata?.kernel_session_id).find(item=>typeof item==='string'&&uuidPattern.test(item));
+ return typeof value==='string'&&uuidPattern.test(value)?value:undefined;
+}
+
+async function executeOrbyCore(input:{organizationId:string;userId:string;sessionId?:string;mode:OrbyMode;prompt:string;context:OrbyContext}):Promise<OrbyKernelResponse>{
+ const foundation=await createServerOrbyFoundation({
+  contextSources:[businessContextSource(input.mode,input.context)],
+  configuration:{systemPolicies:[orbySystemPrompt()]},
+ });
+ const request={
+  identity:{organizationId:input.organizationId,userId:input.userId,workspaceId:input.organizationId},
+  sessionId:input.sessionId,
+  message:`المهمة المطلوبة: ${orbyModes[input.mode]}\n\nطلب المستخدم:\n${input.prompt}`,
+  requiredCapabilities:['text'] as const,
+  metadata:{purpose:'orby-business',mode:input.mode},
+ };
+ try{return await foundation.kernel.execute(request);}
+ catch(error){
+  if(input.sessionId&&isOrbyError(error)&&(error.code==='SESSION_NOT_FOUND'||error.code==='SESSION_CLOSED'))return foundation.kernel.execute({...request,sessionId:undefined});
+  throw error;
+ }
+}
 
 export async function POST(request:Request){
  try{
@@ -16,22 +65,17 @@ export async function POST(request:Request){
   if(!membership?.[0]?.organizations||membership[0].organizations.type==='STUDENT'||membership[0].organizations.status!=='active')return NextResponse.json({error:'لا تملك صلاحية استخدام أوربي في هذه المساحة.'},{status:403});
   const usage=scalar<{requests:number;remaining:number}>(await supabaseFetch('/rest/v1/rpc/consume_orby_quota',{method:'POST',body:JSON.stringify({target_organization:organizationId,submitted_characters:prompt.length})}));
   const context=scalar<OrbyContext>(await supabaseFetch('/rest/v1/rpc/orby_business_context',{method:'POST',body:JSON.stringify({target_organization:organizationId})}));
-  let text:string,source:'ai'|'smart-fallback'='ai',providerUnavailable=false;
+  let text:string,source:'ai'|'smart-fallback'='ai',providerUnavailable=false,kernelResponse:OrbyKernelResponse|undefined;
   try{
-   const result=await generateText({
-    model:'google/gemini-3-flash',
-    system:orbySystemPrompt(),
-    prompt:`المهمة: ${orbyModes[mode]}\n\nسؤال المستخدم:\n${prompt}\n\nسياق مساحة العمل الموثوق بصيغة JSON:\n${JSON.stringify(context)}`,
-    maxOutputTokens:1800,
-    providerOptions:{gateway:{user:user.id,tags:['feature:orby-business','product:madar',`mode:${mode.toLowerCase()}`]}},
-   });
-   text=result.text.trim();if(!text)throw new Error('EMPTY_AI_RESPONSE');
+   const sessionId=await legacyKernelSession(organizationId,user.id,conversationId);
+   kernelResponse=await executeOrbyCore({organizationId,userId:user.id,sessionId,mode,prompt,context});
+   text=kernelResponse.text.trim();if(!text)throw new Error('EMPTY_ORBY_RESPONSE');
   }catch(error){
    providerUnavailable=true;
-   console.warn('ORBY AI provider unavailable; using smart fallback',error instanceof Error?error.name:'unknown');
+   console.warn('ORBY provider unavailable; using deterministic fallback',{code:isOrbyError(error)?error.code:error instanceof Error?error.name:'unknown'});
    source='smart-fallback';text=deterministicOrbyResponse(mode,context,prompt);
   }
-  const saved=await supabaseFetch('/rest/v1/rpc/save_orby_exchange',{method:'POST',body:JSON.stringify({target_organization:organizationId,target_conversation:conversationId,conversation_title:prompt.slice(0,120),conversation_mode:mode,user_prompt:prompt,assistant_response:text,response_source:source,response_metadata:{provider_unavailable:providerUnavailable}})});
+  const saved=await supabaseFetch('/rest/v1/rpc/save_orby_exchange',{method:'POST',body:JSON.stringify({target_organization:organizationId,target_conversation:conversationId,conversation_title:prompt.slice(0,120),conversation_mode:mode,user_prompt:prompt,assistant_response:text,response_source:source,response_metadata:{provider_unavailable:providerUnavailable,runtime:kernelResponse?'orby-core':'deterministic-fallback',kernel_session_id:kernelResponse?.sessionId||null,provider_id:kernelResponse?.providerId||null,model_id:kernelResponse?.modelId||null}})});
   const savedConversationId=scalar<string>(saved);
   return NextResponse.json({text,source,conversationId:savedConversationId,remaining:usage?.remaining??0});
  }catch(error){
