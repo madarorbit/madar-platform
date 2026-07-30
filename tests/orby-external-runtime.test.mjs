@@ -11,7 +11,7 @@ test('OpenRouter is isolated behind server-only environment configuration',async
  assert.match(provider,/allow_fallbacks:true/);
  assert.match(provider,/require_parameters:true/);
  assert.match(provider,/data_collection:'deny'/);
- assert.match(provider,/reasoning:\{effort:'none',exclude:true\}/);
+ assert.match(provider,/reasoning:\{enabled:false,exclude:true\}/);
  assert.match(index,/ORBY_OPENROUTER_API_KEY/);
  assert.doesNotMatch(`${provider}\n${index}\n${env}`,/sk-or-v1-[A-Za-z0-9_-]{20,}/);
 });
@@ -45,18 +45,31 @@ test('database catalog starts disabled and activation is founder guarded',async(
  assert.doesNotMatch(sql,/api_key\s+(text|jsonb)|provider_secret\s+(text|jsonb)/i);
 });
 
+test('DeepSeek V3.2 becomes the only approved primary activation model',async()=>{
+ const sql=await read('supabase/migrations/20260731102000_orby_primary_model_deepseek_v32.sql');
+ assert.match(sql,/'deepseek-v3\.2','openrouter','deepseek\/deepseek-v3\.2'/);
+ assert.match(sql,/target_model text default 'deepseek-v3\.2'/);
+ assert.match(sql,/target_model<>'deepseek-v3\.2'/);
+ assert.match(sql,/openrouter-deepseek-v3\.2-mistral-ocr3/);
+ assert.match(sql,/reasoningDefaultEnabled',false/);
+ assert.match(sql,/where provider_id='openrouter'/);
+ assert.doesNotMatch(sql,/api_key\s+(text|jsonb)|provider_secret\s+(text|jsonb)/i);
+});
+
 test('admin activation probes both services before opening runtime gates',async()=>{
  const [actions,page]=await Promise.all([read('app/admin/orby-os/actions.ts'),read('app/admin/orby-os/models/page.tsx')]);
  assert.match(actions,/requireSuperAdmin/);
  assert.match(actions,/provider\.health\(\)/);
- assert.match(actions,/deepseek\/deepseek-v4-flash/);
+ assert.match(actions,/deepseek\/deepseek-v3\.2/);
  assert.match(actions,/ORBY_RUNTIME_OK/);
  assert.match(actions,/maxOutputTokens:64/);
- assert.match(actions,/reasoning:\{effort:'none',exclude:true\}/);
+ assert.match(actions,/reasoning:\{enabled:false,exclude:true\}/);
+ assert.match(actions,/target_model:'deepseek-v3\.2'/);
  assert.match(actions,/MistralOcrService/);
  assert.match(actions,/ocrHealth\.ok/);
  assert.match(actions,/orby_os_activate_external_runtime/);
  assert.match(page,/فحص المفاتيح وتفعيل التشغيل/);
+ assert.match(page,/DeepSeek V3\.2/);
  assert.match(page,/المفاتيح تبقى داخل متغيرات Vercel المشفرة/);
 });
 
