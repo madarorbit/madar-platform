@@ -27,14 +27,14 @@ import { ApiError, askOrby, fetchDashboard } from '@/lib/api';
 import { clearDashboardCache, readDashboardCache, writeDashboardCache } from '@/lib/cache';
 import { colors } from '@/theme';
 import type { DashboardAlert, DashboardSnapshot, OrbyMessage, OrbyMode } from '@/types';
+import brandSymbol from './assets/adaptive-icon.png';
+import brandHero from './assets/madar-brand-hero.jpg';
 
 I18nManager.allowRTL(true);
 
 type Tab = 'home' | 'reports' | 'orby' | 'account';
 
 const isIos = process.env.EXPO_OS === 'ios';
-const brandSymbol = require('./assets/adaptive-icon.png');
-const brandHero = require('./assets/madar-brand-hero.jpg');
 const liveTables = ['business_products', 'business_customers', 'business_sales', 'business_expenses', 'business_tasks', 'orby_insights'] as const;
 
 const money = (value: number, currency: string) => {
@@ -256,7 +256,7 @@ function LoginScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      <Image source={brandHero} style={styles.loginHero} contentFit="cover" transition={250} />
+      <Image source={brandHero} style={styles.loginHero} contentFit="cover" transition={250} alt="" />
       <LinearGradient
         pointerEvents="none"
         colors={['rgba(9,11,16,.60)', 'rgba(9,11,16,.94)', colors.background]}
@@ -341,7 +341,7 @@ function HomeScreen({ snapshot, refreshing, syncing, onRefresh, offline, error }
           <Text selectable style={styles.eyebrow}>{greeting}</Text>
           <Text selectable style={styles.title}>{snapshot.profile.fullName || 'عميل مَدار'}</Text>
           <Text selectable style={styles.subtitle}>{workspace.name}</Text>
-          <SyncBadge syncing={syncing} offline={offline} fetchedAt={snapshot.fetchedAt} />
+          <SyncBadge syncing={syncing} offline={offline} />
         </View>
         <BrandMark />
       </View>
@@ -490,7 +490,7 @@ function OrbyScreen({ session, snapshot }: { session: Session; snapshot: Dashboa
       <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic">
         <PageHeader eyebrow="المساعد الذكي" title="أوربي" subtitle="يسأل بيانات مَدار ويقدّم تفسيرًا وخطوة تالية" />
         <View style={styles.orbyStatus}>
-          <View style={styles.orbyOrb}><Image source={brandSymbol} style={styles.orbyOrbImage} contentFit="contain" /></View>
+          <View style={styles.orbyOrb}><Image source={brandSymbol} style={styles.orbyOrbImage} contentFit="contain" alt="شعار أوربي" /></View>
           <View style={styles.orbyStatusCopy}>
             <Text selectable style={styles.orbyStatusTitle}>متصل بمساحة {snapshot.workspace.name}</Text>
             <Text selectable style={styles.orbyStatusBody}>لا يملك التطبيق أدوات تعديل، وأي إجابة مبنية على صلاحيات حسابك فقط.</Text>
@@ -557,7 +557,7 @@ function AccountScreen({ session, snapshot }: { session: Session; snapshot: Dash
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
           {snapshot.profile.avatarUrl
-            ? <Image source={{ uri: snapshot.profile.avatarUrl }} style={styles.avatarImage} contentFit="cover" transition={180} />
+            ? <Image source={{ uri: snapshot.profile.avatarUrl }} style={styles.avatarImage} contentFit="cover" transition={180} alt={`صورة ${snapshot.profile.fullName || 'الحساب'}`} />
             : <Text selectable style={styles.avatarText}>{(snapshot.profile.fullName || snapshot.profile.email || 'م').trim().charAt(0)}</Text>}
         </View>
         <Text selectable style={styles.profileName}>{snapshot.profile.fullName || 'عميل مَدار'}</Text>
@@ -627,7 +627,7 @@ function LoadingScreen({ label }: { label: string }) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      <Image source={brandHero} style={styles.loadingHero} contentFit="cover" />
+      <Image source={brandHero} style={styles.loadingHero} contentFit="cover" alt="" />
       <View style={styles.centered}>
         <BrandMark large />
         <ActivityIndicator color={colors.mint} size="large" />
@@ -640,20 +640,17 @@ function LoadingScreen({ label }: { label: string }) {
 function BrandMark({ large = false }: { large?: boolean }) {
   return (
     <View style={[styles.brandMark, large && styles.brandMarkLarge]}>
-      <Image source={brandSymbol} style={large ? styles.brandImageLarge : styles.brandImage} contentFit="contain" transition={180} />
+      <Image source={brandSymbol} style={large ? styles.brandImageLarge : styles.brandImage} contentFit="contain" transition={180} alt="شعار مَدار" />
     </View>
   );
 }
 
-function SyncBadge({ syncing, offline, fetchedAt }: { syncing: boolean; offline: boolean; fetchedAt: string }) {
-  const ageInMinutes = Math.max(0, Math.floor((Date.now() - new Date(fetchedAt).getTime()) / 60_000));
+function SyncBadge({ syncing, offline }: { syncing: boolean; offline: boolean }) {
   const label = offline
     ? 'آخر نسخة محفوظة'
     : syncing
       ? 'جارٍ التحديث…'
-      : ageInMinutes < 1
-        ? 'متزامن الآن'
-        : `متزامن منذ ${ageInMinutes} د`;
+      : 'متزامن الآن';
   return (
     <View style={[styles.syncBadge, offline && styles.syncBadgeOffline]}>
       {syncing && !offline
