@@ -2,13 +2,38 @@
   "expo": {
     "name": "مَدار | ORBIT",
     "slug": "madar-mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "scheme": "orbitmadar",
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#090B10",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#090B10",
+            "image": "./assets/splash-icon.png"
+          }
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ]
+    ],
     "android": {
       "package": "com.orbitmadar.mobile",
-      "versionCode": 1,
+      "versionCode": 2,
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#090B10"
       },
       "permissions": []

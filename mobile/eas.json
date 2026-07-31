@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 19.1.0"
+    "version": ">= 19.1.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -10,8 +11,7 @@
     "prototype": {
       "distribution": "internal",
       "android": {
-        "withoutCredentials": true,
-        "gradleCommand": ":app:assembleDebug"
+        "buildType": "apk"
       }
     },
     "preview": {
@@ -21,7 +21,10 @@
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   }
 }

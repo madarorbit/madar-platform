@@ -1,11 +1,12 @@
-# MADAR prototype APK build
+# MADAR standalone Android APK
 
-The prototype APK is built directly in GitHub Actions from the managed Expo project:
+The installable APK is built by EAS from GitHub Actions:
 
 1. Install the locked mobile dependencies.
-2. Validate TypeScript and Expo configuration.
-3. Generate the native Android project with `expo prebuild`.
-4. Compile `app-debug.apk` with Gradle and Java 17.
-5. Upload the APK and its SHA-256 checksum as the `madar-mobile-prototype-apk` artifact.
+2. Validate TypeScript, Expo configuration, and the authenticated Expo account.
+3. Link the existing EAS project.
+4. Build the `preview` profile as a signed standalone release APK.
+5. Verify the APK contains its JavaScript bundle and therefore does not depend on Metro.
+6. Upload the APK, EAS metadata, and SHA-256 checksum as the `madar-mobile-release-apk` artifact.
 
-This prototype build is signed with Android's generated debug key and is intended only for direct testing. Google Play distribution must use the production EAS/AAB profile and a permanent release signing key.
+The previous `assembleDebug` workflow produced an APK that expected Metro on port 8081 and failed with `Unable to load script`. It must not be restored. Google Play distribution uses the production EAS/AAB profile.
