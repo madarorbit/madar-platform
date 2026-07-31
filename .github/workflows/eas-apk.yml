@@ -1,4 +1,4 @@
-name: Build MADAR Prototype APK
+name: Build MADAR Android APK
 
 on:
   workflow_dispatch:
@@ -17,18 +17,19 @@ permissions:
   contents: read
 
 concurrency:
-  group: madar-prototype-apk-${{ github.ref }}
+  group: madar-android-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: mobile
     env:
       CI: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -38,47 +39,54 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install mobile dependencies
-        run: npm install --no-audit --no-fund
+      - name: Verify Expo access
+        run: |
+          test -n "$EXPO_TOKEN" || { echo "Repository secret EXPO_TOKEN is missing."; exit 1; }
+          npx eas-cli@latest whoami
 
       - name: Verify mobile project
         run: |
           npm run typecheck
           npx expo-doctor@latest
+          npx expo config --type public
 
-      - name: Generate native Android project
-        run: npx expo prebuild --platform android --clean --no-install
+      - name: Link the EAS project
+        run: npx eas-cli@latest init --force --non-interactive
 
-      - name: Build installable Android APK
+      - name: Build standalone release APK
+        run: npx eas-cli@latest build --platform android --profile preview --non-interactive --wait --json > eas-build.json
+
+      - name: Download and validate APK
         run: |
-          chmod +x android/gradlew
-          cd android
-          ./gradlew --no-daemon --stacktrace assembleDebug
+          node <<'NODE'
+          const fs = require('node:fs');
+          const value = JSON.parse(fs.readFileSync('eas-build.json', 'utf8'));
+          const build = Array.isArray(value) ? value[0] : value;
+          const url = build?.artifacts?.buildUrl || build?.artifacts?.applicationArchiveUrl || build?.artifactUrl;
+          if (!url) {
+            console.error(JSON.stringify(value, null, 2));
+            throw new Error('EAS did not return an APK artifact URL.');
+          }
+          fs.writeFileSync('apk-url.txt', url);
+          NODE
+          curl --fail --location "$(cat apk-url.txt)" --output madar-mobile-release.apk
+          test -s madar-mobile-release.apk
+          unzip -l madar-mobile-release.apk | grep -E 'assets/(index\.android\.bundle|expo-root)'
+          sha256sum madar-mobile-release.apk > madar-mobile-release.sha256
 
-      - name: Prepare APK artifact
-        run: |
-          APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
-          test -s "$APK_PATH"
-          cp "$APK_PATH" madar-mobile-prototype.apk
-          sha256sum madar-mobile-prototype.apk > madar-mobile-prototype.sha256
-          ls -lh madar-mobile-prototype.apk
-
-      - name: Upload APK artifact
+      - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: madar-mobile-prototype-apk
+          name: madar-mobile-release-apk
           path: |
-            mobile/madar-mobile-prototype.apk
-            mobile/madar-mobile-prototype.sha256
+            mobile/madar-mobile-release.apk
+            mobile/madar-mobile-release.sha256
+            mobile/eas-build.json
           if-no-files-found: error
           retention-days: 14

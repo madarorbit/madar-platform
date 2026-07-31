@@ -1,30 +1,41 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   I18nManager,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import NetInfo from '@react-native-community/netinfo';
 import type { Session } from '@supabase/supabase-js';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
-import { askOrby, fetchDashboard } from '@/lib/api';
+import { ApiError, askOrby, fetchDashboard } from '@/lib/api';
 import { clearDashboardCache, readDashboardCache, writeDashboardCache } from '@/lib/cache';
 import { colors } from '@/theme';
 import type { DashboardAlert, DashboardSnapshot, OrbyMessage, OrbyMode } from '@/types';
+import brandSymbol from './assets/adaptive-icon.png';
+import brandHero from './assets/madar-brand-hero.jpg';
 
 I18nManager.allowRTL(true);
 
 type Tab = 'home' | 'reports' | 'orby' | 'account';
+
+const isIos = process.env.EXPO_OS === 'ios';
+const liveTables = ['business_products', 'business_customers', 'business_sales', 'business_expenses', 'business_tasks', 'orby_insights'] as const;
 
 const money = (value: number, currency: string) => {
   try {
@@ -47,6 +58,14 @@ const dateTime = (value: string) => {
 };
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppShell />
+    </SafeAreaProvider>
+  );
+}
+
+function AppShell() {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
@@ -69,40 +88,109 @@ function AuthenticatedApp({ session }: { session: Session }) {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
+  const snapshotRef = useRef<DashboardSnapshot | null>(null);
+  const requestInFlight = useRef(false);
+  const realtimeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const load = useCallback(async (manual = false) => {
-    manual ? setRefreshing(true) : setLoading(true);
+  useEffect(() => {
+    snapshotRef.current = snapshot;
+  }, [snapshot]);
+
+  const load = useCallback(async ({ manual = false, silent = false }: { manual?: boolean; silent?: boolean } = {}) => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
+    if (manual) setRefreshing(true);
+    else if (!silent && !snapshotRef.current) setLoading(true);
+    else setSyncing(true);
     setError(null);
     try {
       const fresh = await fetchDashboard(session.access_token);
+      snapshotRef.current = fresh;
       setSnapshot(fresh);
       setOffline(false);
       await writeDashboardCache(fresh);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'تعذر تحميل لوحة العمل.';
-      const cached = snapshot || await readDashboardCache();
+      const cached = snapshotRef.current || await readDashboardCache();
       if (cached) {
+        snapshotRef.current = cached;
         setSnapshot(cached);
         setOffline(true);
         setError('تعذر التحديث، وتُعرض آخر نسخة محفوظة على الجهاز.');
       } else {
         setError(message);
       }
-      if (message.includes('الجلسة')) await supabase.auth.signOut();
+      if (loadError instanceof ApiError && loadError.code === 'AUTH') await supabase.auth.signOut();
     } finally {
+      requestInFlight.current = false;
       setLoading(false);
       setRefreshing(false);
+      setSyncing(false);
     }
-  }, [session.access_token, snapshot]);
+  }, [session.access_token]);
 
   useEffect(() => {
     readDashboardCache().then((cached) => {
-      if (cached) setSnapshot(cached);
-      load();
+      if (cached) {
+        snapshotRef.current = cached;
+        setSnapshot(cached);
+      }
+      void load();
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [load]);
+
+  useEffect(() => {
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void load({ silent: true });
+    });
+    let wasOffline = false;
+    const networkSubscription = NetInfo.addEventListener((state) => {
+      const connected = state.isConnected !== false && state.isInternetReachable !== false;
+      if (!connected) wasOffline = true;
+      if (connected && wasOffline) {
+        wasOffline = false;
+        void load({ silent: true });
+      }
+    });
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') void load({ silent: true });
+    }, 30_000);
+
+    return () => {
+      appStateSubscription.remove();
+      networkSubscription();
+      clearInterval(interval);
+    };
+  }, [load]);
+
+  useEffect(() => {
+    const workspaceId = snapshot?.workspace.id;
+    if (!workspaceId) return;
+
+    void supabase.realtime.setAuth(session.access_token);
+    const scheduleRefresh = () => {
+      if (realtimeTimer.current) clearTimeout(realtimeTimer.current);
+      realtimeTimer.current = setTimeout(() => void load({ silent: true }), 450);
+    };
+    const channel = supabase.channel(`madar-mobile-${workspaceId}`);
+    liveTables.forEach((table) => {
+      channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table, filter: `organization_id=eq.${workspaceId}` },
+        scheduleRefresh,
+      );
+    });
+    channel.subscribe();
+
+    return () => {
+      if (realtimeTimer.current) clearTimeout(realtimeTimer.current);
+      realtimeTimer.current = null;
+      void supabase.removeChannel(channel);
+    };
+  }, [load, session.access_token, snapshot?.workspace.id]);
 
   if (loading && !snapshot) return <LoadingScreen label="جارٍ تجهيز مركز القيادة…" />;
 
@@ -114,7 +202,7 @@ function AuthenticatedApp({ session }: { session: Session }) {
           <BrandMark />
           <Text style={styles.errorTitle}>لم نتمكن من فتح لوحة العمل</Text>
           <Text style={styles.errorBody}>{error || 'تحقق من اتصال الإنترنت ثم أعد المحاولة.'}</Text>
-          <PrimaryButton label="إعادة المحاولة" onPress={() => load()} />
+          <PrimaryButton label="إعادة المحاولة" onPress={() => void load()} />
           <GhostButton label="تسجيل الخروج" onPress={() => supabase.auth.signOut()} />
         </View>
       </SafeAreaView>
@@ -125,14 +213,16 @@ function AuthenticatedApp({ session }: { session: Session }) {
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
       <View style={styles.app}>
-        {tab === 'home' && (
-          <HomeScreen snapshot={snapshot} refreshing={refreshing} onRefresh={() => load(true)} offline={offline} error={error} />
-        )}
-        {tab === 'reports' && (
-          <ReportsScreen snapshot={snapshot} refreshing={refreshing} onRefresh={() => load(true)} />
-        )}
-        {tab === 'orby' && <OrbyScreen session={session} snapshot={snapshot} />}
-        {tab === 'account' && <AccountScreen session={session} snapshot={snapshot} />}
+        <Animated.View key={tab} entering={FadeIn.duration(180)} exiting={FadeOut.duration(100)} style={styles.flex}>
+          {tab === 'home' && (
+            <HomeScreen snapshot={snapshot} refreshing={refreshing} syncing={syncing} onRefresh={() => void load({ manual: true })} offline={offline} error={error} />
+          )}
+          {tab === 'reports' && (
+            <ReportsScreen snapshot={snapshot} refreshing={refreshing} onRefresh={() => void load({ manual: true })} />
+          )}
+          {tab === 'orby' && <OrbyScreen session={session} snapshot={snapshot} />}
+          {tab === 'account' && <AccountScreen session={session} snapshot={snapshot} />}
+        </Animated.View>
         <BottomNav active={tab} onChange={setTab} attention={snapshot.alerts.some((item) => item.severity === 'critical' || item.severity === 'warning')} />
       </View>
     </SafeAreaView>
@@ -142,6 +232,7 @@ function AuthenticatedApp({ session }: { session: Session }) {
 function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -152,20 +243,33 @@ function LoginScreen() {
     }
     setLoading(true);
     setError(null);
-    const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (authError) setError('بيانات الدخول غير صحيحة أو أن الحساب غير مفعل.');
-    setLoading(false);
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (authError) setError('بيانات الدخول غير صحيحة أو أن الحساب غير مفعل.');
+    } catch {
+      setError('تعذر الوصول إلى مَدار. تحقق من اتصال الإنترنت.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Image source={brandHero} style={styles.loginHero} contentFit="cover" transition={250} alt="" />
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(9,11,16,.60)', 'rgba(9,11,16,.94)', colors.background]}
+        locations={[0, 0.45, 1]}
+        style={styles.loginOverlay}
+      />
+      <KeyboardAvoidingView style={styles.flex} behavior={isIos ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.loginContent} keyboardShouldPersistTaps="handled">
           <BrandMark large />
-          <Text style={styles.loginTitle}>لوحة مَدار على هاتفك</Text>
-          <Text style={styles.loginBody}>اطّلع على حالة تجارتك، المؤشرات والتنبيهات الذكية دون أدوات تعديل أو صلاحيات حساسة.</Text>
-          <View style={styles.loginCard}>
+          <Text selectable style={styles.brandName}>مَدار | ORBIT</Text>
+          <Text selectable style={styles.loginTitle}>مساحة عملك، بوضوح</Text>
+          <Text selectable style={styles.loginBody}>المؤشرات المهمة، التقارير والتنبيهات الذكية في واجهة عرض آمنة تتحدث مع بيانات المنصة.</Text>
+          <Animated.View entering={FadeInDown.duration(260).delay(80)} style={styles.loginCard}>
             <FieldLabel>البريد الإلكتروني</FieldLabel>
             <TextInput
               value={email}
@@ -174,36 +278,54 @@ function LoginScreen() {
               autoCorrect={false}
               keyboardType="email-address"
               textContentType="emailAddress"
+              autoComplete="email"
               placeholder="name@example.com"
               placeholderTextColor={colors.faint}
               style={styles.input}
               textAlign="right"
+              returnKeyType="next"
             />
             <FieldLabel>كلمة المرور</FieldLabel>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              textContentType="password"
-              placeholder="••••••••"
-              placeholderTextColor={colors.faint}
-              style={styles.input}
-              textAlign="right"
-              onSubmitEditing={signIn}
-            />
-            {error && <Text style={styles.inlineError}>{error}</Text>}
-            <PrimaryButton label={loading ? 'جارٍ تسجيل الدخول…' : 'تسجيل الدخول'} onPress={signIn} disabled={loading} />
+            <View style={styles.passwordWrap}>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!passwordVisible}
+                textContentType="password"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                placeholderTextColor={colors.faint}
+                style={[styles.input, styles.passwordInput]}
+                textAlign="right"
+                onSubmitEditing={() => void signIn()}
+                returnKeyType="done"
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={passwordVisible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                onPress={() => setPasswordVisible((value) => !value)}
+                style={styles.passwordToggle}
+              >
+                <MaterialCommunityIcons name={passwordVisible ? 'eye-off-outline' : 'eye-outline'} size={21} color={colors.muted} />
+              </Pressable>
+            </View>
+            {error && <Animated.Text entering={FadeIn.duration(150)} selectable style={styles.inlineError}>{error}</Animated.Text>}
+            <PrimaryButton label={loading ? 'جارٍ تسجيل الدخول…' : 'الدخول إلى مساحة العمل'} onPress={() => void signIn()} disabled={loading} icon="login" />
+          </Animated.View>
+          <View style={styles.securityRow}>
+            <MaterialCommunityIcons name="shield-lock-outline" size={16} color={colors.mint} />
+            <Text selectable style={styles.securityNote}>تُحفظ جلستك مشفّرة، وتبقى صلاحياتك مطابقة للمنصة.</Text>
           </View>
-          <Text style={styles.securityNote}>تُحفظ الجلسة محليًا وتُطبق صلاحيات مساحة العمل نفسها الموجودة في منصة مَدار.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-function HomeScreen({ snapshot, refreshing, onRefresh, offline, error }: {
+function HomeScreen({ snapshot, refreshing, syncing, onRefresh, offline, error }: {
   snapshot: DashboardSnapshot;
   refreshing: boolean;
+  syncing: boolean;
   onRefresh: () => void;
   offline: boolean;
   error: string | null;
@@ -216,9 +338,10 @@ function HomeScreen({ snapshot, refreshing, onRefresh, offline, error }: {
     <ScreenScroll refreshing={refreshing} onRefresh={onRefresh}>
       <View style={styles.screenHeader}>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.eyebrow}>{greeting}</Text>
-          <Text style={styles.title}>{snapshot.profile.fullName || 'عميل مَدار'}</Text>
-          <Text style={styles.subtitle}>{workspace.name}</Text>
+          <Text selectable style={styles.eyebrow}>{greeting}</Text>
+          <Text selectable style={styles.title}>{snapshot.profile.fullName || 'عميل مَدار'}</Text>
+          <Text selectable style={styles.subtitle}>{workspace.name}</Text>
+          <SyncBadge syncing={syncing} offline={offline} />
         </View>
         <BrandMark />
       </View>
@@ -229,14 +352,21 @@ function HomeScreen({ snapshot, refreshing, onRefresh, offline, error }: {
         </View>
       )}
 
-      <View style={[styles.commandCard, needsAttention ? styles.commandAttention : styles.commandHealthy]}>
-        <View style={styles.commandIcon}><Text style={styles.commandIconText}>{needsAttention ? '!' : '✓'}</Text></View>
-        <View style={styles.commandCopy}>
-          <Text style={styles.commandLabel}>حالة العمل الآن</Text>
-          <Text style={styles.commandTitle}>{needsAttention ? `${snapshot.alerts.length} أمور تستحق انتباهك` : 'كل شيء يبدو مستقرًا'}</Text>
-          <Text style={styles.commandBody}>{needsAttention ? 'رتّب أوربي التنبيهات حسب الأولوية لتعرف ما الذي تراجعه أولًا.' : 'لا توجد تنبيهات حرجة في البيانات المتاحة حاليًا.'}</Text>
+      <LinearGradient
+        colors={needsAttention ? ['rgba(247,200,115,.18)', 'rgba(155,123,255,.08)'] : ['rgba(112,228,212,.18)', 'rgba(155,123,255,.08)']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[styles.commandCard, needsAttention ? styles.commandAttention : styles.commandHealthy]}
+      >
+        <View style={styles.commandIcon}>
+          <MaterialCommunityIcons name={needsAttention ? 'alert-outline' : 'check-decagram-outline'} size={25} color={needsAttention ? colors.amber : colors.mint} />
         </View>
-      </View>
+        <View style={styles.commandCopy}>
+          <Text selectable style={styles.commandLabel}>حالة العمل الآن</Text>
+          <Text selectable style={styles.commandTitle}>{needsAttention ? `${snapshot.alerts.length} أمور تستحق انتباهك` : 'كل شيء يبدو مستقرًا'}</Text>
+          <Text selectable style={styles.commandBody}>{needsAttention ? 'رتّب أوربي التنبيهات حسب الأولوية لتعرف ما الذي تراجعه أولًا.' : 'لا توجد تنبيهات حرجة في البيانات المتاحة حاليًا.'}</Text>
+        </View>
+      </LinearGradient>
 
       <SectionTitle title="المؤشرات السريعة" hint="آخر 30 يومًا" />
       <View style={styles.metricsGrid}>
@@ -266,7 +396,7 @@ function HomeScreen({ snapshot, refreshing, onRefresh, offline, error }: {
         )) : <EmptyCard text="لا توجد مهام مفتوحة." />}
       </View>
 
-      <Text style={styles.lastUpdate}>آخر تحديث: {dateTime(snapshot.fetchedAt)}</Text>
+      <Text selectable style={styles.lastUpdate}>آخر تحديث: {dateTime(snapshot.fetchedAt)}</Text>
     </ScreenScroll>
   );
 }
@@ -356,14 +486,14 @@ function OrbyScreen({ session, snapshot }: { session: Session; snapshot: Dashboa
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView style={styles.flex} behavior={isIos ? 'padding' : undefined}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic">
         <PageHeader eyebrow="المساعد الذكي" title="أوربي" subtitle="يسأل بيانات مَدار ويقدّم تفسيرًا وخطوة تالية" />
         <View style={styles.orbyStatus}>
-          <View style={styles.orbyOrb}><Text style={styles.orbyOrbText}>O</Text></View>
+          <View style={styles.orbyOrb}><Image source={brandSymbol} style={styles.orbyOrbImage} contentFit="contain" alt="شعار أوربي" /></View>
           <View style={styles.orbyStatusCopy}>
-            <Text style={styles.orbyStatusTitle}>متصل بمساحة {snapshot.workspace.name}</Text>
-            <Text style={styles.orbyStatusBody}>لا يملك التطبيق أدوات تعديل، وأي إجابة مبنية على صلاحيات حسابك فقط.</Text>
+            <Text selectable style={styles.orbyStatusTitle}>متصل بمساحة {snapshot.workspace.name}</Text>
+            <Text selectable style={styles.orbyStatusBody}>لا يملك التطبيق أدوات تعديل، وأي إجابة مبنية على صلاحيات حسابك فقط.</Text>
           </View>
         </View>
 
@@ -422,12 +552,16 @@ function AccountScreen({ session, snapshot }: { session: Session; snapshot: Dash
     await supabase.auth.signOut();
   }
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent} contentInsetAdjustmentBehavior="automatic">
       <PageHeader eyebrow="الحساب" title={snapshot.profile.fullName || 'حساب مَدار'} subtitle={snapshot.profile.email || session.user.email || ''} />
       <View style={styles.profileCard}>
-        <View style={styles.avatar}><Text style={styles.avatarText}>{(snapshot.profile.fullName || snapshot.profile.email || 'م').trim().charAt(0)}</Text></View>
-        <Text style={styles.profileName}>{snapshot.profile.fullName || 'عميل مَدار'}</Text>
-        <Text style={styles.profileEmail}>{snapshot.profile.email || session.user.email}</Text>
+        <View style={styles.avatar}>
+          {snapshot.profile.avatarUrl
+            ? <Image source={{ uri: snapshot.profile.avatarUrl }} style={styles.avatarImage} contentFit="cover" transition={180} alt={`صورة ${snapshot.profile.fullName || 'الحساب'}`} />
+            : <Text selectable style={styles.avatarText}>{(snapshot.profile.fullName || snapshot.profile.email || 'م').trim().charAt(0)}</Text>}
+        </View>
+        <Text selectable style={styles.profileName}>{snapshot.profile.fullName || 'عميل مَدار'}</Text>
+        <Text selectable style={styles.profileEmail}>{snapshot.profile.email || session.user.email}</Text>
       </View>
       <SectionTitle title="مساحة العمل" />
       <InfoRow label="الاسم" value={snapshot.workspace.name} />
@@ -448,21 +582,28 @@ function AccountScreen({ session, snapshot }: { session: Session; snapshot: Dash
 }
 
 function BottomNav({ active, onChange, attention }: { active: Tab; onChange: (tab: Tab) => void; attention: boolean }) {
-  const items: Array<{ key: Tab; icon: string; label: string }> = [
-    { key: 'home', icon: '⌂', label: 'الرئيسية' },
-    { key: 'reports', icon: '▥', label: 'التقارير' },
-    { key: 'orby', icon: '✦', label: 'أوربي' },
-    { key: 'account', icon: '●', label: 'الحساب' },
+  const items: Array<{ key: Tab; icon: keyof typeof MaterialCommunityIcons.glyphMap; activeIcon: keyof typeof MaterialCommunityIcons.glyphMap; label: string }> = [
+    { key: 'home', icon: 'view-dashboard-outline', activeIcon: 'view-dashboard', label: 'الرئيسية' },
+    { key: 'reports', icon: 'chart-box-outline', activeIcon: 'chart-box', label: 'التقارير' },
+    { key: 'orby', icon: 'creation-outline', activeIcon: 'creation', label: 'أوربي' },
+    { key: 'account', icon: 'account-circle-outline', activeIcon: 'account-circle', label: 'الحساب' },
   ];
   return (
     <View style={styles.bottomNav}>
       {items.map((item) => (
-        <Pressable key={item.key} onPress={() => onChange(item.key)} style={styles.navItem}>
+        <Pressable
+          key={item.key}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: active === item.key }}
+          accessibilityLabel={item.label}
+          onPress={() => onChange(item.key)}
+          style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}
+        >
           <View style={[styles.navIconWrap, active === item.key && styles.navIconWrapActive]}>
-            <Text style={[styles.navIcon, active === item.key && styles.navIconActive]}>{item.icon}</Text>
+            <MaterialCommunityIcons name={active === item.key ? item.activeIcon : item.icon} size={21} color={active === item.key ? colors.mint : colors.faint} />
             {item.key === 'home' && attention && <View style={styles.attentionDot} />}
           </View>
-          <Text style={[styles.navLabel, active === item.key && styles.navLabelActive]}>{item.label}</Text>
+          <Text selectable style={[styles.navLabel, active === item.key && styles.navLabelActive]}>{item.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -474,6 +615,7 @@ function ScreenScroll({ children, refreshing, onRefresh }: { children: ReactNode
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.screenContent}
+      contentInsetAdjustmentBehavior="automatic"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.mint} colors={[colors.mint, colors.violet]} />}
     >
       {children}
@@ -485,10 +627,11 @@ function LoadingScreen({ label }: { label: string }) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <Image source={brandHero} style={styles.loadingHero} contentFit="cover" alt="" />
       <View style={styles.centered}>
         <BrandMark large />
         <ActivityIndicator color={colors.mint} size="large" />
-        <Text style={styles.loadingLabel}>{label}</Text>
+        <Text selectable style={styles.loadingLabel}>{label}</Text>
       </View>
     </SafeAreaView>
   );
@@ -497,9 +640,23 @@ function LoadingScreen({ label }: { label: string }) {
 function BrandMark({ large = false }: { large?: boolean }) {
   return (
     <View style={[styles.brandMark, large && styles.brandMarkLarge]}>
-      <View style={[styles.orbitArc, styles.orbitMint]} />
-      <View style={[styles.orbitArc, styles.orbitViolet]} />
-      {large && <Text style={styles.brandWord}>مَدار</Text>}
+      <Image source={brandSymbol} style={large ? styles.brandImageLarge : styles.brandImage} contentFit="contain" transition={180} alt="شعار مَدار" />
+    </View>
+  );
+}
+
+function SyncBadge({ syncing, offline }: { syncing: boolean; offline: boolean }) {
+  const label = offline
+    ? 'آخر نسخة محفوظة'
+    : syncing
+      ? 'جارٍ التحديث…'
+      : 'متزامن الآن';
+  return (
+    <View style={[styles.syncBadge, offline && styles.syncBadgeOffline]}>
+      {syncing && !offline
+        ? <ActivityIndicator size="small" color={colors.mint} />
+        : <View style={[styles.syncDot, offline && styles.syncDotOffline]} />}
+      <Text selectable style={[styles.syncText, offline && styles.syncTextOffline]}>{label}</Text>
     </View>
   );
 }
@@ -524,6 +681,7 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
 }
 
 function MetricCard({ label, value, accent }: { label: string; value: string; accent: 'mint' | 'violet' | 'amber' | 'red' | 'sky' }) {
+  const { width } = useWindowDimensions();
   const accentStyle = {
     mint: styles.metricMint,
     violet: styles.metricViolet,
@@ -532,10 +690,10 @@ function MetricCard({ label, value, accent }: { label: string; value: string; ac
     sky: styles.metricSky,
   }[accent];
   return (
-    <View style={[styles.metricCard, accentStyle]}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue} numberOfLines={1}>{value}</Text>
-    </View>
+    <Animated.View entering={FadeInDown.duration(220)} style={[styles.metricCard, width < 350 && styles.metricCardFull, accentStyle]}>
+      <Text selectable style={styles.metricLabel}>{label}</Text>
+      <Text selectable style={styles.metricValue} numberOfLines={1}>{value}</Text>
+    </Animated.View>
   );
 }
 
@@ -579,18 +737,29 @@ function FieldLabel({ children }: { children: ReactNode }) {
   return <Text style={styles.fieldLabel}>{children}</Text>;
 }
 
-function PrimaryButton({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
+function PrimaryButton({ label, onPress, disabled = false, icon }: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  icon?: keyof typeof MaterialCommunityIcons.glyphMap;
+}) {
   return (
-    <Pressable onPress={onPress} disabled={disabled} style={({ pressed }) => [styles.primaryButton, disabled && styles.disabled, pressed && styles.pressed]}>
-      <Text style={styles.primaryButtonText}>{label}</Text>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [styles.primaryButton, disabled && styles.disabled, pressed && styles.pressed]}
+    >
+      {icon && <MaterialCommunityIcons name={icon} size={19} color="#06110F" />}
+      <Text selectable style={styles.primaryButtonText}>{label}</Text>
     </Pressable>
   );
 }
 
 function GhostButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}>
-      <Text style={styles.ghostButtonText}>{label}</Text>
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}>
+      <Text selectable style={styles.ghostButtonText}>{label}</Text>
     </Pressable>
   );
 }
@@ -609,21 +778,27 @@ const styles = StyleSheet.create({
   screenContent: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 116 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 18 },
   loadingLabel: { color: colors.muted, fontSize: 14, writingDirection: 'rtl' },
+  loadingHero: { position: 'absolute', inset: 0, opacity: 0.12 },
   brandMark: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  brandMarkLarge: { width: 106, height: 106, marginBottom: 4 },
-  orbitArc: { position: 'absolute', width: '58%', height: '76%', borderWidth: 5, borderRadius: 999, borderTopColor: 'transparent', borderBottomColor: 'transparent' },
-  orbitMint: { borderLeftColor: colors.mint, borderRightColor: 'transparent', left: '10%', transform: [{ rotate: '8deg' }] },
-  orbitViolet: { borderRightColor: colors.violet, borderLeftColor: 'transparent', right: '10%', transform: [{ rotate: '8deg' }] },
-  brandWord: { position: 'absolute', bottom: -5, color: colors.text, fontSize: 15, fontWeight: '900' },
-  loginContent: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingVertical: 48, alignItems: 'center' },
+  brandMarkLarge: { width: 108, height: 108, marginBottom: 2 },
+  brandImage: { width: 44, height: 44 },
+  brandImageLarge: { width: 104, height: 104 },
+  loginHero: { position: 'absolute', inset: 0, opacity: 0.55 },
+  loginOverlay: { position: 'absolute', inset: 0 },
+  loginContent: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingVertical: 42, alignItems: 'center' },
+  brandName: { color: colors.mint, fontWeight: '900', fontSize: 13, letterSpacing: 1.2, marginBottom: 12 },
   loginTitle: { color: colors.text, fontWeight: '900', fontSize: 28, textAlign: 'center', writingDirection: 'rtl' },
   loginBody: { color: colors.muted, fontSize: 14, lineHeight: 24, textAlign: 'center', marginTop: 10, maxWidth: 420, writingDirection: 'rtl' },
-  loginCard: { width: '100%', maxWidth: 460, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 24, padding: 18, marginTop: 26 },
+  loginCard: { width: '100%', maxWidth: 460, backgroundColor: 'rgba(17,21,29,.96)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)', borderRadius: 24, padding: 18, marginTop: 26, boxShadow: '0 18px 45px rgba(0,0,0,.32)' },
   fieldLabel: { color: colors.text, fontWeight: '700', fontSize: 13, marginBottom: 8, marginTop: 8, textAlign: 'right' },
   input: { minHeight: 50, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceElevated, color: colors.text, borderRadius: 14, paddingHorizontal: 14, fontSize: 15, writingDirection: 'rtl' },
+  passwordWrap: { position: 'relative' },
+  passwordInput: { paddingLeft: 50 },
+  passwordToggle: { position: 'absolute', left: 3, top: 3, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
   inlineError: { color: colors.red, textAlign: 'right', marginTop: 12, lineHeight: 21, writingDirection: 'rtl' },
-  securityNote: { color: colors.faint, fontSize: 11, lineHeight: 18, textAlign: 'center', marginTop: 18, maxWidth: 420, writingDirection: 'rtl' },
-  primaryButton: { minHeight: 50, borderRadius: 14, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginTop: 18, paddingHorizontal: 20 },
+  securityRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 7, marginTop: 18, maxWidth: 420 },
+  securityNote: { color: colors.faint, fontSize: 11, lineHeight: 18, textAlign: 'center', writingDirection: 'rtl' },
+  primaryButton: { minHeight: 50, borderRadius: 14, backgroundColor: colors.mint, flexDirection: 'row-reverse', gap: 9, alignItems: 'center', justifyContent: 'center', marginTop: 18, paddingHorizontal: 20 },
   primaryButtonText: { color: '#06110F', fontWeight: '900', fontSize: 15 },
   ghostButton: { minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginTop: 12, paddingHorizontal: 20 },
   ghostButtonText: { color: colors.text, fontWeight: '800', fontSize: 14 },
@@ -637,11 +812,17 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.mint, fontSize: 12, fontWeight: '900', writingDirection: 'rtl', textAlign: 'right' },
   title: { color: colors.text, fontSize: 27, fontWeight: '900', marginTop: 3, writingDirection: 'rtl', textAlign: 'right' },
   subtitle: { color: colors.muted, fontSize: 13, marginTop: 4, writingDirection: 'rtl', textAlign: 'right' },
+  syncBadge: { minHeight: 24, marginTop: 9, paddingHorizontal: 9, flexDirection: 'row-reverse', alignItems: 'center', gap: 6, borderRadius: 99, backgroundColor: colors.mintSoft, borderWidth: 1, borderColor: 'rgba(112,228,212,.18)' },
+  syncBadgeOffline: { backgroundColor: colors.amberSoft, borderColor: 'rgba(247,200,115,.2)' },
+  syncDot: { width: 6, height: 6, borderRadius: 99, backgroundColor: colors.mint },
+  syncDotOffline: { backgroundColor: colors.amber },
+  syncText: { color: colors.mint, fontSize: 9, fontWeight: '800', writingDirection: 'rtl' },
+  syncTextOffline: { color: colors.amber },
   offlineBanner: { backgroundColor: colors.amberSoft, borderWidth: 1, borderColor: 'rgba(247,200,115,.25)', padding: 12, borderRadius: 14, marginTop: 16 },
   offlineText: { color: colors.amber, fontSize: 12, lineHeight: 20, textAlign: 'right', writingDirection: 'rtl' },
   commandCard: { borderRadius: 24, borderWidth: 1, padding: 18, marginTop: 20, flexDirection: 'row-reverse', alignItems: 'center', gap: 14 },
-  commandHealthy: { backgroundColor: colors.mintSoft, borderColor: 'rgba(112,228,212,.25)' },
-  commandAttention: { backgroundColor: colors.amberSoft, borderColor: 'rgba(247,200,115,.25)' },
+  commandHealthy: { borderColor: 'rgba(112,228,212,.25)' },
+  commandAttention: { borderColor: 'rgba(247,200,115,.25)' },
   commandIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: 'rgba(0,0,0,.22)', alignItems: 'center', justifyContent: 'center' },
   commandIconText: { color: colors.text, fontSize: 24, fontWeight: '900' },
   commandCopy: { flex: 1, alignItems: 'flex-start' },
@@ -651,8 +832,9 @@ const styles = StyleSheet.create({
   sectionTitleRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginTop: 26, marginBottom: 12 },
   sectionTitle: { color: colors.text, fontSize: 17, fontWeight: '900', writingDirection: 'rtl' },
   sectionHint: { color: colors.faint, fontSize: 11, writingDirection: 'rtl' },
-  metricsGrid: { flexDirection: 'row-reverse', flexWrap: 'wrap', marginHorizontal: -5 },
-  metricCard: { width: '50%', padding: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 18, backgroundColor: colors.surface, marginBottom: 10, transform: [{ scale: 0.97 }] },
+  metricsGrid: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 10 },
+  metricCard: { width: '48.4%', padding: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 18, backgroundColor: colors.surface },
+  metricCardFull: { width: '100%' },
   metricMint: { borderTopColor: colors.mint },
   metricViolet: { borderTopColor: colors.violet },
   metricAmber: { borderTopColor: colors.amber },
@@ -704,7 +886,7 @@ const styles = StyleSheet.create({
   saleValue: { color: colors.mint, fontSize: 13, fontWeight: '900', writingDirection: 'rtl' },
   orbyStatus: { borderRadius: 22, borderWidth: 1, borderColor: 'rgba(112,228,212,.22)', backgroundColor: colors.mintSoft, padding: 16, flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   orbyOrb: { width: 52, height: 52, borderRadius: 18, borderWidth: 2, borderColor: colors.violet, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  orbyOrbText: { color: colors.mint, fontSize: 22, fontWeight: '900' },
+  orbyOrbImage: { width: 37, height: 37 },
   orbyStatusCopy: { flex: 1, alignItems: 'flex-start' },
   orbyStatusTitle: { color: colors.text, fontSize: 13, fontWeight: '900', writingDirection: 'rtl', textAlign: 'right' },
   orbyStatusBody: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 4, writingDirection: 'rtl', textAlign: 'right' },
@@ -731,6 +913,7 @@ const styles = StyleSheet.create({
   remaining: { color: colors.faint, fontSize: 10, marginTop: 10, textAlign: 'right', writingDirection: 'rtl' },
   profileCard: { alignItems: 'center', borderRadius: 24, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 22 },
   avatar: { width: 72, height: 72, borderRadius: 24, backgroundColor: colors.violetSoft, borderWidth: 1, borderColor: 'rgba(155,123,255,.3)', alignItems: 'center', justifyContent: 'center' },
+  avatarImage: { width: '100%', height: '100%', borderRadius: 23 },
   avatarText: { color: colors.violet, fontSize: 30, fontWeight: '900' },
   profileName: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 12, writingDirection: 'rtl' },
   profileEmail: { color: colors.muted, fontSize: 12, marginTop: 4 },
@@ -740,12 +923,10 @@ const styles = StyleSheet.create({
   readOnlyCard: { borderRadius: 18, borderWidth: 1, borderColor: 'rgba(125,211,252,.22)', backgroundColor: colors.skySoft, padding: 15, marginTop: 24 },
   readOnlyTitle: { color: colors.sky, fontSize: 13, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl' },
   readOnlyBody: { color: colors.muted, fontSize: 11, lineHeight: 19, marginTop: 5, textAlign: 'right', writingDirection: 'rtl' },
-  bottomNav: { position: 'absolute', left: 12, right: 12, bottom: Platform.OS === 'ios' ? 14 : 10, height: 74, borderRadius: 24, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(17,21,29,.98)', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 6 },
+  bottomNav: { position: 'absolute', left: 12, right: 12, bottom: isIos ? 8 : 6, height: 72, borderRadius: 24, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(17,21,29,.98)', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 6, boxShadow: '0 12px 32px rgba(0,0,0,.36)' },
   navItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
   navIconWrap: { width: 34, height: 30, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   navIconWrapActive: { backgroundColor: colors.mintSoft },
-  navIcon: { color: colors.faint, fontSize: 18, fontWeight: '900' },
-  navIconActive: { color: colors.mint },
   navLabel: { color: colors.faint, fontSize: 9, fontWeight: '700', writingDirection: 'rtl' },
   navLabelActive: { color: colors.text },
   attentionDot: { position: 'absolute', width: 6, height: 6, borderRadius: 99, backgroundColor: colors.red, top: 2, right: 4 },
