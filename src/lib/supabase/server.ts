@@ -44,8 +44,8 @@ async function responsePayload(response:Response){
  }
 }
 export async function serverToken() { return (await cookies()).get('madar-access-token')?.value; }
-export async function supabaseFetch(path:string, init:RequestInit = {}) {
- const {url,key}=supabaseConfig(); const token=await serverToken();
+export async function supabaseFetch(path:string, init:RequestInit = {}, accessToken?:string) {
+ const {url,key}=supabaseConfig(); const token=accessToken??await serverToken();
  const headers = new Headers(init.headers); headers.set('apikey', key); headers.set('Content-Type','application/json'); if(token) headers.set('Authorization',`Bearer ${token}`); headers.set('Prefer', headers.get('Prefer') || 'return=representation');
  const response=await fetch(`${url}${path}`, {...init, headers, cache:'no-store'});
  if(!response.ok) {
@@ -57,6 +57,6 @@ export async function supabaseFetch(path:string, init:RequestInit = {}) {
  }
  return responsePayload(response);
 }
-export async function currentUser():Promise<AuthUser|null>{ const token=await serverToken(); if(!token)return null; try{return await supabaseFetch('/auth/v1/user') as AuthUser;}catch{return null;} }
-export async function profileForUser(userId:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status`); return rows?.[0] as Profile|undefined; }
-export async function currentProfile(){ const user=await currentUser(); if(!user)return null; return profileForUser(user.id); }
+export async function currentUser(accessToken?:string):Promise<AuthUser|null>{ const token=accessToken??await serverToken(); if(!token)return null; try{return await supabaseFetch('/auth/v1/user',{},token) as AuthUser;}catch{return null;} }
+export async function profileForUser(userId:string,accessToken?:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status`,{},accessToken); return rows?.[0] as Profile|undefined; }
+export async function currentProfile(accessToken?:string){ const user=await currentUser(accessToken); if(!user)return null; return profileForUser(user.id,accessToken); }
