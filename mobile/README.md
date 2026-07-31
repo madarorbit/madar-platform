@@ -25,7 +25,7 @@ npm start
 
 متغيرات `EXPO_PUBLIC_*` عامة بطبيعتها. الأمان يعتمد على جلسة المستخدم وRLS؛ لا تُضف `SUPABASE_SERVICE_ROLE_KEY` أو مفاتيح مزودي أوربي إلى التطبيق.
 
-## إنشاء APK تجريبي
+## إنشاء APK تجريبي محليًا
 
 ثبّت EAS وسجّل الدخول بالحساب المخصص لمَدار، ثم اربط المشروع مرة واحدة:
 
@@ -37,6 +37,26 @@ npm run build:apk
 ```
 
 ملف `eas.json` يضبط ملف `preview` على `android.buildType=apk` ليكون الناتج قابلًا للتثبيت المباشر على أجهزة أندرويد. إصدار Google Play لاحقًا يستخدم ملف `production` وينتج AAB.
+
+## إنشاء أول APK من GitHub Actions
+
+يوجد Workflow يدوي باسم `Build MADAR Prototype APK` داخل `.github/workflows/eas-apk.yml`.
+
+قبل تشغيله لأول مرة:
+
+1. أنشئ حساب Expo/EAS الرسمي لمَدار.
+2. أنشئ Expo access token من لوحة حساب مَدار.
+3. أضف الرمز داخل GitHub Repository Secrets بالاسم `EXPO_TOKEN`. لا تضع الرمز داخل الكود أو المحادثات.
+4. افتح GitHub Actions وشغّل Workflow يدويًا.
+
+الـWorkflow ينفذ ما يلي:
+
+- يتحقق من TypeScript وExpo Doctor.
+- ينشئ أو يربط مشروع EAS تلقائيًا عبر `eas init --force --non-interactive`.
+- يستخدم ملف `prototype` لبناء Debug APK قابل للتثبيت دون إعداد Android production credentials.
+- ينتظر اكتمال EAS Build ثم يحمّل الملف داخل GitHub Artifact باسم `madar-mobile-prototype-apk` لمدة 14 يومًا.
+
+ملف `prototype` مخصص للاختبار المبكر فقط. قبل Google Play يجب إنشاء مفتاح توقيع دائم واستخدام ملف `production` لإنتاج AAB.
 
 ## واجهة الخادم
 

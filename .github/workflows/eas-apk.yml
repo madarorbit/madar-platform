@@ -1,0 +1,85 @@
+name: Build MADAR Prototype APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Verify Expo token
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "Repository secret EXPO_TOKEN is missing."
+            exit 1
+          fi
+
+      - name: Install mobile dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify mobile project
+        run: |
+          npm run typecheck
+          npx expo-doctor@latest
+
+      - name: Authenticate with Expo
+        run: npx eas-cli@latest whoami
+
+      - name: Create or link EAS project
+        run: npx eas-cli@latest init --force --non-interactive
+
+      - name: Build installable Android APK
+        run: npx eas-cli@latest build --platform android --profile prototype --non-interactive --wait --json > eas-build.json
+
+      - name: Resolve and download APK
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const value = JSON.parse(fs.readFileSync('eas-build.json', 'utf8'));
+          const build = Array.isArray(value) ? value[0] : value;
+          const url = build?.artifacts?.buildUrl || build?.artifacts?.applicationArchiveUrl || build?.artifactUrl;
+          if (!url) {
+            console.error(JSON.stringify(value, null, 2));
+            throw new Error('EAS did not return an APK artifact URL.');
+          }
+          fs.writeFileSync('apk-url.txt', url);
+          NODE
+          curl --fail --location "$(cat apk-url.txt)" --output madar-mobile-prototype.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: madar-mobile-prototype-apk
+          path: mobile/madar-mobile-prototype.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload EAS build metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: madar-mobile-eas-build-metadata
+          path: |
+            mobile/eas-build.json
+            mobile/apk-url.txt
+          if-no-files-found: error
+          retention-days: 14
