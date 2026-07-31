@@ -38,8 +38,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: mobile/package-lock.json
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -52,7 +50,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install mobile dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
 
       - name: Verify mobile project
         run: |
