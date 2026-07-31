@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "مَدار | ORBIT",
+    "slug": "madar-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.orbitmadar.mobile",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#090B10"
+      },
+      "permissions": []
+    }
+  }
+}
