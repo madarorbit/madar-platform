@@ -2,13 +2,15 @@ import Link from 'next/link';
 import {AnalyticsBars} from '@/components/business/AnalyticsBars';
 import {analyticsMoney,changeLabel,loadBusinessAnalytics,resolveAnalyticsRange,shiftIsoDate} from '@/src/lib/analytics';
 import {requireBusinessWorkspace} from '@/src/lib/business';
+import {supabaseFetch} from '@/src/lib/supabase/server';
 
 export const dynamic='force-dynamic';
 export const metadata={title:'ذكاء الأعمال | مَدار'};
 const customerLabels:{[key:string]:string}={new:'جدد',active:'نشطون',vip:'مميزون',inactive:'متوقفون'};
 
 export default async function AnalyticsPage({searchParams}:{searchParams:Promise<{start?:string;end?:string}>}){
- const{workspace}=await requireBusinessWorkspace(),params=await searchParams;
+ const{workspace,sector}=await requireBusinessWorkspace(),params=await searchParams;
+ if(sector.extension!=='commerce')return <SectorAnalytics organizationId={workspace.id} currency={workspace.currency} extension={sector.extension} title={sector.specializationName}/>;
  let range;
  try{range=resolveAnalyticsRange(params.start,params.end)}catch(error){return <ErrorState message={error instanceof Error?error.message:'الفترة غير صالحة.'}/>}
  let data;
@@ -52,4 +54,5 @@ export default async function AnalyticsPage({searchParams}:{searchParams:Promise
   <p className="mt-6 text-xs leading-6 text-slate-500">صافي الربح هنا تقديري: المبيعات ناقص تكلفة العناصر المسجلة والمصروفات. المبيعات التاريخية المستوردة دون بنود تفصيلية لا تُنتج تكلفة بضاعة تلقائية.</p>
  </main>;
 }
+async function SectorAnalytics({organizationId,currency,extension,title}:{organizationId:string;currency:string;extension:'food_service'|'hospitality';title:string}){const id=encodeURIComponent(organizationId),[report,configs]=await Promise.all([supabaseFetch(extension==='food_service'?`/rest/v1/restaurant_profit_report?organization_id=eq.${id}&select=*`:`/rest/v1/hotel_daily_report?organization_id=eq.${id}&select=*`).catch(()=>[]),supabaseFetch(`/rest/v1/sector_report_configs?organization_id=eq.${id}&is_active=eq.true&select=key,name_ar,definition&order=key`).catch(()=>[])]),data=report?.[0]||{},cards=extension==='food_service'?[['الطلبات المكتملة',data.completed_orders||0],['إيراد الوجبات',analyticsMoney(data.revenue||0,currency)],['تكلفة المكونات',analyticsMoney(data.ingredient_cost||0,currency)],['الربح الإجمالي',analyticsMoney(data.gross_profit||0,currency)],['متوسط زمن التذكرة',`${Number(data.avg_ticket_minutes||0).toLocaleString('ar-YE')} دقيقة`]]:[['إجمالي الغرف',data.total_rooms||0],['الغرف المشغولة',data.occupied_rooms||0],['نسبة الإشغال',`${Number(data.occupancy||0).toLocaleString('ar-YE')}%`],['إيراد الغرف اليوم',analyticsMoney(data.room_revenue||0,currency)]];return <main className="mx-auto max-w-7xl p-5 py-10"><p className="font-bold text-emerald-300">التقارير القطاعية</p><h1 className="mt-2 text-4xl font-black">تحليلات {title}</h1><p className="mt-3 max-w-3xl leading-8 text-slate-300">تقرير القطاع مستقل عن نموذج المتجر العام، ويستخدم كيانات ومؤشرات الحزمة المفعلة.</p><section className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards.map(([label,value])=><article key={String(label)} className="md-card p-5"><p className="text-sm text-slate-400">{label}</p><strong className="mt-3 block text-2xl">{value}</strong></article>)}</section><section className="mt-8"><h2 className="text-2xl font-black">تعريفات المؤشرات المفعلة</h2><div className="mt-4 grid gap-4 md:grid-cols-2">{configs.map((config:{key:string;name_ar:string;definition:unknown})=><article key={config.key} className="md-card p-5"><strong>{config.name_ar}</strong><pre className="mt-3 overflow-auto text-xs text-slate-400" dir="ltr">{JSON.stringify(config.definition,null,2)}</pre></article>)}</div></section></main>}
 function ErrorState({message}:{message:string}){return <main className="mx-auto max-w-3xl p-6 py-16"><h2 className="text-3xl font-black">تعذر عرض التحليلات</h2><p className="mt-4 rounded-2xl border border-red-300/20 bg-red-300/10 p-5 text-red-100">{message}</p><Link href="/workspace" className="mt-6 inline-block font-bold text-[#70E4D4]">العودة إلى مساحة العمل</Link></main>}

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { supabaseConfig } from '@/src/lib/env';
 
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'CUSTOMER';
-export type Profile = { id:string; email:string|null; full_name:string|null; phone:string|null; avatar_url:string|null; role:Role; status:'active'|'disabled' };
+export type Profile = { id:string; email:string|null; full_name:string|null; phone:string|null; avatar_url:string|null; role:Role; status:'active'|'disabled'; account_type?:'PERSONAL'|'BUSINESS'; default_commercial_organization_id?:string|null };
 export type AuthUser = { id:string; email?:string|null; email_confirmed_at?:string|null; phone?:string|null; created_at?:string; app_metadata?:Record<string,unknown>|null; user_metadata?:Record<string,unknown>|null };
 
 type SupabaseErrorPayload={code?:string;message?:string;msg?:string;error_description?:string;details?:string;hint?:string};
@@ -58,5 +58,5 @@ export async function supabaseFetch(path:string, init:RequestInit = {}, accessTo
  return responsePayload(response);
 }
 export async function currentUser(accessToken?:string):Promise<AuthUser|null>{ const token=accessToken??await serverToken(); if(!token)return null; try{return await supabaseFetch('/auth/v1/user',{},token) as AuthUser;}catch{return null;} }
-export async function profileForUser(userId:string,accessToken?:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status`,{},accessToken); return rows?.[0] as Profile|undefined; }
+export async function profileForUser(userId:string,accessToken?:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status,account_type,default_commercial_organization_id`,{},accessToken); return rows?.[0] as Profile|undefined; }
 export async function currentProfile(accessToken?:string){ const user=await currentUser(accessToken); if(!user)return null; return profileForUser(user.id,accessToken); }

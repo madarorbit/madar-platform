@@ -1,13 +1,11 @@
-import {requireUser} from '@/src/lib/auth';
-import {supabaseFetch} from '@/src/lib/supabase/server';
+import Link from 'next/link';
 import {redirect} from 'next/navigation';
-import OnboardingForm from './form';
+import {requireUser} from '@/src/lib/auth';
+import {currentProfile,supabaseFetch} from '@/src/lib/supabase/server';
+
 export const dynamic='force-dynamic';
 export default async function Page(){
- const user=await requireUser();
- const memberships=await supabaseFetch(`/rest/v1/organization_members?user_id=eq.${user.id}&select=organizations(type)`);
- if(memberships?.some((x:{organizations?:{type?:string}})=>x.organizations?.type!=='STUDENT'))redirect('/dashboard');
- const requests=await supabaseFetch(`/rest/v1/workspace_requests?user_id=eq.${user.id}&status=in.(pending_payment,pending_review)&select=id&order=created_at.desc&limit=1`);
- if(requests?.[0])redirect(`/workspace-payment/${requests[0].id}`);
- return <main className="mx-auto max-w-xl p-6"><h1 className="text-3xl font-bold">أنشئ مساحتك في مَدار</h1><p className="mt-3 text-slate-300">مساحة الطالب مجانية ومستقلة، بينما تُفعّل مساحات الأعمال بعد الدفع وموافقة الإدارة.</p><OnboardingForm/></main>;
+ const user=await requireUser(),profile=await currentProfile();if(profile?.account_type==='PERSONAL')redirect('/student');
+ const memberships=await supabaseFetch(`/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=organizations(type)`);if(memberships?.some((item:{organizations?:{type?:string}})=>item.organizations?.type!=='STUDENT'))redirect('/workspace');
+ return <main className="mx-auto max-w-2xl p-6 py-16"><p className="font-bold text-amber-300">استعادة تهيئة الحساب</p><h1 className="mt-3 text-4xl font-black">حساب الأعمال لا يملك مساحة مرتبطة</h1><p className="mt-5 leading-8 text-slate-300">لا تسمح مَدار V2 بإنشاء مسار آخر أو مساحة طالب من هذا الحساب. يفترض أن تُنشأ مساحة العمل والحزمة والاشتراك التجريبي تلقائيًا عند التسجيل؛ لذلك يلزم إصلاح التهيئة الحالية مع الحفاظ على هوية الحساب.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/contact" className="md-button md-button-primary">طلب استعادة التهيئة</Link><Link href="/account" className="md-button md-button-secondary">العودة للحساب</Link></div></main>;
 }

@@ -1,0 +1,12 @@
+import Link from 'next/link';
+import {requireBusinessWorkspace} from '@/src/lib/business';
+import {Icon} from '@/components/ui/Icons';
+
+export const dynamic='force-dynamic';
+export const metadata={title:'تطبيق لوحة القيادة | مَدار'};
+
+export default async function DashboardAppPage(){
+ const{workspace,sector}=await requireBusinessWorkspace(),ios=process.env.NEXT_PUBLIC_DASHBOARD_APP_IOS_URL,android=process.env.NEXT_PUBLIC_DASHBOARD_APP_ANDROID_URL,pwa=process.env.NEXT_PUBLIC_DASHBOARD_APP_PWA_URL;
+ const links=[['iPhone وiPad',ios],['Android',android],['نسخة الويب المثبتة',pwa]] as const;
+ return <main className="mx-auto max-w-5xl p-6 py-14"><Link href="/workspace" className="font-bold text-emerald-300">← العودة لمساحة العمل</Link><header className="mt-7"><p className="font-bold text-violet-300">MADAR Dashboard V2</p><h1 className="mt-2 text-4xl font-black">لوحة قيادة مرتبطة بـ{workspace.name}</h1><p className="mt-4 max-w-3xl leading-8 text-slate-300">بعد تسجيل الدخول في التطبيق تُحل المساحة من عضويتك الآمنة، وتظهر واجهة {sector.specializationName}. لا تُضمّن مفاتيح النظام الخارجي في التطبيق، وكل كتابة حساسة تمر بالمعاينة والتأكيد وسجل التدقيق.</p></header><section className="mt-9 grid gap-5 md:grid-cols-3">{links.map(([label,href])=><article key={label} className="md-card flex min-h-52 flex-col justify-between p-6"><div><Icon name="automation" className="h-9 w-9 text-emerald-300"/><h2 className="mt-4 text-xl font-black">{label}</h2><p className="mt-2 text-sm leading-7 text-slate-400">لوحة سريعة للتقارير والتنبيهات والمهام والتعديلات اليومية المسموحة.</p></div>{href?<a href={href} rel="noreferrer" className="md-button md-button-primary mt-5">تحميل التطبيق</a>:<span className="mt-5 rounded-xl border border-dashed border-white/15 p-3 text-center text-sm text-slate-500">رابط المتجر يُضاف عند اعتماد حزمة التطبيق</span>}</article>)}</section><section className="md-panel mt-8"><h2 className="text-2xl font-black">ضمانات الربط</h2><div className="mt-5 grid gap-4 sm:grid-cols-2">{['جلسة المستخدم تحدد المساحة؛ لا اختيار يدوي لمعرف عميل آخر.','واجهة وبيانات تتغير حسب القطاع والحزمة المفعلة.','مصدر الحقيقة محفوظ: مَدار للنشاط الجديد والنظام الخارجي للنشاط المرتبط.','الكتابة العكسية تتطلب منحة ومفتاح عدم تكرار ومعاينة وتأكيدًا.'].map(item=><p key={item} className="rounded-xl border border-white/10 bg-white/[.025] p-4 text-sm leading-7"><span className="ml-2 text-emerald-300">✓</span>{item}</p>)}</div></section></main>;
+}

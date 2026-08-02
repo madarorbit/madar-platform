@@ -32,6 +32,17 @@ export async function submitSubscriptionRenewal(form:FormData){
  finish('/account/subscription',errorMessage,'تم إرسال طلب التجديد للمراجعة.');
 }
 
+export async function submitV2LocalPayment(form:FormData){
+ let proof,errorMessage:string|undefined;
+ try{
+  const{workspace,user}=await requireBusinessWorkspace({allowExpired:true}),file=form.get('proof');if(!(file instanceof File))throw new Error('اختر إثبات التحويل.');
+  proof=await uploadLocalPaymentProof(file,`v2/${user.id}/${workspace.id}`);
+  await supabaseFetch('/rest/v1/rpc/submit_v2_local_payment',{method:'POST',body:JSON.stringify({target_organization:workspace.id,target_variant:required(form.get('variant_id'),'الباقة'),target_method:required(form.get('payment_method_id'),'طريقة الدفع'),target_currency:required(form.get('currency'),'العملة'),reference:required(form.get('payment_reference'),'رقم العملية'),proof_path:proof.storagePath,proof_name:proof.originalFilename,proof_mime:proof.mimeType,proof_size:proof.fileSize})});
+  revalidatePath('/account/subscription');revalidatePath('/admin/local-payments');
+ }catch(error){if(proof)await removeLocalPaymentProof(proof.storagePath);errorMessage=error instanceof Error?error.message:'تعذر إرسال طلب دفع الباقة.'}
+ finish('/account/subscription',errorMessage,'تم إرسال دفع الباقة للمراجعة، وستُفعّل فور اعتماده.');
+}
+
 export async function savePaymentMethod(form:FormData){
  let errorMessage:string|undefined;
  try{
@@ -52,4 +63,11 @@ export async function reviewSubscriptionRenewal(form:FormData){
   revalidatePath('/admin/local-payments');revalidatePath('/account/subscription');
  }catch(error){errorMessage=error instanceof Error?error.message:'تعذر مراجعة طلب التجديد.'}
  finish('/admin/local-payments',errorMessage,'تم حفظ قرار التجديد.');
+}
+
+export async function reviewV2LocalPayment(form:FormData){
+ let errorMessage:string|undefined;
+ try{await requireAdmin();const decision=String(form.get('decision'));if(!['approve','reject'].includes(decision))throw new Error('القرار غير صالح.');await supabaseFetch('/rest/v1/rpc/review_v2_local_payment',{method:'POST',body:JSON.stringify({target_request:required(form.get('request_id'),'طلب الدفع'),decision,note:String(form.get('note')||'').trim()||null})});revalidatePath('/admin/local-payments');revalidatePath('/account/subscription');}
+ catch(error){errorMessage=error instanceof Error?error.message:'تعذر مراجعة دفع الباقة.'}
+ finish('/admin/local-payments',errorMessage,'تم حفظ قرار دفع الباقة.');
 }

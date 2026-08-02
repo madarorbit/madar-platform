@@ -5,7 +5,7 @@ import {supabaseFetch} from '@/src/lib/supabase/server';
 
 export async function GET(request:Request,{params}:{params:Promise<{type:string;id:string}>}){
  await requireAdmin();const{type,id}=await params;
- const table=type==='workspace'?'workspace_payment_submissions':type==='renewal'?'subscription_renewal_requests':null;
+ const table=type==='workspace'?'workspace_payment_submissions':type==='renewal'?'subscription_renewal_requests':type==='v2'?'pricing_local_payment_requests':null;
  if(!table)return new NextResponse('غير موجود',{status:404});
  const row=(await supabaseFetch(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}&select=storage_path&limit=1`))?.[0];
  if(!row)return new NextResponse('غير موجود',{status:404});
