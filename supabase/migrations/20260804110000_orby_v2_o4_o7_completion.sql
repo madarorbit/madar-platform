@@ -22,7 +22,7 @@ create table if not exists public.orby_source_of_truth_states (
   organization_id uuid primary key references public.organizations(id) on delete cascade,
   operating_mode text not null check(operating_mode in ('MADAR_NATIVE','CONNECTED_EXTERNAL')),
   source_of_truth text not null check(source_of_truth in ('MADAR','EXTERNAL')),
-  connector_id uuid references public.integration_connectors(id) on delete set null,
+  connector_id text references public.integration_connectors(connector_key) on delete set null,
   connector_authorized boolean not null default false,
   last_synced_at timestamptz,
   allowed_write_operations jsonb not null default '[]'::jsonb,
@@ -120,7 +120,7 @@ create index if not exists orby_vertical_installations_org_status_idx on public.
 create index if not exists orby_cross_device_state_scope_idx on public.orby_cross_device_state(organization_id,user_id,updated_at desc);
 create index if not exists orby_admin_control_versions_resource_idx on public.orby_admin_control_versions(resource_kind,resource_key,created_at desc);
 create index if not exists orby_release_gate_runs_release_idx on public.orby_release_gate_runs(release_id,started_at desc);
-create index if not exists orby_data_governance_requests_scope_idx on public.orby_data_governance_requests(organization_id,user_id,status,created_at desc);
+create index if not exists orby_data_governance_requests_scope_idx on public.orby_data_governance_requests(organization_id,user_id,status,requested_at desc);
 
 alter table public.orby_vertical_installations enable row level security;
 alter table public.orby_source_of_truth_states enable row level security;
