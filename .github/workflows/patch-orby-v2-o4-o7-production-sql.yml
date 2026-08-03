@@ -1,0 +1,40 @@
+name: Patch ORBY V2 O4-O7 Production SQL
+
+on:
+  push:
+    branches: [codex/orby-v2-production-compat]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: patch-orby-v2-o4-o7-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout compatibility branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/orby-v2-production-compat
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Patch migration deterministically
+        run: node scripts/fix-orby-v2-o4-o7-production-sql.mjs
+      - name: Commit patch when needed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Migration already patched."
+            exit 0
+          fi
+          git config user.name "madarorbit"
+          git config user.email "orbit.ops.digital@gmail.com"
+          git add supabase/migrations/20260804110000_orby_v2_o4_o7_completion.sql
+          git commit -m "fix(orby): align O4-O7 production schema"
+          git push origin HEAD:codex/orby-v2-production-compat
