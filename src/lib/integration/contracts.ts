@@ -4,6 +4,7 @@ export type JsonObject={ [key:string]:JsonValue };
 
 export type ConnectorAuthScheme='none'|'api_key'|'bearer'|'basic'|'oauth2'|'database'|'custom';
 export type ConnectorSyncMode='initial'|'incremental';
+export type ConnectorChannel='OAUTH'|'API_KEY'|'WEBHOOK'|'LOCAL_BRIDGE'|'FILE'|'DATABASE';
 export type ConnectionMode='READ_ONLY'|'WRITE_LIMITED';
 export type ConnectionStatus='draft'|'verifying'|'active'|'paused'|'error'|'disconnected'|'archived';
 export type IntegrationJobType='connection.test'|'sync.initial'|'sync.incremental'|'pipeline.process_batch';
@@ -36,6 +37,10 @@ export type ConnectorManifest={
  authSchemes:readonly ConnectorAuthScheme[];
  streams:readonly ConnectorStreamDefinition[];
  capabilities:ConnectorCapabilities;
+ channels?:readonly ConnectorChannel[];
+ supportedVerticals?:readonly ('commerce'|'food_service'|'hospitality')[];
+ certification?:'draft'|'testing'|'certified'|'suspended'|'retired';
+ setupSchema?:JsonObject;
  internalOnly?:boolean;
 };
 
@@ -102,12 +107,19 @@ export type ConnectorBatch={
  metadata?:JsonObject;
 };
 
+export type ConnectorWriteCommand={id:string;resourceKey:string;commandType:string;entityType:string;entityId:string;desiredChange:JsonObject;expectedSourceVersion:string|null;idempotencyKey:string};
+export type ConnectorWriteResult={ok:boolean;conflict?:boolean;sourceRequestId?:string;sourceVersion?:string;sourceSnapshot?:JsonObject;canonicalAfter?:JsonObject;compensationPayload?:JsonObject;warnings?:string[]};
+export type ConnectorWriteVerification={verified:boolean;sourceVersion?:string;sourceSnapshot?:JsonObject;canonicalAfter?:JsonObject;reason?:string};
+
 export interface Connector {
  readonly manifest:ConnectorManifest;
  validateConfig(input:unknown):ConnectorValidationResult;
  testConnection(context:ConnectorContext):Promise<ConnectionTestResult>;
  initialSync(context:ConnectorContext,request:ConnectorSyncRequest):AsyncIterable<ConnectorBatch>;
  incrementalSync(context:ConnectorContext,request:ConnectorSyncRequest):AsyncIterable<ConnectorBatch>;
+ write?(context:ConnectorContext,command:ConnectorWriteCommand):Promise<ConnectorWriteResult>;
+ verifyWrite?(context:ConnectorContext,command:ConnectorWriteCommand,result:ConnectorWriteResult):Promise<ConnectorWriteVerification>;
+ compensate?(context:ConnectorContext,command:ConnectorWriteCommand,payload:JsonObject):Promise<ConnectorWriteResult>;
 }
 
 export type StoredIntegrationConnection={
@@ -148,6 +160,8 @@ export type StoredIntegrationJob={
  created_at:string;
  updated_at:string;
 };
+
+export type StoredWriteCommand={id:string;organization_id:string;connection_id:string;command_type:string;resource_key:string;entity_type:string;entity_id:string;desired_change:JsonObject;preview:JsonObject;expected_source_version:string|null;idempotency_key:string;status:string;requested_by:string;requested_at:string;locked_by:string|null;lease_expires_at:string|null};
 
 export type EncryptedSecret={
  ciphertext:string;

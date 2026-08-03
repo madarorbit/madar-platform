@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+
+function runSmoke(){return new Promise((resolve,reject)=>{const child=spawn(process.execPath,['--import','tsx','scripts/run-orby-v2-o4-o7-smoke.ts'],{cwd:new URL('..',import.meta.url),env:{...process.env,NODE_ENV:'test'},stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');child.stdout.on('data',chunk=>stdout+=chunk);child.stderr.on('data',chunk=>stderr+=chunk);child.on('error',reject);child.on('close',code=>code===0?resolve({stdout,stderr}):reject(new Error(`ORBY V2 O4-O7 smoke exited ${code}\n${stderr}\n${stdout}`)));});}
+
+test('ORBY V2 O4-O7 acceptance gate passes',async()=>{const{stdout,stderr}=await runSmoke();assert.equal(stderr.trim(),'');const report=JSON.parse(stdout);assert.equal(report.status,'passed');assert.equal(report.failed,0);assert.ok(report.total>=10);for(const key of ['o4-closed-tool-registry','o4-sensitive-write-approval','o5-memory-isolation-and-secret-block','o5-sector-analysis-evidence-confidence-actions','o6-domain-plugins-and-entitlements','o6-source-of-truth-server-guard','o6-cross-device-continuity','o7-admin-control-center','o7-release-gate-and-rollback-requirement','o7-data-governance-backup-channels','o4-o7-database-contract'])assert.ok(report.checks.some(check=>check.key===key&&check.status==='passed'),`${key} must pass`);});

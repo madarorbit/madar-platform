@@ -5,3 +5,5 @@ export * from './governance';
 export * from './operations';
 export * from './benchmark';
 export * from './domains';
+export * from './verticals';
+export * from './control-plane';

@@ -7,6 +7,8 @@ export * from './adapters/integration';
 export * from './execution';
 export * from './intelligence';
 export * from './os';
+export * from './conversation';
+export * from './personality';
 
 import type {OrbyConfigurationStore,OrbyContextSource,OrbyLogger,OrbyModelDescriptor,OrbyProvider,OrbyRuntimeConfiguration,OrbySessionStore} from './core/contracts';
 import {DefaultOrbyEventBus,InMemoryConfigurationStore,InMemorySessionStore,OrbyCapabilityRegistry,OrbyConfigurationManager,OrbyContextEngine,OrbyHealthMonitor,OrbyModelRegistry,OrbyProviderRegistry,OrbyRoutingEngine,OrbySessionManager,RedactingLogger} from './core/runtime';
@@ -20,6 +22,9 @@ export function createOrbyFoundation(options:CreateOrbyFoundationOptions={}){
  capabilities
   .register({key:'chat',version:'1.0.0',enabled:true,description:'المحادثة النصية الأساسية',requiredProviderCapabilities:['text']})
   .register({key:'streaming',version:'1.0.0',enabled:true,description:'البث التدريجي للاستجابات',requiredProviderCapabilities:['text','streaming']})
+  .register({key:'conversation-v2',version:'2.0.0',enabled:true,description:'Threads ورسائل مركبة وبث وإيقاف وإعادة محاولة واستعادة موحدة للويب والتطبيق',metadata:{protocol:'ORBY_CONVERSATION_PROTOCOL_VERSION'}})
+  .register({key:'personality-engine',version:'2.0.0',enabled:true,description:'دستور أوربي ومحرك الشخصية المستقل عن المزود',metadata:{constitution:'ORBY_CHARACTER_CONSTITUTION_VERSION'}})
+  .register({key:'intent-dialogue',version:'2.0.0',enabled:true,description:'تصنيف النية والقطاع والحساسية واختيار استراتيجية الرد قبل استدعاء النموذج'})
   .register({key:'embeddings',version:'1.0.0',enabled:true,description:'التضمينات الدلالية',requiredProviderCapabilities:['embeddings']})
   .register({key:'moderation',version:'1.0.0',enabled:true,description:'فحص سلامة المدخلات والمخرجات',requiredProviderCapabilities:['moderation']})
   .register({key:'tools',version:'1.0.0',enabled:true,description:'طبقة تنفيذ أدوات ORBY مبنية وتبقى خاضعة لإعدادات التنفيذ وسياساته',metadata:{gatedBy:'orby_execution_config.enabled'}})

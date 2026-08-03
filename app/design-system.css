@@ -285,6 +285,13 @@ input[type="file"]::file-selector-button {
 
 .md-sidebar-layout { display: grid; min-height: 100vh; grid-template-columns: var(--md-sidebar) minmax(0, 1fr); }
 .md-sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; border-inline-end: 1px solid var(--md-color-border); background: rgba(7, 10, 18, .94); padding: 1rem; backdrop-filter: blur(18px); }
+.md-sidebar-compact { --md-sidebar: 5.5rem; }
+.md-sidebar-compact .md-sidebar { padding-inline: .65rem; }
+.md-sidebar-compact .md-sidebar nav .md-sidebar-link > span:last-child,
+.md-sidebar-compact .md-sidebar h1,
+.md-sidebar-compact .md-sidebar p,
+.md-sidebar-compact .md-sidebar > div:nth-child(2) { display: none; }
+.md-sidebar-compact .md-sidebar-link { justify-content: center; padding-inline: .45rem; }
 .md-sidebar-nav { display: grid; gap: .35rem; }
 .md-sidebar-link { display: flex; align-items: center; gap: .7rem; border-radius: var(--md-radius-md); padding: .7rem .8rem; color: var(--md-color-text-muted); font-size: var(--md-font-sm); font-weight: 800; transition: background var(--md-duration-fast), color var(--md-duration-fast); }
 .md-sidebar-link:hover { background: rgba(255,255,255,.045); color: white; }

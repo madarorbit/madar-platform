@@ -12,6 +12,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "promote:super-admin": "tsx scripts/promote-super-admin.ts",
     "orby:smoke": "tsx scripts/run-orby-foundation-smoke.ts",
+    "orby:v2-o1-o3": "tsx scripts/run-orby-v2-o1-o3-smoke.ts",
+    "orby:v2-o4-o7": "tsx scripts/run-orby-v2-o4-o7-smoke.ts",
     "orby:agent-smoke": "tsx scripts/run-orby-agent-execution-smoke.ts",
     "orby:intelligence-smoke": "tsx scripts/run-orby-stage-3-smoke.ts",
     "orby:os-smoke": "tsx scripts/run-orby-stage-4-smoke.ts",
