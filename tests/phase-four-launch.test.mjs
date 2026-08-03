@@ -84,7 +84,9 @@ test('Beta operations and attachments are admin controlled',()=>{
 test('launch health endpoint is public, stable and secret free',()=>{
  assert.match(health,/platform_settings/);
  assert.match(health,/database:'connected'/);
- assert.match(health,/VERSION='1\.0\.0'/);
+ assert.match(health,/VERSION='2\.0\.0'/);
  assert.match(health,/RELEASE_CHANNEL='stable'/);
+ assert.match(health,/platform_generation:'MADAR_V2'/);
+ assert.match(health,/orby_generation:'ORBY_V2'/);
  assert.doesNotMatch(health,/service_role|secret_key/i);
 });
