@@ -29,5 +29,26 @@ if(!source.includes(activityAnswerPolicy)){
 }
 if(!source.includes('p.id=activity_profile_id')||!source.includes('private.is_organization_member(p.organization_id)'))throw new Error('MADAR_V2_ACTIVITY_ANSWER_POLICY_INVALID');
 
+// Every static policy in this additive production migration must be safe to
+// apply against a database where an earlier compatible policy already exists.
+source=source.replace(
+ /(^|\n)(?!drop policy if exists "([^"]+)" on public\.([a-z0-9_]+);\n)create policy "([^"]+)" on public\.([a-z0-9_]+)/g,
+ (match,prefix,_oldName,_oldTable,name,table)=>`${prefix}drop policy if exists "${name}" on public.${table};\ncreate policy "${name}" on public.${table}`,
+);
+
+// Dynamic tenant/admin policy loops need the same idempotent behavior.
+source=source.replace(
+ "execute format('create policy \\\"organization member read %1$s\\\" on public.%1$I for select to authenticated using((select private.is_organization_member(organization_id)) or (select private.is_admin()))',table_name);",
+ "execute format('drop policy if exists \\\"organization member read %1$s\\\" on public.%1$I',table_name);\n  execute format('create policy \\\"organization member read %1$s\\\" on public.%1$I for select to authenticated using((select private.is_organization_member(organization_id)) or (select private.is_admin()))',table_name);",
+);
+source=source.replace(
+ "execute format('create policy \\\"admin manage %1$s\\\" on public.%1$I for all to authenticated using((select private.is_admin())) with check((select private.is_admin()))',table_name);",
+ "execute format('drop policy if exists \\\"admin manage %1$s\\\" on public.%1$I',table_name);\n  execute format('create policy \\\"admin manage %1$s\\\" on public.%1$I for all to authenticated using((select private.is_admin())) with check((select private.is_admin()))',table_name);",
+);
+
+if(!source.includes('drop policy if exists "certified integration connector catalog read" on public.integration_connectors;'))throw new Error('MADAR_V2_CERTIFIED_CONNECTOR_POLICY_NOT_IDEMPOTENT');
+if(!source.includes("execute format('drop policy if exists \\\"organization member read %1$s\\\""))throw new Error('MADAR_V2_DYNAMIC_TENANT_POLICIES_NOT_IDEMPOTENT');
+if(!source.includes("execute format('drop policy if exists \\\"admin manage %1$s\\\""))throw new Error('MADAR_V2_DYNAMIC_ADMIN_POLICIES_NOT_IDEMPOTENT');
+
 await writeFile(path,source,'utf8');
-console.log('Patched MADAR V2 production SQL ambiguities and parent-scoped RLS.');
+console.log('Patched MADAR V2 production SQL ambiguities, parent-scoped RLS, and idempotent policies.');
