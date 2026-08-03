@@ -14,10 +14,7 @@ const reportAfter=reportBefore
 if(!reportAfter.includes('select o.organization_id,count(*) filter')||!reportAfter.includes('filter(where o.status not in')||!reportAfter.includes('group by o.organization_id;'))throw new Error('MADAR_V2_RESTAURANT_REPORT_PATCH_INVALID');
 source=source.slice(0,reportStart)+reportAfter+source.slice(reportEnd);
 
-source=source.replace(
- "'activity_profiles','activity_profile_answers','organization_sector_packages'",
- "'activity_profiles','organization_sector_packages'",
-);
+source=source.replace("'activity_profiles','activity_profile_answers','organization_sector_packages'","'activity_profiles','organization_sector_packages'");
 if(source.includes("'activity_profiles','activity_profile_answers','organization_sector_packages'"))throw new Error('MADAR_V2_ACTIVITY_ANSWERS_STILL_IN_GENERIC_RLS');
 
 const childMarker='-- Child tables without organization_id inherit access from their parent command.';
@@ -29,26 +26,18 @@ if(!source.includes(activityAnswerPolicy)){
 }
 if(!source.includes('p.id=activity_profile_id')||!source.includes('private.is_organization_member(p.organization_id)'))throw new Error('MADAR_V2_ACTIVITY_ANSWER_POLICY_INVALID');
 
-// Every static policy in this additive production migration must be safe to
-// apply against a database where an earlier compatible policy already exists.
-source=source.replace(
- /(^|\n)(?!drop policy if exists "([^"]+)" on public\.([a-z0-9_]+);\n)create policy "([^"]+)" on public\.([a-z0-9_]+)/g,
- (match,prefix,_oldName,_oldTable,name,table)=>`${prefix}drop policy if exists "${name}" on public.${table};\ncreate policy "${name}" on public.${table}`,
-);
-
-// Dynamic tenant/admin policy loops need the same idempotent behavior.
-source=source.replace(
- "execute format('create policy \\\"organization member read %1$s\\\" on public.%1$I for select to authenticated using((select private.is_organization_member(organization_id)) or (select private.is_admin()))',table_name);",
- "execute format('drop policy if exists \\\"organization member read %1$s\\\" on public.%1$I',table_name);\n  execute format('create policy \\\"organization member read %1$s\\\" on public.%1$I for select to authenticated using((select private.is_organization_member(organization_id)) or (select private.is_admin()))',table_name);",
-);
-source=source.replace(
- "execute format('create policy \\\"admin manage %1$s\\\" on public.%1$I for all to authenticated using((select private.is_admin())) with check((select private.is_admin()))',table_name);",
- "execute format('drop policy if exists \\\"admin manage %1$s\\\" on public.%1$I',table_name);\n  execute format('create policy \\\"admin manage %1$s\\\" on public.%1$I for all to authenticated using((select private.is_admin())) with check((select private.is_admin()))',table_name);",
-);
-
+source=source.replace(/(^|\n)(?!drop policy if exists "([^"]+)" on public\.([a-z0-9_]+);\n)create policy "([^"]+)" on public\.([a-z0-9_]+)/g,(match,prefix,_oldName,_oldTable,name,table)=>`${prefix}drop policy if exists "${name}" on public.${table};\ncreate policy "${name}" on public.${table}`);
+source=source.replace("execute format('create policy \\\"organization member read %1$s\\\" on public.%1$I for select to authenticated using((select private.is_organization_member(organization_id)) or (select private.is_admin()))',table_name);","execute format('drop policy if exists \\\"organization member read %1$s\\\" on public.%1$I',table_name);\n  execute format('create policy \\\"organization member read %1$s\\\" on public.%1$I for select to authenticated using((select private.is_organization_member(organization_id)) or (select private.is_admin()))',table_name);");
+source=source.replace("execute format('create policy \\\"admin manage %1$s\\\" on public.%1$I for all to authenticated using((select private.is_admin())) with check((select private.is_admin()))',table_name);","execute format('drop policy if exists \\\"admin manage %1$s\\\" on public.%1$I',table_name);\n  execute format('create policy \\\"admin manage %1$s\\\" on public.%1$I for all to authenticated using((select private.is_admin())) with check((select private.is_admin()))',table_name);");
 if(!source.includes('drop policy if exists "certified integration connector catalog read" on public.integration_connectors;'))throw new Error('MADAR_V2_CERTIFIED_CONNECTOR_POLICY_NOT_IDEMPOTENT');
 if(!source.includes("execute format('drop policy if exists \\\"organization member read %1$s\\\""))throw new Error('MADAR_V2_DYNAMIC_TENANT_POLICIES_NOT_IDEMPOTENT');
 if(!source.includes("execute format('drop policy if exists \\\"admin manage %1$s\\\""))throw new Error('MADAR_V2_DYNAMIC_ADMIN_POLICIES_NOT_IDEMPOTENT');
-
 await writeFile(path,source,'utf8');
-console.log('Patched MADAR V2 production SQL ambiguities, parent-scoped RLS, and idempotent policies.');
+
+const orbyPath='supabase/migrations/20260804110000_orby_v2_o4_o7_completion.sql';
+let orby=await readFile(orbyPath,'utf8');
+orby=orby.replace('connector_id uuid references public.integration_connectors(id) on delete set null','connector_id text references public.integration_connectors(connector_key) on delete set null');
+orby=orby.replace('orby_data_governance_requests(organization_id,user_id,status,created_at desc)','orby_data_governance_requests(organization_id,user_id,status,requested_at desc)');
+if(!orby.includes('connector_id text references public.integration_connectors(connector_key)')||!orby.includes('status,requested_at desc'))throw new Error('ORBY_V2_PRODUCTION_SCHEMA_ALIGNMENT_FAILED');
+await writeFile(orbyPath,orby,'utf8');
+console.log('Patched MADAR V2 and ORBY V2 production migration compatibility.');
