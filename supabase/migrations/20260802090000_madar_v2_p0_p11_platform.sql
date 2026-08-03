@@ -1650,7 +1650,7 @@ end $$;
 do $$ declare table_name text;
 begin
  foreach table_name in array array[
-  'activity_profiles','activity_profile_answers','organization_sector_packages','pricing_subscription_snapshots','pricing_subscription_changes','organization_modules','sector_dashboard_configs','sector_report_configs',
+  'activity_profiles','organization_sector_packages','pricing_subscription_snapshots','pricing_subscription_changes','organization_modules','sector_dashboard_configs','sector_report_configs',
   'commerce_purchase_orders','commerce_purchase_order_items','commerce_goods_receipts','commerce_goods_receipt_items','commerce_sales_returns','commerce_sales_return_items','sector_operation_events',
   'integration_connector_requests','integration_schema_snapshots','integration_mapping_previews','integration_sync_previews','integration_inbound_endpoints','integration_inbound_deliveries','integration_health_incidents',
   'integration_permission_grants','integration_consent_log','integration_write_commands','restaurant_locations','restaurant_recipes','restaurant_recipe_ingredients','restaurant_orders','restaurant_order_items','restaurant_kitchen_tickets',
@@ -1660,6 +1660,12 @@ begin
   execute format('create policy "organization member read %1$s" on public.%1$I for select to authenticated using((select private.is_organization_member(organization_id)) or (select private.is_admin()))',table_name);
  end loop;
 end $$;
+
+-- Activity profile answers inherit tenant access from their parent profile.
+alter table public.activity_profile_answers enable row level security;
+drop policy if exists "organization member read activity profile answers" on public.activity_profile_answers;
+create policy "organization member read activity profile answers" on public.activity_profile_answers for select to authenticated
+using(exists(select 1 from public.activity_profiles p where p.id=activity_profile_id and ((select private.is_organization_member(p.organization_id)) or (select private.is_admin()))));
 
 -- Child tables without organization_id inherit access from their parent command.
 alter table public.integration_write_attempts enable row level security;
