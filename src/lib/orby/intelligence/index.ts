@@ -5,6 +5,8 @@ export * from './knowledge';
 export * from './mistral-ocr';
 export * from './rag';
 export * from './analytics';
+export * from './vertical-analytics';
+export * from './isolation';
 export * from './proactive';
 export * from './adapters/supabase';
 export * from './adapters/metrics';
