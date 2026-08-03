@@ -1459,12 +1459,12 @@ revoke all on function public.update_kitchen_ticket(uuid,uuid,text) from public,
 grant execute on function public.update_kitchen_ticket(uuid,uuid,text) to authenticated;
 
 create or replace view public.restaurant_profit_report with (security_invoker=true) as
-select organization_id,count(*) filter(where status not in ('CANCELLED','OPEN')) completed_orders,
+select o.organization_id,count(*) filter(where status not in ('CANCELLED','OPEN')) completed_orders,
  coalesce(sum(total) filter(where status not in ('CANCELLED','OPEN')),0) revenue,
  coalesce(sum(ingredient_cost) filter(where status not in ('CANCELLED','OPEN')),0) ingredient_cost,
  coalesce(sum(total-ingredient_cost) filter(where status not in ('CANCELLED','OPEN')),0) gross_profit,
  coalesce(avg(extract(epoch from (k.ready_at-k.opened_at))/60) filter(where k.ready_at is not null),0) avg_ticket_minutes
-from public.restaurant_orders o left join public.restaurant_kitchen_tickets k on k.restaurant_order_id=o.id group by organization_id;
+from public.restaurant_orders o left join public.restaurant_kitchen_tickets k on k.restaurant_order_id=o.id group by o.organization_id;
 
 -- Hotel atomic reservation, check-in and check-out lifecycle.
 create or replace function private.create_hotel_reservation_impl(target_organization uuid,target_property uuid,target_rate uuid,target_room uuid,guest_name text,guest_phone text,guest_email text,p_check_in_date date,p_check_out_date date,adults integer,children integer)
