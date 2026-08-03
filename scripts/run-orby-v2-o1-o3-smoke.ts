@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {ORBY_CHARACTER_CONSTITUTION,ORBY_CHARACTER_CONSTITUTION_VERSION,OrbyDialogueManager,OrbyPersonalityEngine} from '../src/lib/orby/personality';
 import {ORBY_CONVERSATION_PROTOCOL_VERSION} from '../src/lib/orby/conversation';
-import {createOrbyFoundation,MockOrbyProvider} from '../src/lib/orby';
+import {createOrbyFoundation} from '../src/lib/orby/index';
+import {MockOrbyProvider} from '../src/lib/orby/providers/mock';
 import type {OrbyJsonObject,OrbyModelDescriptor} from '../src/lib/orby/core/contracts';
 
 async function main(){
