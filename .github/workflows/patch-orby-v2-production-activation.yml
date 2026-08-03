@@ -1,0 +1,29 @@
+name: Patch ORBY V2 Production Activation
+
+on:
+  push:
+    branches: [codex/orby-v2-activation-hotfix]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/orby-v2-activation-hotfix
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/fix-orby-v2-production-activation-sql.mjs
+      - shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "madarorbit"
+          git config user.email "orbit.ops.digital@gmail.com"
+          git add supabase/migrations/20260804120000_orby_v2_production_activation.sql
+          git commit -m "fix(orby): omit generated release scope key"
+          git push origin HEAD:codex/orby-v2-activation-hotfix
