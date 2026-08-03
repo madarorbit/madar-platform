@@ -29,7 +29,7 @@ export const ORBY_V2_REQUIRED_GATES:readonly OrbyReleaseGateKey[]=['provider_swa
 export class OrbyV2ReleaseGate{
  evaluate(evidence:readonly OrbyReleaseGateEvidence[]){const byKey=new Map(evidence.map(item=>[item.key,item])),missing=ORBY_V2_REQUIRED_GATES.filter(key=>!byKey.get(key)?.passed),failed=evidence.filter(item=>!item.passed);return{passed:missing.length===0&&failed.length===0,missing,failed,score:evidence.length?evidence.reduce((sum,item)=>sum+(item.score??(item.passed?1:0)),0)/evidence.length:0};}
  assertReady(evidence:readonly OrbyReleaseGateEvidence[]){const result=this.evaluate(evidence);if(!result.passed)throw new Error(`ORBY_V2_RELEASE_BLOCKED:${[...result.missing,...result.failed.map(item=>item.key)].join(',')}`);return result;}
- fromEvaluation(results:readonly OrbyEvaluationResult[],mapping:Readonly<Record<string,OrbyReleaseGateKey>>){return results.map(result=>({key:mapping[result.caseId],passed:result.passed,score:result.score,details:{findings:[...result.findings],durationMs:result.durationMs,cost:result.cost}})).filter((item):item is OrbyReleaseGateEvidence=>Boolean(item.key));}
+ fromEvaluation(results:readonly OrbyEvaluationResult[],mapping:Readonly<Record<string,OrbyReleaseGateKey>>):OrbyReleaseGateEvidence[]{return results.map(result=>({key:mapping[result.caseId],passed:result.passed,score:result.score,details:{findings:[...result.findings],durationMs:result.durationMs,cost:result.cost}}));}
 }
 
 export class OrbyDataGovernanceEngine{
