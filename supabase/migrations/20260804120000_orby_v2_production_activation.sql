@@ -187,7 +187,7 @@ declare v_release_id uuid;
 begin
   insert into public.orby_os_releases(
     organization_id,component,component_key,version,status,rollout_percentage,
-    previous_version,metadata,created_at,activated_at,scope_key
+    previous_version,metadata,created_at,activated_at
   )
   select null,'core','orby-os','2.0.0','active',100,'1.0.0',
     jsonb_build_object(
@@ -197,7 +197,7 @@ begin
         'repository','orby-o1-o3','orby-o4-o7','orby-os-smoke','orby-os-security',
         'orby-os-load','typescript','next-build','enterprise-transformation'
       )
-    ),now(),now(),'global'
+    ),now(),now()
   where not exists(
     select 1 from public.orby_os_releases r
     where r.scope_key='global' and r.component='core'
