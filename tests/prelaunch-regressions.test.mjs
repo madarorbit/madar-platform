@@ -62,10 +62,12 @@ test('expected database domain errors are translated without polluting runtime e
   assert.match(source, /status===422/);
 });
 
-test('health endpoint reports the approved stable v1 technical baseline', async () => {
+test('health endpoint reports the approved stable V2 technical baseline', async () => {
   const source = await read('app/api/health/route.ts');
-  assert.match(source, /const VERSION='1\.0\.0'/);
+  assert.match(source, /const VERSION='2\.0\.0'/);
   assert.match(source, /const RELEASE_CHANNEL='stable'/);
-  assert.match(source, /const RELEASED_AT='2026-07-26'/);
-  assert.doesNotMatch(source, /beta-1\.0\.0/);
+  assert.match(source, /const RELEASED_AT='2026-08-04'/);
+  assert.match(source, /platform_generation:'MADAR_V2'/);
+  assert.match(source, /orby_generation:'ORBY_V2'/);
+  assert.doesNotMatch(source, /beta-2\.0\.0/);
 });
