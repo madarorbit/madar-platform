@@ -22,7 +22,7 @@ create table if not exists public.orby_source_of_truth_states (
   organization_id uuid primary key references public.organizations(id) on delete cascade,
   operating_mode text not null check(operating_mode in ('MADAR_NATIVE','CONNECTED_EXTERNAL')),
   source_of_truth text not null check(source_of_truth in ('MADAR','EXTERNAL')),
-  connector_id uuid references public.integration_connectors(id) on delete set null,
+  connector_id text references public.integration_connectors(connector_key) on delete set null,
   connector_authorized boolean not null default false,
   last_synced_at timestamptz,
   allowed_write_operations jsonb not null default '[]'::jsonb,
@@ -131,32 +131,46 @@ alter table public.orby_data_governance_requests enable row level security;
 alter table public.orby_backup_manifests enable row level security;
 alter table public.orby_channel_registry enable row level security;
 
+drop policy if exists orby_vertical_installations_members_read on public.orby_vertical_installations;
 create policy orby_vertical_installations_members_read on public.orby_vertical_installations for select to authenticated using (
  exists(select 1 from public.organization_members m where m.organization_id=orby_vertical_installations.organization_id and m.user_id=auth.uid())
 );
+drop policy if exists orby_source_of_truth_members_read on public.orby_source_of_truth_states;
 create policy orby_source_of_truth_members_read on public.orby_source_of_truth_states for select to authenticated using (
  exists(select 1 from public.organization_members m where m.organization_id=orby_source_of_truth_states.organization_id and m.user_id=auth.uid())
 );
+drop policy if exists orby_cross_device_owner_rw on public.orby_cross_device_state;
 create policy orby_cross_device_owner_rw on public.orby_cross_device_state for all to authenticated using (
  user_id=auth.uid() and exists(select 1 from public.organization_members m where m.organization_id=orby_cross_device_state.organization_id and m.user_id=auth.uid())
 ) with check (
  user_id=auth.uid() and exists(select 1 from public.organization_members m where m.organization_id=orby_cross_device_state.organization_id and m.user_id=auth.uid())
 );
+drop policy if exists orby_data_governance_owner_read on public.orby_data_governance_requests;
 create policy orby_data_governance_owner_read on public.orby_data_governance_requests for select to authenticated using (
  user_id=auth.uid() and exists(select 1 from public.organization_members m where m.organization_id=orby_data_governance_requests.organization_id and m.user_id=auth.uid())
 );
+drop policy if exists orby_data_governance_owner_create on public.orby_data_governance_requests;
 create policy orby_data_governance_owner_create on public.orby_data_governance_requests for insert to authenticated with check (
  user_id=auth.uid() and exists(select 1 from public.organization_members m where m.organization_id=orby_data_governance_requests.organization_id and m.user_id=auth.uid())
 );
+drop policy if exists orby_channel_registry_authenticated_read on public.orby_channel_registry;
 create policy orby_channel_registry_authenticated_read on public.orby_channel_registry for select to authenticated using (true);
 
+drop policy if exists orby_vertical_installations_service on public.orby_vertical_installations;
 create policy orby_vertical_installations_service on public.orby_vertical_installations for all to service_role using (true) with check (true);
+drop policy if exists orby_source_of_truth_service on public.orby_source_of_truth_states;
 create policy orby_source_of_truth_service on public.orby_source_of_truth_states for all to service_role using (true) with check (true);
+drop policy if exists orby_cross_device_service on public.orby_cross_device_state;
 create policy orby_cross_device_service on public.orby_cross_device_state for all to service_role using (true) with check (true);
+drop policy if exists orby_admin_control_versions_service on public.orby_admin_control_versions;
 create policy orby_admin_control_versions_service on public.orby_admin_control_versions for all to service_role using (true) with check (true);
+drop policy if exists orby_release_gate_runs_service on public.orby_release_gate_runs;
 create policy orby_release_gate_runs_service on public.orby_release_gate_runs for all to service_role using (true) with check (true);
+drop policy if exists orby_data_governance_service on public.orby_data_governance_requests;
 create policy orby_data_governance_service on public.orby_data_governance_requests for all to service_role using (true) with check (true);
+drop policy if exists orby_backup_manifests_service on public.orby_backup_manifests;
 create policy orby_backup_manifests_service on public.orby_backup_manifests for all to service_role using (true) with check (true);
+drop policy if exists orby_channel_registry_service on public.orby_channel_registry;
 create policy orby_channel_registry_service on public.orby_channel_registry for all to service_role using (true) with check (true);
 
 revoke all on public.orby_admin_control_versions,public.orby_release_gate_runs,public.orby_backup_manifests from authenticated;
