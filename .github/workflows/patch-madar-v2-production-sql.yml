@@ -1,0 +1,40 @@
+name: Patch MADAR V2 Production SQL
+
+on:
+  push:
+    branches: [codex/madar-v2-sql-hotfix]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: patch-madar-v2-production-sql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout hotfix branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/madar-v2-sql-hotfix
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Patch migration deterministically
+        run: node scripts/fix-madar-v2-production-sql.mjs
+      - name: Commit patch when needed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Migration already patched."
+            exit 0
+          fi
+          git config user.name "madarorbit"
+          git config user.email "orbit.ops.digital@gmail.com"
+          git add supabase/migrations/20260802090000_madar_v2_p0_p11_platform.sql
+          git commit -m "fix(v2): qualify restaurant profit organization column"
+          git push origin HEAD:codex/madar-v2-sql-hotfix
