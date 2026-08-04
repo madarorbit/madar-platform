@@ -25,6 +25,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: mobile-v2-beta
+      # Successful, verified PR build containing the installable Android APK.
       SOURCE_RUN_ID: '30876417929'
       ARTIFACT_NAME: MADAR-V2.0-beta-APK
     steps:
