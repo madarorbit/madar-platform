@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import type { MobileAlert, MobileCommandAction } from '@madar/contracts/mobile-v2';
@@ -28,10 +28,12 @@ export default function AlertsScreen() {
     } catch (error) { Alert.alert('تعذر تحميل التنبيهات', error instanceof Error ? error.message : 'أعد المحاولة.'); }
     finally { setLoading(false); }
   }, [cursor, session, snapshot]);
+  const loadRef = useRef(load);
+  loadRef.current = load;
   useEffect(() => {
-    const timer = setTimeout(() => void load(false), 0);
+    const timer = setTimeout(() => void loadRef.current(false), 0);
     return () => clearTimeout(timer);
-  }, [load, snapshot?.workspace.id]);
+  }, [snapshot?.workspace.id]);
 
   async function run(action: MobileCommandAction, target: MobileAlert) {
     if (!session || !snapshot) return;
