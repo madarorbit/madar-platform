@@ -44,3 +44,25 @@ test('V1 financial records are archival and cannot be approved from the admin UI
  assert.match(admin,/reviewV2LocalPayment/);
  assert.doesNotMatch(admin,/eslint-disable @typescript-eslint\/no-explicit-any/);
 });
+
+test('founder controls and overview use V2 subscriptions exclusively',async()=>{
+ const actions=await read('app/actions/founder.ts');
+ const workspaces=await read('app/admin/founder/workspaces/page.tsx');
+ const center=await read('app/admin/founder/page.tsx');
+ const migration=await read('supabase/migrations/20260805070200_madar_v2_founder_subscription_control.sql');
+ assert.match(actions,/founder_adjust_v2_subscription/);
+ assert.doesNotMatch(actions,/founder_adjust_subscription/);
+ assert.match(workspaces,/pricing_current_subscriptions/);
+ assert.doesNotMatch(workspaces,/workspace_subscriptions|subscription_plans/);
+ assert.match(center,/subscriptions\.pending_payments/);
+ assert.doesNotMatch(center,/pending_renewals/);
+ assert.match(migration,/revoke execute on function public\.founder_adjust_subscription/);
+ assert.match(migration,/founder\.v2_subscription\.adjusted/);
+ assert.match(migration,/ACTIVE_SUBSCRIPTION_REQUIRES_FUTURE_END/);
+});
+
+test('founder notifications accept internal routes only',async()=>{
+ const actions=await read('app/actions/founder.ts');
+ assert.match(actions,/!link\.startsWith\('\/'\)\|\|link\.startsWith\('\/\/'\)/);
+ assert.match(actions,/رابط الإشعار يجب أن يكون مسارًا داخليًا آمنًا/);
+});
