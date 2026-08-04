@@ -8,12 +8,6 @@
     "scheme": "madar",
     "icon": "../public/brand/symbol-512x512.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "../public/brand/symbol-512x512.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#070A12"
-    },
     "android": {
       "package": "com.orbitmadar.mobile",
       "versionCode": 2,
