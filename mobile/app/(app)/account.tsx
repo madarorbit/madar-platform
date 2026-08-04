@@ -3,7 +3,7 @@ import { Alert, Pressable, Text, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { router } from 'expo-router';
 import { PageHeader, Screen } from '@/components/screen';
-import { AppButton, Badge, Card, SectionTitle } from '@/components/ui';
+import { AppButton, Badge, Card, SectionTitle, Skeleton } from '@/components/ui';
 import { secureKeyValue } from '@/lib/secure-store';
 import { useMadarApp } from '@/providers/app-provider';
 import { useAuth } from '@/providers/auth-provider';
@@ -15,7 +15,7 @@ export default function AccountScreen() {
   const { colors, mode, setMode } = useMadarTheme();
   const [biometric, setBiometric] = useState(false);
   useEffect(() => { secureKeyValue.getItem('madar-biometric-lock').then((value) => setBiometric(value === 'enabled')); }, []);
-  if (!snapshot) return <Screen />;
+  if (!snapshot) return <Screen><Skeleton height={150} /><Skeleton height={210} /></Screen>;
   async function toggleBiometric() {
     if (!biometric) {
       const available = await LocalAuthentication.hasHardwareAsync();
