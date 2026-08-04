@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import NetInfo from '@react-native-community/netinfo';
 import type { MobileDashboardSnapshot } from '@madar/contracts/mobile-v2';
 import { ApiError, mobileApi } from '@/lib/api';
+import { registerMadarPush } from '@/lib/push';
 import { getSecureJson, secureKeyValue, setSecureJson } from '@/lib/secure-store';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -84,6 +85,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const timer = setInterval(() => void load(false), 60_000);
     return () => clearInterval(timer);
   }, [load, online, session]);
+
+  useEffect(() => {
+    if (!online || !session || !snapshot?.capabilities.canUsePush) return;
+    void registerMadarPush(session.access_token, snapshot.workspace.id).catch(() => null);
+  }, [online, session, snapshot?.workspace.id, snapshot?.capabilities.canUsePush]);
 
   const value = useMemo<AppContextValue>(() => ({
     snapshot,
