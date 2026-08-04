@@ -34,24 +34,23 @@ as $$
 declare
   target_organization uuid;
 begin
-  -- Database workers and service-role jobs run without an end-user auth.uid().
-  -- Direct authenticated calls always carry auth.uid() and must pass V2 access.
-  if (select auth.uid()) is null
-     or coalesce((select auth.role()), '') = 'service_role'
-     or private.is_admin() then
-    return case when tg_op = 'DELETE' then old else new end;
+  if tg_op = 'DELETE' then
+    target_organization := old.organization_id;
+  else
+    target_organization := new.organization_id;
   end if;
 
-  target_organization := case
-    when tg_op = 'DELETE' then old.organization_id
-    else new.organization_id
-  end;
-
-  if not private.has_v2_workspace_access(target_organization) then
+  if (select auth.uid()) is not null
+     and coalesce((select auth.role()), '') <> 'service_role'
+     and not private.is_admin()
+     and not private.has_v2_workspace_access(target_organization) then
     raise exception 'V2_WORKSPACE_ACCESS_REQUIRED';
   end if;
 
-  return case when tg_op = 'DELETE' then old else new end;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
 $$;
 
@@ -60,11 +59,11 @@ from public, anon, authenticated;
 
 do $$
 declare
-  table_name text;
+  protected_table text;
   policy_name text := 'madar v2 orby access gate';
   trigger_name text := 'madar_v2_orby_access_guard';
 begin
-  foreach table_name in array array[
+  foreach protected_table in array array[
     'orby_conversations',
     'orby_messages',
     'orby_insights',
@@ -72,32 +71,32 @@ begin
     'orby_usage_daily',
     'orby_message_feedback'
   ] loop
-    if to_regclass(format('public.%I', table_name)) is null then
-      raise exception 'EXPECTED_ORBY_TABLE_MISSING:%', table_name;
+    if to_regclass(format('public.%I', protected_table)) is null then
+      raise exception 'EXPECTED_ORBY_TABLE_MISSING:%', protected_table;
     end if;
     if not exists (
       select 1
       from information_schema.columns column_definition
       where column_definition.table_schema = 'public'
-        and column_definition.table_name = table_name
+        and column_definition.table_name = protected_table
         and column_definition.column_name = 'organization_id'
     ) then
-      raise exception 'EXPECTED_ORBY_ORGANIZATION_COLUMN_MISSING:%', table_name;
+      raise exception 'EXPECTED_ORBY_ORGANIZATION_COLUMN_MISSING:%', protected_table;
     end if;
 
-    execute format('alter table public.%I enable row level security', table_name);
-    execute format('drop policy if exists %I on public.%I', policy_name, table_name);
+    execute format('alter table public.%I enable row level security', protected_table);
+    execute format('drop policy if exists %I on public.%I', policy_name, protected_table);
     execute format(
       'create policy %I on public.%I as restrictive for all to authenticated using ((select private.has_v2_workspace_access(organization_id))) with check ((select private.has_v2_workspace_access(organization_id)))',
       policy_name,
-      table_name
+      protected_table
     );
 
-    execute format('drop trigger if exists %I on public.%I', trigger_name, table_name);
+    execute format('drop trigger if exists %I on public.%I', trigger_name, protected_table);
     execute format(
       'create trigger %I before insert or update or delete on public.%I for each row execute function private.enforce_orby_v2_workspace_access()',
       trigger_name,
-      table_name
+      protected_table
     );
   end loop;
 end;
