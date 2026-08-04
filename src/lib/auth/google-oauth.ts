@@ -22,6 +22,7 @@ export type GoogleOAuthErrorCode =
 export type OAuthIdentity = {
   id?: string;
   identity_id?: string;
+  provider_id?: string;
   provider?: string;
   identity_data?: Record<string, unknown> | null;
 };
@@ -89,7 +90,7 @@ export function googleSubject(user: OAuthUser) {
   const subject = identity?.identity_data?.sub;
   return typeof subject === 'string' && subject.trim()
     ? subject
-    : identity?.identity_id || identity?.id || null;
+    : identity?.provider_id || identity?.identity_id || identity?.id || null;
 }
 
 export function metadataText(metadata: Record<string, unknown> | null | undefined, ...keys: string[]) {
