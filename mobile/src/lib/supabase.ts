@@ -1,24 +1,33 @@
-import { AppState, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 import { createClient, processLock } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
+import { config } from '@/config';
+import { secureKeyValue } from '@/lib/secure-store';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://rybzdpduwgnsjofolini.supabase.co';
-const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx';
-
-export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
+export const supabase = createClient(config.supabaseUrl, config.supabasePublishableKey, {
   auth: {
-    ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),
+    storage: secureKeyValue,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
     lock: processLock,
+    storageKey: 'madar-mobile-v2-auth',
+  },
+  global: {
+    headers: { 'x-madar-client': 'mobile-v2' },
   },
 });
 
-if (Platform.OS !== 'web') {
-  AppState.addEventListener('change', (state) => {
+let appStateBound = false;
+export function bindSessionAutoRefresh() {
+  if (appStateBound || process.env.EXPO_OS === 'web') return () => undefined;
+  appStateBound = true;
+  const subscription = AppState.addEventListener('change', (state) => {
     if (state === 'active') supabase.auth.startAutoRefresh();
     else supabase.auth.stopAutoRefresh();
   });
+  return () => {
+    appStateBound = false;
+    subscription.remove();
+  };
 }
