@@ -20,7 +20,7 @@ function AppNavigator() {
   if (!ready) return null;
   return (
     <>
-      <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
+      <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background }, animation: 'fade_from_bottom' }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
