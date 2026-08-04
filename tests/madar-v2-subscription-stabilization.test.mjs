@@ -22,7 +22,7 @@ test('subscription recovery stays reachable for every locked state',async()=>{
  assert.match(page,/currency=eq\.\$\{currency\}/);
  assert.match(actions,/submitV2LocalPayment/);
  assert.match(actions,/allowExpired:true,allowMissing:true,allowCancelled:true/);
- assert.doesNotMatch(actions,/submitSubscriptionRenewal[\s\S]*submit_subscription_renewal/);
+ assert.doesNotMatch(actions,/submitSubscriptionRenewal|reviewSubscriptionRenewal/);
 });
 
 test('PostgreSQL persists expiry using server time and least privilege',async()=>{
@@ -39,10 +39,35 @@ test('PostgreSQL persists expiry using server time and least privilege',async()=
 
 test('V1 financial records are archival and cannot be approved from the admin UI',async()=>{
  const admin=await read('app/admin/local-payments/page.tsx');
+ const actions=await read('app/actions/local-payments.ts');
  assert.match(admin,/أرشيف V1 للقراءة فقط/);
  assert.doesNotMatch(admin,/reviewSubscriptionRenewal/);
  assert.match(admin,/reviewV2LocalPayment/);
+ assert.doesNotMatch(actions,/submitSubscriptionRenewal|reviewSubscriptionRenewal/);
  assert.doesNotMatch(admin,/eslint-disable @typescript-eslint\/no-explicit-any/);
+});
+
+test('V2 entitlements replace executable V1 limits and quota',async()=>{
+ const migration=await read('supabase/migrations/20260805070300_madar_v2_entitlement_enforcement.sql');
+ assert.match(migration,/v2_active_subscription_entitlement/);
+ assert.match(migration,/locked_entitlements/);
+ assert.match(migration,/revoke execute on function public\.submit_subscription_renewal/);
+ assert.match(migration,/revoke execute on function public\.review_subscription_renewal/);
+ assert.match(migration,/revoke execute on function public\.refresh_workspace_subscription/);
+ assert.match(migration,/MADAR_V2_LOCKED_ENTITLEMENTS/);
+ assert.doesNotMatch(migration,/workspace_subscriptions|subscription_plans/);
+});
+
+test('operational RPCs require server-valid workspace access while billing remains recoverable',async()=>{
+ const migration=await read('supabase/migrations/20260805070400_madar_v2_rpc_access_gate.sql');
+ assert.match(migration,/assert_v2_organization_membership/);
+ assert.match(migration,/assert_v2_organization_access/);
+ assert.match(migration,/v2_active_subscription_entitlement\([\s\S]*'workspace_access'/);
+ assert.match(migration,/submit_v2_local_payment_impl[\s\S]*assert_v2_organization_membership/);
+ assert.doesNotMatch(migration,/submit_v2_local_payment_impl[\s\S]*actor := private\.assert_v2_organization_access/);
+ assert.match(migration,/WORKSPACE_CURRENCY_MISMATCH/);
+ assert.match(migration,/is_grandfathered[\s\S]*false/);
+ assert.match(migration,/pricing\.v2_payment\.approved/);
 });
 
 test('founder controls and overview use V2 subscriptions exclusively',async()=>{
