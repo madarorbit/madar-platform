@@ -78,8 +78,19 @@ test('restrictive RLS blocks direct operational data access after expiry',async(
  assert.match(migration,/activity_profile_answers[\s\S]*as restrictive[\s\S]*for select/i);
  assert.match(migration,/integration_write_attempts[\s\S]*has_v2_workspace_access/i);
  assert.match(migration,/current_v2_entitlement[\s\S]*v2_active_subscription_entitlement/i);
- assert.doesNotMatch(migration,/pricing_local_payment_requests[\s\S]*as restrictive for all/i);
- assert.doesNotMatch(migration,/pricing_subscription_snapshots[\s\S]*as restrictive for all/i);
+ assert.doesNotMatch(migration,/'pricing_local_payment_requests'/);
+ assert.doesNotMatch(migration,/'pricing_subscription_snapshots'/);
+});
+
+test('ORBY context, history and feedback cannot bypass workspace expiry',async()=>{
+ const migration=await read('supabase/migrations/20260805070600_madar_v2_orby_access_gate.sql');
+ assert.match(migration,/public\.orby_business_context/);
+ assert.match(migration,/assert_v2_organization_access/);
+ assert.match(migration,/revoke all on function private\.orby_business_context_impl/);
+ assert.match(migration,/enforce_orby_v2_workspace_access/);
+ assert.match(migration,/as restrictive for all to authenticated/i);
+ for(const table of ['orby_conversations','orby_messages','orby_insights','orby_action_drafts','orby_usage_daily','orby_message_feedback'])assert.match(migration,new RegExp(`'${table}'`));
+ assert.match(migration,/before insert or update or delete/);
 });
 
 test('founder controls and overview use V2 subscriptions exclusively',async()=>{
