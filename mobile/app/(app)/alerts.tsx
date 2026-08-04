@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import type { MobileAlert, MobileCommandAction } from '@madar/contracts/mobile-v2';
@@ -28,12 +28,26 @@ export default function AlertsScreen() {
     } catch (error) { Alert.alert('تعذر تحميل التنبيهات', error instanceof Error ? error.message : 'أعد المحاولة.'); }
     finally { setLoading(false); }
   }, [cursor, session, snapshot]);
-  const loadRef = useRef(load);
-  loadRef.current = load;
+
   useEffect(() => {
-    const timer = setTimeout(() => void loadRef.current(false), 0);
+    if (!session || !snapshot) return;
+    const accessToken = session.access_token;
+    const workspaceId = snapshot.workspace.id;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      mobileApi.alerts(accessToken, workspaceId, null)
+        .then((page) => {
+          setItems(page.items);
+          setCursor(page.nextCursor);
+          setHasMore(page.hasMore);
+        })
+        .catch((error: unknown) => {
+          Alert.alert('تعذر تحميل التنبيهات', error instanceof Error ? error.message : 'أعد المحاولة.');
+        })
+        .finally(() => setLoading(false));
+    }, 0);
     return () => clearTimeout(timer);
-  }, [snapshot?.workspace.id]);
+  }, [session, snapshot?.workspace.id]);
 
   async function run(action: MobileCommandAction, target: MobileAlert) {
     if (!session || !snapshot) return;
