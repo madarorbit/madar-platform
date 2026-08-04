@@ -1,0 +1,61 @@
+name: Publish Mobile V2 APK Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/mobile-v2-publish-release.yml'
+      - '.github/workflows/mobile-v2-apk.yml'
+      - 'app/mobile/page.tsx'
+      - 'mobile/**'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: mobile-v2-public-release
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: mobile-v2-beta
+      SOURCE_BRANCH: fix/mobile-apk-public-download
+      ARTIFACT_NAME: MADAR-V2.0-beta-APK
+    steps:
+      - name: Download latest verified APK artifact
+        run: |
+          SOURCE_RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow "Mobile V2 Android APK" \
+            --branch "$SOURCE_BRANCH" \
+            --event pull_request \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$SOURCE_RUN_ID"
+          echo "Using verified APK workflow run: $SOURCE_RUN_ID"
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$ARTIFACT_NAME" \
+            --dir release
+      - name: Validate APK file
+        run: |
+          test -s release/MADAR-V2.0-beta.apk
+          sha256sum release/MADAR-V2.0-beta.apk
+      - name: Publish stable public beta download
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release/MADAR-V2.0-beta.apk --clobber
+          else
+            gh release create "$RELEASE_TAG" release/MADAR-V2.0-beta.apk \
+              --title "مَدار Android V2.0 Beta" \
+              --notes "نسخة Android التجريبية الرسمية لحسابات الأعمال في منصة مَدار." \
+              --prerelease
+          fi
