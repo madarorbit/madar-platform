@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     let authSubscription: Subscription | null = null;
     let linkSubscription: ReturnType<typeof Linking.addEventListener> | null = null;
-    let unbind = () => undefined;
+    let unbind: () => void = () => undefined;
 
     void (async () => {
       try {
