@@ -54,7 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Invalid external links are ignored safely.
       }
     };
-    Linking.getInitialURL().then((url) => url && handleUrl({ url }));
+    void Linking.getInitialURL().then(async (url) => {
+      if (url) await handleUrl({ url });
+    });
     const linkSubscription = Linking.addEventListener('url', handleUrl);
     return () => {
       data.subscription.unsubscribe();
