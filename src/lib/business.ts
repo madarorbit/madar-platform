@@ -33,7 +33,12 @@ export type BusinessMembership = Omit<WorkspaceMembership, "organizations"> & {
   organizations: BusinessWorkspace;
 };
 export type WorkspaceSubscriptionStatus =
-  "trialing" | "active" | "past_due" | "expired" | "cancelled" | "missing";
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "expired"
+  | "cancelled"
+  | "missing";
 export type WorkspaceSector = {
   profileId: string | null;
   specializationCode: string;
@@ -43,7 +48,11 @@ export type WorkspaceSector = {
   enabledModules: string[];
 };
 
-type RequireBusinessWorkspaceOptions = { allowExpired?: boolean };
+type RequireBusinessWorkspaceOptions = {
+  allowExpired?: boolean;
+  allowMissing?: boolean;
+  allowCancelled?: boolean;
+};
 const scalar = <T>(value: unknown) =>
   Array.isArray(value) ? (value[0] as T) : (value as T);
 const organizationOf = (value: WorkspaceMembership["organizations"]) =>
@@ -54,9 +63,19 @@ const extensionFor = (code: string): VerticalExtension =>
     : code === "HOTEL"
       ? "hospitality"
       : "commerce";
+const subscriptionStatuses: WorkspaceSubscriptionStatus[] = [
+  "trialing",
+  "active",
+  "past_due",
+  "expired",
+  "cancelled",
+  "missing",
+];
 
 export async function requireBusinessWorkspace({
   allowExpired = false,
+  allowMissing = false,
+  allowCancelled = false,
 }: RequireBusinessWorkspaceOptions = {}) {
   const user = await requireUser(),
     profile = await currentProfile();
@@ -88,43 +107,30 @@ export async function requireBusinessWorkspace({
       },
     } as BusinessWorkspace,
     id = encodeURIComponent(rawWorkspace.id);
-  const [v2Subscriptions, activityRows, moduleRows] = await Promise.all([
-    supabaseFetch(
-      `/rest/v1/pricing_subscription_snapshots?organization_id=eq.${id}&status=in.(trialing,active,past_due)&select=id,status,trial_ends_at,ends_at,locked_entitlements,variant_id&order=created_at.desc&limit=1`,
-    ).catch(() => []),
-    supabaseFetch(
-      `/rest/v1/activity_profiles?organization_id=eq.${id}&status=eq.active&select=id,activity_specializations(code,name_ar,terminology)&limit=1`,
-    ).catch(() => []),
-    supabaseFetch(
-      `/rest/v1/organization_modules?organization_id=eq.${id}&status=eq.active&select=module_key`,
-    ).catch(() => []),
-  ]);
-  let subscriptionStatus: WorkspaceSubscriptionStatus = "missing";
-  const current = v2Subscriptions?.[0] as
-    | {
-        status: WorkspaceSubscriptionStatus;
-        trial_ends_at: string | null;
-        ends_at: string | null;
-      }
-    | undefined;
-  if (current) {
-    const deadline =
-      current.status === "trialing" ? current.trial_ends_at : current.ends_at;
-    subscriptionStatus =
-      deadline && new Date(deadline).getTime() <= Date.now()
-        ? "expired"
-        : current.status;
-  } else
-    subscriptionStatus = scalar<WorkspaceSubscriptionStatus>(
-      await supabaseFetch("/rest/v1/rpc/refresh_workspace_subscription", {
+  const [resolvedSubscriptionStatus, activityRows, moduleRows] =
+    await Promise.all([
+      supabaseFetch("/rest/v1/rpc/resolve_pricing_subscription_status", {
         method: "POST",
         body: JSON.stringify({ target_organization: workspace.id }),
-      }).catch(() => "missing"),
-    );
-  if (subscriptionStatus === "missing")
+      }),
+      supabaseFetch(
+        `/rest/v1/activity_profiles?organization_id=eq.${id}&status=eq.active&select=id,activity_specializations(code,name_ar,terminology)&limit=1`,
+      ).catch(() => []),
+      supabaseFetch(
+        `/rest/v1/organization_modules?organization_id=eq.${id}&status=eq.active&select=module_key`,
+      ).catch(() => []),
+    ]);
+  const subscriptionStatus = scalar<WorkspaceSubscriptionStatus>(
+    resolvedSubscriptionStatus,
+  );
+  if (!subscriptionStatuses.includes(subscriptionStatus))
+    throw new Error("تعذر التحقق من حالة اشتراك مَدار V2.0.");
+  if (subscriptionStatus === "missing" && !allowMissing)
     redirect("/account/subscription?missing=1");
   if (subscriptionStatus === "expired" && !allowExpired)
     redirect("/account/subscription?expired=1");
+  if (subscriptionStatus === "cancelled" && !allowCancelled)
+    redirect("/account/subscription?cancelled=1");
   const activity = activityRows?.[0] as
     | {
         id: string;

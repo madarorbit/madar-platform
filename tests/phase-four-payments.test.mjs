@@ -14,6 +14,14 @@ const subscriptions = fs.readFileSync(
   "supabase/migrations/20260724060200_phase_four_subscription_renewals_limits.sql",
   "utf8",
 );
+const v2Access = fs.readFileSync(
+  "supabase/migrations/20260805070100_madar_v2_subscription_access_hardening.sql",
+  "utf8",
+);
+const v2Entitlements = fs.readFileSync(
+  "supabase/migrations/20260805070300_madar_v2_entitlement_enforcement.sql",
+  "utf8",
+);
 const currency = fs.readFileSync(
   "supabase/migrations/20260724060300_local_payment_currency_alignment.sql",
   "utf8",
@@ -77,43 +85,49 @@ test("payment proofs are validated and stored in a private bucket", () => {
   assert.match(actions, /removeLocalPaymentProof/);
 });
 
-test("renewal approval extends from the later of now or the current end date", () => {
+test("legacy renewal history remains auditable but executable RPCs are revoked", () => {
   assert.match(subscriptions, /private\.submit_subscription_renewal_impl/);
   assert.match(subscriptions, /RENEWAL_ALREADY_PENDING/);
-  assert.match(subscriptions, /greatest\(subscription\.ends_at,now\(\)\)/);
-  assert.match(subscriptions, /renewal_count=renewal_count\+1/);
-  assert.match(subscriptions, /subscription\.renewal\.approved/);
   assert.match(subscriptionPage, /V2PaymentForm/);
   assert.match(subscriptionPage, /pricing_current_subscriptions/);
+  assert.match(actions, /submitV2LocalPayment/);
+  assert.doesNotMatch(actions, /submitSubscriptionRenewal|reviewSubscriptionRenewal/);
+  assert.match(v2Entitlements, /revoke execute on function public\.submit_subscription_renewal/);
+  assert.match(v2Entitlements, /revoke execute on function public\.review_subscription_renewal/);
+  assert.match(v2Entitlements, /revoke execute on function public\.refresh_workspace_subscription/);
 });
 
-test("subscription limits are enforced in the database", () => {
-  assert.match(foundation, /product_limit integer/);
-  assert.match(foundation, /member_limit integer/);
-  assert.match(foundation, /orby_daily_limit integer/);
-  assert.match(subscriptions, /enforce_business_product_limit/);
-  assert.match(subscriptions, /PRODUCT_LIMIT_REACHED/);
-  assert.match(subscriptions, /enforce_organization_member_limit/);
-  assert.match(subscriptions, /MEMBER_LIMIT_REACHED/);
-  assert.match(subscriptions, /daily_limit/);
+test("subscription limits and ORBY quota use V2 locked entitlements", () => {
+  assert.match(v2Entitlements, /v2_active_subscription_entitlement/);
+  assert.match(v2Entitlements, /locked_entitlements/);
+  assert.match(v2Entitlements, /'products'/);
+  assert.match(v2Entitlements, /PRODUCT_LIMIT_REACHED/);
+  assert.match(v2Entitlements, /'team_members'/);
+  assert.match(v2Entitlements, /MEMBER_LIMIT_REACHED/);
+  assert.match(v2Entitlements, /'orby_daily_messages'/);
+  assert.match(v2Entitlements, /MADAR_V2_LOCKED_ENTITLEMENTS/);
+  assert.doesNotMatch(v2Entitlements, /workspace_subscriptions|subscription_plans/);
 });
 
-test("expired subscriptions block paid workspace pages but preserve renewal access", () => {
-  assert.match(subscriptions, /refresh_workspace_subscription/);
-  assert.match(
-    subscriptions,
-    /when now\(\)<=subscription\.ends_at then 'active'/,
-  );
-  assert.match(subscriptions, /then 'past_due' else 'expired'/);
+test("terminal V2 subscriptions block workspace tools but preserve billing recovery", () => {
+  assert.match(v2Access, /resolve_pricing_subscription_status/);
+  assert.match(v2Access, /trial_ends_at is null/);
+  assert.match(v2Access, /trial_ends_at <= now\(\)/);
+  assert.match(v2Access, /ends_at <= now\(\)/);
+  assert.match(v2Access, /set status = 'expired'/);
   assert.match(business, /allowExpired\s*=\s*false/);
+  assert.match(business, /allowMissing\s*=\s*false/);
+  assert.match(business, /allowCancelled\s*=\s*false/);
   assert.match(
     business,
     /redirect\(["']\/account\/subscription\?expired=1["']\)/,
   );
   assert.match(
     actions,
-    /requireBusinessWorkspace\(\{\s*allowExpired:\s*true\s*\}\)/,
+    /requireBusinessWorkspace\(\{allowExpired:true,allowMissing:true,allowCancelled:true\}\)/,
   );
   assert.match(subscriptionPage, /allowExpired:\s*true/);
+  assert.match(subscriptionPage, /allowMissing:\s*true/);
+  assert.match(subscriptionPage, /allowCancelled:\s*true/);
   assert.match(subscriptionPage, /V2PaymentForm/);
 });
