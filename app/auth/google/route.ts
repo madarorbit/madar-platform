@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const state = randomBase64Url(32);
   const verifier = randomBase64Url(64);
   const callback = new URL('/auth/google/callback', siteUrl());
-  callback.searchParams.set('state', state);
+  callback.searchParams.set('madar_state', state);
 
   const jar = await cookies();
   jar.set(GOOGLE_OAUTH_STATE_COOKIE, state, oauthCookieOptions());
