@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         ));
         const message = recent[0];
         if (message) await supabaseFetch(`/rest/v1/orby_messages?id=eq.${message.id}`, {
-          method: 'PATCH', body: JSON.stringify({ metadata: { ...(message.metadata || {}), attachments, mobile_mode: body.mode || 'GENERAL' } }),
+          method: 'PATCH', body: JSON.stringify({ metadata: { ...(message.metadata || {}), attachments: metadata, mobile_mode: body.mode || 'GENERAL' } }),
         }, context.accessToken);
       })().catch(() => null);
     }
