@@ -7,7 +7,7 @@ on:
       - 'packages/contracts/**'
       - '.github/workflows/mobile-v2-apk.yml'
   push:
-    branches: [main, codex/madar-v2-mobile-dashboard-a0-a7]
+    branches: [main]
     paths:
       - 'mobile/**'
       - 'packages/contracts/**'
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: mobile-v2-apk-${{ github.ref }}
@@ -30,8 +30,6 @@ jobs:
         working-directory: mobile
     env:
       EXPO_PUBLIC_MADAR_API_URL: https://www.orbitmadar.com
-      EXPO_PUBLIC_SUPABASE_URL: https://rybzdpduwgnsjofolini.supabase.co
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx
       EXPO_PUBLIC_RELEASE_CHANNEL: beta
       CI: '1'
     steps:
@@ -64,3 +62,18 @@ jobs:
           path: mobile/MADAR-V2.0-beta.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Publish stable public beta download
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: mobile-v2-beta
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" mobile/MADAR-V2.0-beta.apk --clobber
+          else
+            gh release create "$RELEASE_TAG" mobile/MADAR-V2.0-beta.apk \
+              --title "مَدار Android V2.0 Beta" \
+              --notes "نسخة Android التجريبية الرسمية لحسابات الأعمال في منصة مَدار." \
+              --prerelease
+          fi
