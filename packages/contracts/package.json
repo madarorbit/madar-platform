@@ -1,0 +1,12 @@
+{
+  "name": "@madar/contracts",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./mobile-v2": {
+      "types": "./mobile-v2.d.ts",
+      "default": "./mobile-v2.js"
+    }
+  }
+}

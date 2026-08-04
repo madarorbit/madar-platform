@@ -4,11 +4,9 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "ignoreDeprecations": "6.0",
-    "types": ["node"],
+    "types": ["node", "expo-router/types"],
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "paths": { "@/*": ["src/*"] }
   },
-  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"]
+  "include": ["expo-env.d.ts", "app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx"]
 }
