@@ -29,21 +29,18 @@ jobs:
         working-directory: mobile
     env:
       EXPO_PUBLIC_MADAR_API_URL: https://www.orbitmadar.com
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: https://rybzdpduwgnsjofolini.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx
       EXPO_PUBLIC_RELEASE_CHANNEL: ${{ matrix.profile }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Verify build secrets
+      - name: Verify Expo access token
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          test -n "$EXPO_TOKEN"
-          test -n "$EXPO_PUBLIC_SUPABASE_URL"
-          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+        run: test -n "$EXPO_TOKEN"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - uses: expo/expo-github-action@v8
