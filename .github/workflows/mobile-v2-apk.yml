@@ -30,8 +30,8 @@ jobs:
         working-directory: mobile
     env:
       EXPO_PUBLIC_MADAR_API_URL: https://www.orbitmadar.com
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: https://rybzdpduwgnsjofolini.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx
       EXPO_PUBLIC_RELEASE_CHANNEL: beta
       CI: '1'
     steps:
@@ -44,10 +44,6 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - name: Verify public runtime configuration
-        run: |
-          test -n "$EXPO_PUBLIC_SUPABASE_URL"
-          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Validate TypeScript and Expo
