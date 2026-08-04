@@ -1,6 +1,11 @@
 name: Mobile V2 Android APK
 
 on:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'packages/contracts/**'
+      - '.github/workflows/mobile-v2-apk.yml'
   push:
     branches: [main, codex/madar-v2-mobile-dashboard-a0-a7]
     paths:
