@@ -28,7 +28,10 @@ export default function AlertsScreen() {
     } catch (error) { Alert.alert('تعذر تحميل التنبيهات', error instanceof Error ? error.message : 'أعد المحاولة.'); }
     finally { setLoading(false); }
   }, [cursor, session, snapshot]);
-  useEffect(() => { void load(false); }, [snapshot?.workspace.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const timer = setTimeout(() => void load(false), 0);
+    return () => clearTimeout(timer);
+  }, [load, snapshot?.workspace.id]);
 
   async function run(action: MobileCommandAction, target: MobileAlert) {
     if (!session || !snapshot) return;
@@ -42,7 +45,7 @@ export default function AlertsScreen() {
         { text: 'إلغاء', style: 'cancel', onPress: () => setBusy(null) },
         { text: 'تأكيد', onPress: async () => {
           try {
-            const result = await mobileApi.confirmCommand(session.access_token, { ...input, confirmationToken: preview.confirmationToken! });
+            const result = await mobileApi.confirmCommand(session.access_token, { ...input, confirmationToken: preview.confirmationToken });
             Alert.alert(result.systemConfirmed ? 'تم التنفيذ' : 'يحتاج مراجعة', result.operation.message || (result.madarSynced ? 'تمت مزامنة مَدار.' : 'تم تسجيل العملية دون نجاح وهمي.'));
             await load(false);
           } catch (error) { Alert.alert('فشل التنفيذ', error instanceof Error ? error.message : 'تعذر تنفيذ الأمر.'); }
