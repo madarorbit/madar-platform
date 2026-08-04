@@ -42,12 +42,13 @@ export default function AlertsScreen() {
     try {
       const input = { organizationId: snapshot.workspace.id, action, targetType: 'alert', targetId: target.id, payload: {}, idempotencyKey: Crypto.randomUUID() };
       const preview = await mobileApi.previewCommand(session.access_token, input);
-      if (!preview.allowed || !preview.confirmationToken) throw new Error(preview.blockedReason || 'هذا الإجراء غير مسموح.');
+      const confirmationToken = preview.confirmationToken;
+      if (!preview.allowed || !confirmationToken) throw new Error(preview.blockedReason || 'هذا الإجراء غير مسموح.');
       Alert.alert('تأكيد التنفيذ', `${preview.summary}${preview.warnings.length ? `\n\n${preview.warnings.join('\n')}` : ''}`, [
         { text: 'إلغاء', style: 'cancel', onPress: () => setBusy(null) },
         { text: 'تأكيد', onPress: async () => {
           try {
-            const result = await mobileApi.confirmCommand(session.access_token, { ...input, confirmationToken: preview.confirmationToken });
+            const result = await mobileApi.confirmCommand(session.access_token, { ...input, confirmationToken });
             Alert.alert(result.systemConfirmed ? 'تم التنفيذ' : 'يحتاج مراجعة', result.operation.message || (result.madarSynced ? 'تمت مزامنة مَدار.' : 'تم تسجيل العملية دون نجاح وهمي.'));
             await load(false);
           } catch (error) { Alert.alert('فشل التنفيذ', error instanceof Error ? error.message : 'تعذر تنفيذ الأمر.'); }
