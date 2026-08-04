@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const launch=fs.readFileSync('supabase/migrations/20260724070000_phase_four_launch_readiness_core.sql','utf8');
 const founder=fs.readFileSync('supabase/migrations/20260724070100_phase_four_founder_control_plane.sql','utf8');
+const founderV2=fs.readFileSync('supabase/migrations/20260805070200_madar_v2_founder_subscription_control.sql','utf8');
 const switches=fs.readFileSync('supabase/migrations/20260724070200_phase_four_platform_switch_enforcement.sql','utf8');
 const founderActions=fs.readFileSync('app/actions/founder.ts','utf8');
 const founderPage=fs.readFileSync('app/admin/founder/page.tsx','utf8');
@@ -38,13 +39,19 @@ test('founder account and privileged actions are protected in the database',()=>
  assert.match(founder,/LAST_SUPER_ADMIN_PROTECTED/);
  for(const rpc of ['founder_update_settings','founder_update_user','founder_update_organization','founder_adjust_subscription','founder_broadcast_notification','founder_platform_overview'])assert.match(founder,new RegExp(`public\\.${rpc}`));
  assert.match(founder,/if not private\.is_super_admin\(\) then raise exception 'SUPER_ADMIN_REQUIRED'/g);
+ assert.match(founderV2,/private\.founder_adjust_v2_subscription_impl/);
+ assert.match(founderV2,/if not private\.is_super_admin\(\)/);
+ assert.match(founderV2,/revoke execute on function public\.founder_adjust_subscription/);
+ assert.match(founderV2,/grant execute on function public\.founder_adjust_v2_subscription/);
  assert.match(founderActions,/requireSuperAdmin\(\)/g);
  assert.match(founderUsers,/الحساب المؤسس المحمي/);
 });
 
-test('founder can control accounts workspaces subscriptions store and platform settings',()=>{
+test('founder can control accounts workspaces V2 subscriptions store and platform settings',()=>{
  for(const path of ['/admin/founder/users','/admin/founder/workspaces','/admin/founder/settings','/admin/founder/audit','/admin/products','/admin/services','/admin/orders','/admin/local-payments'])assert.match(founderPage,new RegExp(path.replaceAll('/','\\/')));
- assert.match(founderWorkspaces,/adjustFounderSubscription/);
+ assert.match(founderWorkspaces,/adjustFounderV2Subscription/);
+ assert.match(founderWorkspaces,/pricing_current_subscriptions/);
+ assert.doesNotMatch(founderWorkspaces,/workspace_subscriptions|subscription_plans/);
  assert.match(founderWorkspaces,/updateFounderOrganization/);
  assert.match(founderSettings,/saveFounderSettings/);
  assert.match(founderAudit,/audit_logs/);
