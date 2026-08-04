@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import type { MobileOperation } from '@madar/contracts/mobile-v2';
 import { PageHeader, Screen } from '@/components/screen';
@@ -34,11 +34,26 @@ export default function OperationsScreen() {
       setLoading(false);
     }
   }, [cursor, session, snapshot]);
-  const loadRef = useRef(load);
-  loadRef.current = load;
+
   useEffect(() => {
-    const timer = setTimeout(() => void loadRef.current(false), 0);
+    if (!session || !snapshot) return;
+    const accessToken = session.access_token;
+    const workspaceId = snapshot.workspace.id;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      mobileApi.operations(accessToken, workspaceId, null)
+        .then((page) => {
+          setItems(page.items);
+          setCursor(page.nextCursor);
+          setHasMore(page.hasMore);
+        })
+        .catch((error: unknown) => {
+          Alert.alert('تعذر تحميل العمليات', error instanceof Error ? error.message : 'أعد المحاولة.');
+        })
+        .finally(() => setLoading(false));
+    }, 0);
     return () => clearTimeout(timer);
-  }, [snapshot?.workspace.id]);
+  }, [session, snapshot?.workspace.id]);
+
   return <Screen refreshing={loading && items.length > 0} onRefresh={() => void load(false)}><PageHeader eyebrow="سجل التنفيذ" title="العمليات" subtitle="لا يظهر نجاح قبل تأكيد النظام ثم مزامنة مَدار" />{loading && !items.length ? [1, 2, 3].map((item) => <Skeleton key={item} height={110} />) : items.length ? items.map((item) => <Card key={item.id}><View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', gap: 10 }}><Text selectable style={{ flex: 1, color: colors.text, fontWeight: '900', textAlign: 'right' }}>{item.label}</Text><Badge label={statusLabel[item.status] || item.status} tone={tone(item.status)} /></View><Text selectable style={{ color: colors.faint, fontSize: 11, textAlign: 'right' }}>{dateTime(item.updatedAt)}</Text>{item.message ? <Text selectable style={{ color: colors.muted, lineHeight: 21, textAlign: 'right' }}>{item.message}</Text> : null}</Card>) : <EmptyState title="لا توجد عمليات بعد" body="عند تنفيذ أمر آمن من التطبيق سيظهر مساره وحالته هنا." />}{hasMore ? <AppButton kind="secondary" label="تحميل المزيد" loading={loading} onPress={() => void load(true)} /> : null}</Screen>;
 }
