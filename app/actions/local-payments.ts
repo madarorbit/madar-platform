@@ -53,14 +53,12 @@ export async function savePaymentMethod(form:FormData){
  finish('/admin/local-payments',errorMessage,'تم تحديث طريقة الدفع.');
 }
 
-export async function reviewSubscriptionRenewal(form:FormData){
- let errorMessage:string|undefined;
- try{
-  await requireAdmin();const decision=String(form.get('decision'));if(!['approve','reject'].includes(decision))throw new Error('القرار غير صالح.');
-  await supabaseFetch('/rest/v1/rpc/review_subscription_renewal',{method:'POST',body:JSON.stringify({target_renewal:required(form.get('renewal_id'),'طلب التجديد'),decision,note:String(form.get('note')||'').trim()||null})});
-  revalidatePath('/admin/local-payments');revalidatePath('/account/subscription');
- }catch(error){errorMessage=error instanceof Error?error.message:'تعذر مراجعة طلب التجديد.'}
- finish('/admin/local-payments',errorMessage,'تم حفظ قرار التجديد.');
+/**
+ * Archived compatibility endpoint. It deliberately performs no V1 mutation.
+ */
+export async function reviewSubscriptionRenewal(_form:FormData){
+ await requireAdmin();
+ finish('/admin/local-payments','طلبات تجديد V1 مؤرشفة للقراءة فقط. راجع دفعات باقات V2 لاتخاذ قرار مالي جديد.');
 }
 
 export async function reviewV2LocalPayment(form:FormData){
