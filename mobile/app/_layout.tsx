@@ -44,10 +44,7 @@ function AppNavigator() {
   const [watchdogExpired, setWatchdogExpired] = useState(false);
 
   useEffect(() => {
-    if (ready) {
-      setWatchdogExpired(false);
-      return;
-    }
+    if (ready) return;
     const timer = setTimeout(() => setWatchdogExpired(true), 10_000);
     return () => clearTimeout(timer);
   }, [ready]);
