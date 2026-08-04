@@ -31,6 +31,7 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       RELEASE_TAG: mobile-v2-stable
       RELEASE_ASSET: MADAR-Mobile.apk
+      EXPO_ACCOUNT: madarorbits-team
     steps:
       - uses: actions/checkout@v4
       - name: Mark signed mobile release as pending
@@ -54,8 +55,18 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-      - name: Verify linked Expo project
-        run: eas project:info --non-interactive
+      - name: Link the existing Madar Mobile EAS project
+        run: |
+          eas init --account "$EXPO_ACCOUNT" --non-interactive
+          eas project:info --non-interactive
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          const projectId = app?.expo?.extra?.eas?.projectId;
+          if (!projectId) throw new Error('EAS did not write the linked project ID.');
+          fs.writeFileSync('eas-project-id.txt', String(projectId));
+          console.log(`Linked EAS project ID: ${projectId}`);
+          NODE
       - name: Validate the production source
         run: |
           npm run typecheck
@@ -84,7 +95,7 @@ jobs:
           test "$BYTES" -ge 5000000
           test "$BYTES" -le 100000000
           sha256sum "$RELEASE_ASSET" > "$RELEASE_ASSET.sha256"
-          printf 'EAS_BUILD_ID=%s\nAPK_BYTES=%s\n' "$(cat eas-build-id.txt)" "$BYTES" > release-metadata.txt
+          printf 'EAS_PROJECT_ID=%s\nEAS_BUILD_ID=%s\nAPK_BYTES=%s\n' "$(cat eas-project-id.txt)" "$(cat eas-build-id.txt)" "$BYTES" > release-metadata.txt
           cat release-metadata.txt
           cat "$RELEASE_ASSET.sha256"
       - uses: actions/upload-artifact@v4
