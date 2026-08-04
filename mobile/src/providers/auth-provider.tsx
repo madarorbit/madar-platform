@@ -46,9 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let linkSubscription: ReturnType<typeof Linking.addEventListener> | null = null;
     let unbind: () => void = () => undefined;
 
-    setReady(false);
-    setStartupError(null);
-
     void (async () => {
       try {
         const client = await getSupabase();
@@ -112,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     startupError,
     retryStartup: () => {
       resetSupabaseClient();
+      setReady(false);
+      setStartupError(null);
       setAttempt((current) => current + 1);
     },
     signIn: async (email, password) => {
