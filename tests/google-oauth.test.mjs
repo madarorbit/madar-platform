@@ -5,6 +5,7 @@ import test from 'node:test';
 const startRoute = await readFile(new URL('../app/auth/google/route.ts', import.meta.url), 'utf8');
 const callbackRoute = await readFile(new URL('../app/auth/google/callback/route.ts', import.meta.url), 'utf8');
 const helper = await readFile(new URL('../src/lib/auth/google-oauth.ts', import.meta.url), 'utf8');
+const sharedAuth = await readFile(new URL('../src/lib/auth.ts', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../supabase/migrations/20260805031000_google_oauth_profiles.sql', import.meta.url), 'utf8');
 
 test('Google OAuth starts with official Supabase provider and PKCE S256', () => {
@@ -23,7 +24,8 @@ test('OAuth callback validates state before exchanging the authorization code', 
 });
 
 test('OAuth return paths reject protocol-relative and authentication loop destinations', () => {
-  assert.match(helper, /!value\.startsWith\('\/\/'\)/);
+  assert.match(helper, /safeReturnTo/);
+  assert.match(sharedAuth, /!value\.startsWith\('\/\/'\)/);
   assert.match(helper, /destination\.startsWith\('\/auth\/google'\)/);
 });
 
