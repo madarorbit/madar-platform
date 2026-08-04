@@ -6,7 +6,7 @@ const startRoute = await readFile(new URL('../app/auth/google/route.ts', import.
 const callbackRoute = await readFile(new URL('../app/auth/google/callback/route.ts', import.meta.url), 'utf8');
 const helper = await readFile(new URL('../src/lib/auth/google-oauth.ts', import.meta.url), 'utf8');
 const sharedAuth = await readFile(new URL('../src/lib/auth.ts', import.meta.url), 'utf8');
-const migration = await readFile(new URL('../supabase/migrations/20260805031000_google_oauth_profiles.sql', import.meta.url), 'utf8');
+const migration = await readFile(new URL('../supabase/migrations/20260804143639_google_oauth_profiles.sql', import.meta.url), 'utf8');
 
 test('Google OAuth starts with official Supabase provider and PKCE S256', () => {
   assert.match(startRoute, /auth\/v1\/authorize/);
