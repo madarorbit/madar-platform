@@ -9,7 +9,7 @@ import { useMadarApp } from '@/providers/app-provider';
 import { useAuth } from '@/providers/auth-provider';
 import { useMadarTheme } from '@/providers/theme-provider';
 
-const modes: Array<{ key: OrbyMode; label: string }> = [{ key: 'GENERAL', label: 'عام' }, { key: 'SALES', label: 'المبيعات' }, { key: 'INVENTORY', label: 'المخزون' }, { key: 'CUSTOMERS', label: 'العملاء' }, { key: 'PLANNING', label: 'التخطيط' }];
+const modes: { key: OrbyMode; label: string }[] = [{ key: 'GENERAL', label: 'عام' }, { key: 'SALES', label: 'المبيعات' }, { key: 'INVENTORY', label: 'المخزون' }, { key: 'CUSTOMERS', label: 'العملاء' }, { key: 'PLANNING', label: 'التخطيط' }];
 
 export default function OrbyScreen() {
   const { session } = useAuth();
