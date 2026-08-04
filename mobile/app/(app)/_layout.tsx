@@ -5,9 +5,14 @@ import { BiometricGate } from '@/providers/biometric-gate';
 import { useAuth } from '@/providers/auth-provider';
 import { useMadarTheme } from '@/providers/theme-provider';
 
-const icon = (symbol: string) => ({ color, size }: { focused: boolean; color: ColorValue; size: number }) => (
-  <Text style={{ color, fontSize: Math.min(size, 19), fontWeight: '900' }}>{symbol}</Text>
-);
+type TabIconProps = { focused: boolean; color: ColorValue; size: number };
+function tabIcon(symbol: string) {
+  function MadarTabIcon({ color, size }: TabIconProps) {
+    return <Text style={{ color, fontSize: Math.min(size, 19), fontWeight: '900' }}>{symbol}</Text>;
+  }
+  MadarTabIcon.displayName = `MadarTabIcon(${symbol})`;
+  return MadarTabIcon;
+}
 function HeaderTitle() {
   const { snapshot, stale } = useMadarApp();
   const { colors } = useMadarTheme();
@@ -21,12 +26,12 @@ function TabsLayout() {
       sceneStyle: { backgroundColor: colors.background }, tabBarStyle: { height: 66, paddingTop: 6, backgroundColor: colors.tab, borderTopColor: colors.border },
       tabBarActiveTintColor: colors.mint, tabBarInactiveTintColor: colors.faint, tabBarLabelStyle: { fontSize: 9, fontWeight: '800', paddingBottom: 5 },
     }}>
-      <Tabs.Screen name="index" options={{ title: 'الرئيسية', tabBarIcon: icon('⌂') }} />
-      <Tabs.Screen name="alerts" options={{ title: 'التنبيهات', tabBarIcon: icon('!') }} />
-      <Tabs.Screen name="operations" options={{ title: 'العمليات', tabBarIcon: icon('↻') }} />
-      <Tabs.Screen name="reports" options={{ title: 'التقارير', tabBarIcon: icon('▥') }} />
-      <Tabs.Screen name="orby" options={{ title: 'أوربي', tabBarIcon: icon('◉') }} />
-      <Tabs.Screen name="account" options={{ title: 'الحساب', tabBarIcon: icon('●') }} />
+      <Tabs.Screen name="index" options={{ title: 'الرئيسية', tabBarIcon: tabIcon('⌂') }} />
+      <Tabs.Screen name="alerts" options={{ title: 'التنبيهات', tabBarIcon: tabIcon('!') }} />
+      <Tabs.Screen name="operations" options={{ title: 'العمليات', tabBarIcon: tabIcon('↻') }} />
+      <Tabs.Screen name="reports" options={{ title: 'التقارير', tabBarIcon: tabIcon('▥') }} />
+      <Tabs.Screen name="orby" options={{ title: 'أوربي', tabBarIcon: tabIcon('◉') }} />
+      <Tabs.Screen name="account" options={{ title: 'الحساب', tabBarIcon: tabIcon('●') }} />
       <Tabs.Screen name="about" options={{ href: null, title: 'حول التطبيق' }} />
       <Tabs.Screen name="privacy" options={{ href: null, title: 'سياسة الخصوصية' }} />
     </Tabs>
