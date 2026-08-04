@@ -25,21 +25,11 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: mobile-v2-beta
-      SOURCE_BRANCH: fix/mobile-apk-public-download
+      SOURCE_RUN_ID: '30876417929'
       ARTIFACT_NAME: MADAR-V2.0-beta-APK
     steps:
-      - name: Download latest verified APK artifact
+      - name: Download verified APK artifact
         run: |
-          SOURCE_RUN_ID="$(gh run list \
-            --repo "$GITHUB_REPOSITORY" \
-            --workflow "Mobile V2 Android APK" \
-            --branch "$SOURCE_BRANCH" \
-            --event pull_request \
-            --status success \
-            --limit 1 \
-            --json databaseId \
-            --jq '.[0].databaseId')"
-          test -n "$SOURCE_RUN_ID"
           echo "Using verified APK workflow run: $SOURCE_RUN_ID"
           gh run download "$SOURCE_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
