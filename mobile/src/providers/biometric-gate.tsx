@@ -31,12 +31,15 @@ export function BiometricGate({ children }: { children: ReactNode }) {
     });
   }, []);
   useEffect(() => {
-    if (enabled) void unlock();
+    const initialUnlock = enabled ? setTimeout(() => void unlock(), 0) : null;
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'background') setLocked(enabled);
       if (state === 'active' && enabled) void unlock();
     });
-    return () => subscription.remove();
+    return () => {
+      if (initialUnlock) clearTimeout(initialUnlock);
+      subscription.remove();
+    };
   }, [enabled, unlock]);
 
   if (!locked) return children;
