@@ -1,0 +1,52 @@
+name: Publish Mobile V2 APK Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/mobile-v2-publish-release.yml'
+      - '.github/workflows/mobile-v2-apk.yml'
+      - 'app/mobile/page.tsx'
+      - 'mobile/**'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: mobile-v2-public-release
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SOURCE_RUN_ID: '30875385769'
+      RELEASE_TAG: mobile-v2-beta
+    steps:
+      - name: Download verified APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: madarorbit/madar-platform
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          name: MADAR-V2.0-beta-APK
+          path: release
+          github-token: ${{ github.token }}
+      - name: Validate APK file
+        run: |
+          test -s release/MADAR-V2.0-beta.apk
+          sha256sum release/MADAR-V2.0-beta.apk
+      - name: Publish stable public beta download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release/MADAR-V2.0-beta.apk --clobber
+          else
+            gh release create "$RELEASE_TAG" release/MADAR-V2.0-beta.apk \
+              --title "مَدار Android V2.0 Beta" \
+              --notes "نسخة Android التجريبية الرسمية لحسابات الأعمال في منصة مَدار." \
+              --prerelease
+          fi
