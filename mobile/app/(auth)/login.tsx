@@ -8,7 +8,7 @@ import { useMadarTheme } from '@/providers/theme-provider';
 
 export default function LoginScreen() {
   const { colors } = useMadarTheme();
-  const { signIn, sendRecovery } = useAuth();
+  const { signIn, sendRecovery, startupError, retryStartup } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [forgot, setForgot] = useState(false);
@@ -37,9 +37,16 @@ export default function LoginScreen() {
       <Screen contentContainerStyle={{ justifyContent: 'center' }}>
         <View style={{ alignItems: 'flex-end', gap: 14 }}>
           <Brand />
-          <Text selectable style={{ color: colors.text, fontSize: 27, fontWeight: '900', textAlign: 'right' }}>{forgot ? 'استعادة كلمة المرور' : 'لوحة القيادة V2.0'}</Text>
+          <Text selectable style={{ color: colors.text, fontSize: 27, fontWeight: '900', textAlign: 'right' }}>{forgot ? 'استعادة كلمة المرور' : 'لوحة القيادة V2.1'}</Text>
           <Text selectable style={{ color: colors.muted, lineHeight: 22, textAlign: 'right' }}>{forgot ? 'سنرسل رابطًا آمنًا يفتح التطبيق عبر Deep Link.' : 'دخول واحد آمن إلى مساحة عملك التجارية، وتنبيهاتك وتقاريرك وأوربي.'}</Text>
         </View>
+        {startupError ? (
+          <Card>
+            <Text selectable style={{ color: colors.red, fontWeight: '900', textAlign: 'right' }}>تعذر تجهيز الاتصال عند تشغيل التطبيق</Text>
+            <Text selectable style={{ color: colors.muted, lineHeight: 21, textAlign: 'right' }}>{startupError}</Text>
+            <AppButton kind="secondary" label="إعادة فحص الاتصال" onPress={retryStartup} />
+          </Card>
+        ) : null}
         <Card>
           <Text selectable style={{ color: colors.muted, fontWeight: '700', textAlign: 'right' }}>البريد الإلكتروني</Text>
           <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" textContentType="emailAddress" placeholder="name@example.com" placeholderTextColor={colors.faint} style={inputStyle} />

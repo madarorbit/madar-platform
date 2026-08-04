@@ -7,19 +7,35 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_MADAR_API_URL": "https://www.orbitmadar.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rybzdpduwgnsjofolini.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "development"
+      }
     },
     "preview": {
       "distribution": "internal",
       "channel": "beta",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_RELEASE_CHANNEL": "beta" }
+      "env": {
+        "EXPO_PUBLIC_MADAR_API_URL": "https://www.orbitmadar.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rybzdpduwgnsjofolini.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "beta"
+      }
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
       "android": { "buildType": "app-bundle" },
-      "env": { "EXPO_PUBLIC_RELEASE_CHANNEL": "production" }
+      "env": {
+        "EXPO_PUBLIC_MADAR_API_URL": "https://www.orbitmadar.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rybzdpduwgnsjofolini.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "production"
+      }
     }
   },
   "submit": {

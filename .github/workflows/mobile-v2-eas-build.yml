@@ -1,45 +1,27 @@
-name: Mobile V2 EAS Build
+name: Mobile V2 Production AAB
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'mobile/**'
-      - 'packages/contracts/**'
-      - '.github/workflows/mobile-v2-eas-build.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  android:
-    name: Android ${{ matrix.profile }}
+  android-production:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    concurrency:
-      group: mobile-v2-eas-${{ matrix.profile }}
-      cancel-in-progress: false
-    strategy:
-      fail-fast: false
-      matrix:
-        profile: [preview, production]
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: mobile
     env:
-      EXPO_PUBLIC_MADAR_API_URL: https://www.orbitmadar.com
-      EXPO_PUBLIC_SUPABASE_URL: https://rybzdpduwgnsjofolini.supabase.co
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_L4P1zdLREZ_9KR3Bew8zkQ_81_h9iyx
-      EXPO_PUBLIC_RELEASE_CHANNEL: ${{ matrix.profile }}
+      CI: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - name: Verify Expo access token
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: test -n "$EXPO_TOKEN"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -49,13 +31,15 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Verify Expo project link
         run: eas project:info --non-interactive
-      - name: Build signed Android artifact
-        run: eas build --platform android --profile "${{ matrix.profile }}" --non-interactive --wait --json > "eas-build-${{ matrix.profile }}.json"
+      - name: Validate source
+        run: npm run check
+      - name: Build signed Google Play AAB
+        run: eas build --platform android --profile production --non-interactive --wait --json > eas-build-production.json
       - name: Upload build receipt
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-v2-${{ matrix.profile }}-build-receipt
-          path: mobile/eas-build-${{ matrix.profile }}.json
+          name: mobile-v2-production-aab-receipt
+          path: mobile/eas-build-production.json
           if-no-files-found: ignore
           retention-days: 30

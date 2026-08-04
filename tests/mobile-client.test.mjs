@@ -6,11 +6,15 @@ const root=new URL('../',import.meta.url);const read=path=>readFile(new URL(path
 test('mobile client is an Expo TypeScript APK project with no privileged secret',async()=>{
  const[packageFile,app,eas,env,readme]=await Promise.all([read('mobile/package.json'),read('mobile/app.json'),read('mobile/eas.json'),read('mobile/.env.example'),read('mobile/README.md')]);
  assert.match(packageFile,/"expo": "~57\.0\.1"/);
+ assert.match(packageFile,/"version": "2\.1\.0"/);
  assert.match(packageFile,/"main": "expo-router\/entry"/);
  assert.match(packageFile,/@supabase\/supabase-js/);
+ assert.match(packageFile,/expo-build-properties/);
  assert.match(app,/com\.orbitmadar\.mobile/);
  assert.match(app,/adaptiveIcon/);
  assert.match(app,/expo-splash-screen/);
+ assert.match(app,/enableMinifyInReleaseBuilds/);
+ assert.match(app,/enableShrinkResourcesInReleaseBuilds/);
  assert.match(eas,/"buildType": "apk"/);
  assert.match(eas,/"buildType": "app-bundle"/);
  assert.match(env,/EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
@@ -68,4 +72,22 @@ test('ORBY endpoint accepts mobile bearer sessions without weakening web session
  assert.match(route,/consume_orby_quota/);
  assert.match(route,/save_orby_exchange/);
  assert.doesNotMatch(route,/service.role|SUPABASE_SERVICE_ROLE_KEY/i);
+});
+
+test('public Android release is a signed EAS build and cannot regress to a Metro-dependent debug APK',async()=>{
+ const[workflow,mobilePage,dashboardPage,rootLayout,supabaseClient,network]=await Promise.all([
+  read('.github/workflows/mobile-v2-apk.yml'),read('app/mobile/page.tsx'),read('app/dashboard-app/page.tsx'),read('mobile/app/_layout.tsx'),read('mobile/src/lib/supabase.ts'),read('mobile/src/lib/network.ts')
+ ]);
+ assert.match(workflow,/eas build --platform android --profile preview/);
+ assert.match(workflow,/unzip -tq/);
+ assert.match(workflow,/mobile-v2-stable/);
+ assert.doesNotMatch(workflow,/assembleDebug|app-debug\.apk|gradlew assembleDebug/);
+ assert.match(mobilePage,/mobile-v2-stable\/MADAR-Mobile\.apk/);
+ assert.match(dashboardPage,/mobile-v2-stable\/MADAR-Mobile\.apk/);
+ assert.match(rootLayout,/watchdogExpired/);
+ assert.match(rootLayout,/SplashScreen\.hideAsync/);
+ assert.match(supabaseClient,/hasValidEmbeddedSupabaseConfig/);
+ assert.match(supabaseClient,/8_000/);
+ assert.match(network,/AbortController/);
+ assert.match(network,/NetworkTimeoutError/);
 });

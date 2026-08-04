@@ -7,35 +7,38 @@ import { currentProfile } from '@/src/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-const PUBLIC_BETA_APK_URL =
-  'https://github.com/madarorbit/madar-platform/releases/download/mobile-v2-beta/MADAR-V2.0-beta.apk';
+const PUBLIC_ANDROID_APK_URL =
+  'https://github.com/madarorbit/madar-platform/releases/download/mobile-v2-stable/MADAR-Mobile.apk';
+const PUBLIC_ANDROID_CHECKSUM_URL =
+  'https://github.com/madarorbit/madar-platform/releases/download/mobile-v2-stable/MADAR-Mobile.apk.sha256';
 
 export default async function MobileReleasePage() {
   await requireUser();
   const profile = await currentProfile();
-  const apkUrl = process.env.NEXT_PUBLIC_MADAR_ANDROID_APK_URL?.trim() || PUBLIC_BETA_APK_URL;
+  const apkUrl = process.env.NEXT_PUBLIC_MADAR_ANDROID_APK_URL?.trim() || PUBLIC_ANDROID_APK_URL;
   const storeUrl = process.env.NEXT_PUBLIC_MADAR_ANDROID_STORE_URL?.trim();
   const isBusiness = profile?.account_type === 'BUSINESS';
   return (
     <PageShell>
       <PageHero
-        eyebrow="تطبيق مَدار V2.0"
+        eyebrow="تطبيق مَدار V2.1"
         title="لوحة عملك في الهاتف"
         description="تطبيق Android مخصص لحسابات الأعمال، يعرض المؤشرات والتنبيهات والتقارير وأوربي بحسب نشاط مساحة العمل ومصدر بياناتها."
       />
       <Section>
         <Grid className="lg:grid-cols-3" auto={false}>
           <Card className="lg:col-span-2">
-            <h2 className="text-2xl font-black">الإصدار الحالي: 2.0.0 Beta</h2>
+            <h2 className="text-2xl font-black">الإصدار الحالي: 2.1.0</h2>
             <p className="mt-3 leading-8 text-slate-400">
-              يسجل الدخول مرة واحدة، ويحفظ الجلسة داخل التخزين الآمن، ويبيّن وقت آخر مزامنة. لا يحتوي التطبيق مفاتيح Connector أو مفاتيح أوربي.
+              إصدار Release مستقل وموقّع من مشروع مَدار موبايل على Expo/EAS. يحفظ الجلسة داخل التخزين الآمن، ويعرض آخر مزامنة، ولا يحتاج Metro أو بيئة تطوير كي يعمل.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               {storeUrl ? <a className="md-button md-button-primary" href={storeUrl} rel="noreferrer">فتح صفحة Google Play</a> : null}
-              <a className="md-button md-button-primary" href={apkUrl} rel="noreferrer">تحميل تطبيق مَدار APK</a>
+              <a className="md-button md-button-primary" href={apkUrl} rel="noreferrer">تحميل تطبيق مَدار Android</a>
+              <a className="md-button md-button-secondary" href={PUBLIC_ANDROID_CHECKSUM_URL} rel="noreferrer">بصمة التحقق SHA-256</a>
             </div>
             <p className="mt-4 text-xs leading-6 text-slate-500">
-              هذه نسخة تجريبية مباشرة لأجهزة Android. قد يطلب النظام السماح بالتثبيت من المتصفح المستخدم.
+              هذه حزمة Android رسمية مباشرة. قد يطلب النظام السماح بالتثبيت من المتصفح المستخدم عند التثبيت لأول مرة.
             </p>
           </Card>
           <Card>

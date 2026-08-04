@@ -1,16 +1,13 @@
-name: Mobile V2 Android APK
+name: Mobile V2 Signed Android Release
 
 on:
-  pull_request:
-    paths:
-      - 'mobile/**'
-      - 'packages/contracts/**'
-      - '.github/workflows/mobile-v2-apk.yml'
   push:
     branches: [main]
     paths:
       - 'mobile/**'
       - 'packages/contracts/**'
+      - 'app/mobile/page.tsx'
+      - 'app/dashboard-app/page.tsx'
       - '.github/workflows/mobile-v2-apk.yml'
   workflow_dispatch:
 
@@ -18,62 +15,102 @@ permissions:
   contents: write
 
 concurrency:
-  group: mobile-v2-apk-${{ github.ref }}
-  cancel-in-progress: true
+  group: mobile-v2-signed-release
+  cancel-in-progress: false
 
 jobs:
-  android-apk:
+  release-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: mobile
     env:
-      EXPO_PUBLIC_MADAR_API_URL: https://www.orbitmadar.com
-      EXPO_PUBLIC_RELEASE_CHANNEL: beta
       CI: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      RELEASE_TAG: mobile-v2-stable
+      RELEASE_ASSET: MADAR-Mobile.apk
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - name: Verify Expo access
+        run: test -n "$EXPO_TOKEN"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Validate TypeScript and Expo
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Verify linked Expo project
+        run: eas project:info --non-interactive
+      - name: Validate the production source
         run: |
           npm run typecheck
           npm run lint
           npm run doctor
-      - name: Generate Android project
-        run: npx expo prebuild --platform android --clean --no-install
-      - name: Build installable beta APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
-        working-directory: mobile/android
-      - name: Prepare artifact
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk MADAR-V2.0-beta.apk
+          npm run export:android
+      - name: Build signed standalone APK with EAS
+        run: eas build --platform android --profile preview --non-interactive --wait --json > eas-build-preview.json
+      - name: Resolve and download the EAS artifact
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(fs.readFileSync('eas-build-preview.json', 'utf8'));
+          const build = Array.isArray(payload) ? payload[0] : payload;
+          const url = build?.artifacts?.buildUrl || build?.artifacts?.applicationArchiveUrl;
+          if (!url || !String(url).startsWith('https://')) throw new Error('EAS build did not return a downloadable Android artifact.');
+          fs.writeFileSync('eas-build-url.txt', String(url));
+          fs.writeFileSync('eas-build-id.txt', String(build?.id || 'unknown'));
+          NODE
+          curl --fail --location --retry 4 --retry-all-errors "$(cat eas-build-url.txt)" --output "$RELEASE_ASSET"
+      - name: Validate standalone release APK
+        run: |
+          test -s "$RELEASE_ASSET"
+          unzip -tq "$RELEASE_ASSET"
+          BYTES="$(stat -c%s "$RELEASE_ASSET")"
+          test "$BYTES" -ge 5000000
+          test "$BYTES" -le 100000000
+          sha256sum "$RELEASE_ASSET" > "$RELEASE_ASSET.sha256"
+          printf 'EAS_BUILD_ID=%s\nAPK_BYTES=%s\n' "$(cat eas-build-id.txt)" "$BYTES" > release-metadata.txt
+          cat release-metadata.txt
+          cat "$RELEASE_ASSET.sha256"
       - uses: actions/upload-artifact@v4
         with:
-          name: MADAR-V2.0-beta-APK
-          path: mobile/MADAR-V2.0-beta.apk
+          name: MADAR-Mobile-2.1.0-signed-APK
+          path: |
+            mobile/MADAR-Mobile.apk
+            mobile/MADAR-Mobile.apk.sha256
+            mobile/eas-build-preview.json
+            mobile/release-metadata.txt
           if-no-files-found: error
           retention-days: 30
-      - name: Publish stable public beta download
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      - name: Publish stable public download
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: mobile-v2-beta
         run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" mobile/MADAR-V2.0-beta.apk --clobber
+          NOTES='إصدار Android 2.1.0 الموقّع من مشروع مَدار موبايل على Expo/EAS. يتضمن إصلاح التوقف عند شاشة الشعار، مهلة واستعادة آمنة للإقلاع، إعداد جلسة ثابت، وبناء Release مصغّر بدل Debug.'
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              "mobile/$RELEASE_ASSET" \
+              "mobile/$RELEASE_ASSET.sha256" \
+              "mobile/release-metadata.txt" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+            gh release edit "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title 'مَدار موبايل 2.1.0' \
+              --notes "$NOTES" \
+              --latest
           else
-            gh release create "$RELEASE_TAG" mobile/MADAR-V2.0-beta.apk \
-              --title "مَدار Android V2.0 Beta" \
-              --notes "نسخة Android التجريبية الرسمية لحسابات الأعمال في منصة مَدار." \
-              --prerelease
+            gh release create "$RELEASE_TAG" \
+              "mobile/$RELEASE_ASSET" \
+              "mobile/$RELEASE_ASSET.sha256" \
+              "mobile/release-metadata.txt" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title 'مَدار موبايل 2.1.0' \
+              --notes "$NOTES" \
+              --latest
           fi

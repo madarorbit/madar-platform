@@ -10,6 +10,7 @@ import type {
   OrbyMode,
 } from '@madar/contracts/mobile-v2';
 import { config } from '@/config';
+import { fetchWithTimeout } from '@/lib/network';
 
 export class ApiError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -37,10 +38,10 @@ async function request<T>(path: string, accessToken: string, init: RequestInit =
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${accessToken}`);
   headers.set('Accept', 'application/json');
-  headers.set('x-madar-mobile-version', '2.0');
+  headers.set('x-madar-mobile-version', '2.1');
   if (workspaceId) headers.set('x-madar-workspace-id', workspaceId);
   if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
-  const response = await fetch(`${config.apiBase}${path}`, { ...init, headers });
+  const response = await fetchWithTimeout(`${config.apiBase}${path}`, { ...init, headers }, 15_000);
   return parseResponse<T>(response);
 }
 
@@ -89,12 +90,12 @@ export async function streamOrby(input: {
   signal?: AbortSignal;
   onDelta: (delta: string) => void;
 }) {
-  const response = await fetch(`${config.apiBase}/api/mobile/v2/orby/stream`, {
+  const response = await fetchWithTimeout(`${config.apiBase}/api/mobile/v2/orby/stream`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${input.accessToken}`, Accept: 'text/event-stream', 'Content-Type': 'application/json', 'x-madar-workspace-id': input.organizationId },
     body: JSON.stringify({ organizationId: input.organizationId, conversationId: input.conversationId, mode: input.mode, prompt: input.prompt, attachmentIds: input.attachmentIds || [] }),
     signal: input.signal,
-  });
+  }, 20_000);
   if (!response.ok) return parseResponse<never>(response);
   if (!response.body) throw new ApiError('تعذر بدء بث رد أوربي.', 503);
   const reader = response.body.getReader();
