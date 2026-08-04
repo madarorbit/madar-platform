@@ -17,7 +17,7 @@ create unique index if not exists profiles_google_user_id_unique
 update public.profiles as profile
 set
   auth_provider = 'google',
-  google_user_id = coalesce(identity.identity_data->>'sub', identity.identity_id::text, profile.google_user_id),
+  google_user_id = coalesce(identity.identity_data->>'sub', identity.provider_id, profile.google_user_id),
   oauth_avatar_url = coalesce(identity.identity_data->>'avatar_url', identity.identity_data->>'picture', profile.oauth_avatar_url),
   auth_provider_updated_at = coalesce(profile.auth_provider_updated_at, now())
 from auth.identities as identity
