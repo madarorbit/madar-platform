@@ -41,7 +41,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async (manual = false, requestedWorkspace = workspaceId) => {
     if (!session) return;
-    manual ? setRefreshing(true) : setLoading(true);
+    if (manual) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     const key = cacheKey(session.user.id, requestedWorkspace);
     try {
