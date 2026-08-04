@@ -6,9 +6,7 @@
     "ignoreDeprecations": "6.0",
     "types": ["node"],
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"]
+  "include": ["expo-env.d.ts", "assets.d.ts", "app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx"]
 }

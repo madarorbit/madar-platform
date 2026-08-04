@@ -1,0 +1,32 @@
+name: Mobile V2 Push Worker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-v2-push-worker
+  cancel-in-progress: false
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify worker secret
+        env:
+          WORKER_SECRET: ${{ secrets.MADAR_ORBY_WORKER_SECRET }}
+        run: test -n "$WORKER_SECRET"
+      - name: Deliver queued mobile notifications
+        env:
+          WORKER_SECRET: ${{ secrets.MADAR_ORBY_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-all-errors --max-time 60 \
+            -H "Authorization: Bearer $WORKER_SECRET" \
+            -H "Content-Type: application/json" \
+            -X POST https://www.orbitmadar.com/api/internal/mobile/push-drain

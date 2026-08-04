@@ -1,66 +1,69 @@
-# مَدار للهاتف — MADAR Mobile V1
+# مَدار للهاتف — MADAR Mobile V2.0
 
-تطبيق Expo/React Native عربي بنمط عرض فقط لعملاء مَدار. يستخدم نفس حساب Supabase ونفس سياسات RLS الخاصة بمنصة الويب، ويعرض لوحة القيادة والتقارير وتنبيهات أوربي ومحادثة أوربي دون أدوات إدارة المنتجات أو المخزون أو المستخدمين.
+تطبيق Expo/React Native عربي مخصص لحسابات الأعمال في مَدار. يستخدم Expo Router، وجلسة Supabase محفوظة داخل Secure Storage، وعقود API مشتركة مع منصة الويب. تتغير لوحة القيادة حسب نشاط مساحة العمل وطريقة تشغيلها، ولا يحتوي التطبيق أي مفتاح Connector أو مفتاح خاص بأوربي.
 
-## نطاق V1
+## البنية
 
-- تسجيل الدخول بالبريد وكلمة المرور.
-- استعادة الجلسة وتحديثها تلقائيًا.
-- مركز قيادة يوضح حالة العمل والمؤشرات والتنبيهات مرتبة حسب الأولوية.
-- تقارير آخر 30 يومًا ورسم مبسط لآخر 7 أيام.
-- تنبيهات المخزون والمهام المتأخرة وتنبيهات أوربي الاستباقية.
-- محادثة أوربي ضمن صلاحيات مساحة العمل.
-- نسخة محلية لآخر Dashboard متاح عند ضعف الشبكة.
-- لا توجد عمليات إنشاء أو تعديل أو حذف لبيانات الأعمال.
+- `app/(auth)`: تسجيل الدخول واستعادة كلمة المرور عبر Deep Link.
+- `app/(app)`: الرئيسية، التنبيهات، العمليات، التقارير، أوربي، الحساب.
+- `src/providers`: الجلسة، البيانات، المظهر، القفل الحيوي.
+- `src/lib`: API V2، Supabase، التخزين الآمن، Push Notifications.
+- `packages/contracts/mobile-v2`: العقود المشتركة بين التطبيق والمنصة.
 
-## التشغيل
+## سلوك البيانات
+
+- التطبيق يقبل حساب `BUSINESS` ومساحة عمل تجارية نشطة فقط.
+- آخر Snapshot صالح يُحفظ داخل Secure Storage ويظهر بوضوح كنسخة قديمة عند انقطاع الشبكة.
+- `MADAR_NATIVE`: الأوامر الداخلية تُنفذ عبر Command API في مَدار.
+- `CONNECTED_EXTERNAL`: الأمر يمر عبر المعاينة والتأكيد والصلاحيات وConnector والتحقق والمزامنة.
+- الكتابة الخارجية مغلقة افتراضيًا حتى ينجح ربط عميل حقيقي ويُفعّل المسار صراحة.
+- الأسعار والمدفوعات والحذف الحساس وإدارة الفريق وبيانات الربط والعمليات الجماعية محظورة داخل V2.0.
+
+## التشغيل المحلي
 
 ```bash
 cd mobile
 cp .env.example .env
 npm install
-npm run typecheck
+npm run check
 npm start
 ```
 
-متغيرات `EXPO_PUBLIC_*` عامة بطبيعتها. الأمان يعتمد على جلسة المستخدم وRLS؛ لا تُضف `SUPABASE_SERVICE_ROLE_KEY` أو مفاتيح مزودي أوربي إلى التطبيق.
+المتغيرات المطلوبة:
 
-## إنشاء APK تجريبي محليًا
-
-ثبّت EAS وسجّل الدخول بالحساب المخصص لمَدار، ثم اربط المشروع مرة واحدة:
-
-```bash
-cd mobile
-npx eas-cli@latest login
-npx eas-cli@latest init
-npm run build:apk
+```env
+EXPO_PUBLIC_MADAR_API_URL=https://www.orbitmadar.com
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLIC_PUBLISHABLE_KEY
+EXPO_PUBLIC_RELEASE_CHANNEL=development
 ```
 
-ملف `eas.json` يضبط ملف `preview` على `android.buildType=apk` ليكون الناتج قابلًا للتثبيت المباشر على أجهزة أندرويد. إصدار Google Play لاحقًا يستخدم ملف `production` وينتج AAB.
+متغيرات `EXPO_PUBLIC_*` عامة بطبيعتها. لا تضف `SUPABASE_SERVICE_ROLE_KEY` أو مفاتيح Connector أو مفاتيح مزودي أوربي إلى التطبيق.
 
-## إنشاء أول APK من GitHub Actions
+## التحقق والبناء
 
-يوجد Workflow يدوي باسم `Build MADAR Prototype APK` داخل `.github/workflows/eas-apk.yml`.
+- `Mobile V2 CI`: TypeScript، Expo Lint، Expo Doctor، وتصدير Android.
+- `Mobile V2 Android APK`: يولد مشروع Android ويبني `MADAR-V2.0-beta.apk` قابلًا للتثبيت، ثم يرفعه كـGitHub Artifact.
+- `Mobile V2 EAS Build`: يعمل بعد الدمج إلى `main` ويبني:
+  - ملف `preview`: APK موقّع للاختبار الداخلي.
+  - ملف `production`: AAB موقّع للنشر في Google Play.
 
-قبل تشغيله لأول مرة:
+التوقيع الرسمي يُدار داخل EAS ولا يُحفظ keystore داخل المستودع. يحتاج GitHub إلى الأسرار التالية:
 
-1. أنشئ حساب Expo/EAS الرسمي لمَدار.
-2. أنشئ Expo access token من لوحة حساب مَدار.
-3. أضف الرمز داخل GitHub Repository Secrets بالاسم `EXPO_TOKEN`. لا تضع الرمز داخل الكود أو المحادثات.
-4. افتح GitHub Actions وشغّل Workflow يدويًا.
+- `EXPO_TOKEN`
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-الـWorkflow ينفذ ما يلي:
+ويجب أن يكون مشروع Expo مرتبطًا مسبقًا؛ يتحقق Workflow من ذلك بواسطة `eas project:info` قبل البناء.
 
-- يتحقق من TypeScript وExpo Doctor.
-- ينشئ أو يربط مشروع EAS تلقائيًا عبر `eas init --force --non-interactive`.
-- يستخدم ملف `prototype` لبناء Debug APK قابل للتثبيت دون إعداد Android production credentials.
-- ينتظر اكتمال EAS Build ثم يحمّل الملف داخل GitHub Artifact باسم `madar-mobile-prototype-apk` لمدة 14 يومًا.
+## واجهات الخادم
 
-ملف `prototype` مخصص للاختبار المبكر فقط. قبل Google Play يجب إنشاء مفتاح توقيع دائم واستخدام ملف `production` لإنتاج AAB.
+- `GET /api/mobile/v2/bootstrap`
+- `GET /api/mobile/v2/alerts`
+- `GET /api/mobile/v2/operations`
+- `POST /api/mobile/v2/commands/preview`
+- `POST /api/mobile/v2/commands/confirm`
+- `/api/mobile/v2/orby/*`
+- `POST /api/mobile/v2/push-token`
 
-## واجهة الخادم
-
-- `GET /api/mobile/v1/dashboard`: يرجع Snapshot مجمعًا باستخدام Bearer access token وسياسات RLS نفسها.
-- `POST /api/orby`: يقبل جلسة الويب الحالية أو Bearer token من التطبيق.
-
-لا يحتاج V1 إلى migration جديدة.
+كل طلب يستخدم Bearer access token، ويتحقق من عضوية مساحة العمل وسياسات RLS. لا يظهر نجاح لأي أمر خارجي قبل تأكيد النظام ثم مزامنة مَدار.

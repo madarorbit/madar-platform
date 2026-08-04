@@ -1,0 +1,66 @@
+name: Mobile V2 CI
+
+on:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'packages/contracts/**'
+      - 'app/api/mobile/v2/**'
+      - 'app/api/internal/mobile/**'
+      - 'src/lib/mobile/**'
+      - 'supabase/migrations/*mobile_dashboard_v2*'
+      - '.github/workflows/mobile-v2-ci.yml'
+  push:
+    branches: [main, codex/madar-v2-mobile-dashboard-a0-a7]
+    paths:
+      - 'mobile/**'
+      - 'packages/contracts/**'
+      - 'app/api/mobile/v2/**'
+      - 'app/api/internal/mobile/**'
+      - 'src/lib/mobile/**'
+      - 'supabase/migrations/*mobile_dashboard_v2*'
+      - '.github/workflows/mobile-v2-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  expo-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_PUBLIC_MADAR_API_URL: https://www.orbitmadar.com
+      EXPO_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+      EXPO_PUBLIC_RELEASE_CHANNEL: ci
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install mobile dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Expo lint
+        run: npm run lint
+      - name: Expo doctor
+        run: npm run doctor
+      - name: Export Android bundle
+        run: npm run export:android
+      - name: Upload export diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-v2-android-export
+          path: mobile/dist
+          if-no-files-found: ignore
+          retention-days: 5
