@@ -12,6 +12,7 @@ import { useMadarTheme } from '@/providers/theme-provider';
 export default function AlertsScreen() {
   const { session } = useAuth();
   const { snapshot, online } = useMadarApp();
+  const workspaceId = snapshot?.workspace.id;
   const { colors } = useMadarTheme();
   const [items, setItems] = useState<MobileAlert[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -19,20 +20,19 @@ export default function AlertsScreen() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const load = useCallback(async (append = false) => {
-    if (!session || !snapshot) return;
+    if (!session || !workspaceId) return;
     setLoading(true);
     try {
-      const page = await mobileApi.alerts(session.access_token, snapshot.workspace.id, append ? cursor : null);
+      const page = await mobileApi.alerts(session.access_token, workspaceId, append ? cursor : null);
       setItems((current) => append ? [...current, ...page.items] : page.items);
       setCursor(page.nextCursor); setHasMore(page.hasMore);
     } catch (error) { Alert.alert('تعذر تحميل التنبيهات', error instanceof Error ? error.message : 'أعد المحاولة.'); }
     finally { setLoading(false); }
-  }, [cursor, session, snapshot]);
+  }, [cursor, session, workspaceId]);
 
   useEffect(() => {
-    if (!session || !snapshot) return;
+    if (!session || !workspaceId) return;
     const accessToken = session.access_token;
-    const workspaceId = snapshot.workspace.id;
     const timer = setTimeout(() => {
       setLoading(true);
       mobileApi.alerts(accessToken, workspaceId, null)
@@ -47,7 +47,7 @@ export default function AlertsScreen() {
         .finally(() => setLoading(false));
     }, 0);
     return () => clearTimeout(timer);
-  }, [session, snapshot?.workspace.id]);
+  }, [session, workspaceId]);
 
   async function run(action: MobileCommandAction, target: MobileAlert) {
     if (!session || !snapshot) return;
