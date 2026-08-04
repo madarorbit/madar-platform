@@ -230,7 +230,10 @@ begin
         select count(*) from public.data_privacy_requests where status in ('requested', 'processing')
       ),
       'integration_incidents', (
-        select count(*) from public.integration_health_incidents where status in ('open', 'acknowledged')
+        select count(*)
+        from public.integration_connections connection
+        where connection.deleted_at is null
+          and connection.status = 'error'
       )
     ),
     'generated_at', now()
