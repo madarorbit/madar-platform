@@ -1,4 +1,4 @@
-import 'react-native-gesture-handler';
+import '@/gesture-handler';
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
