@@ -30,7 +30,8 @@ test('mobile V2 is modular, dynamic and constrains every write behind preview an
  assert.match(layout,/Tabs\.Screen name="account"/);
  assert.match(dashboard,/food_service/);
  assert.match(dashboard,/hospitality/);
- assert.match(dashboard,/CONNECTED_EXTERNAL/);
+ assert.match(dashboard,/نظام خارجي مرتبط/);
+ assert.match(contracts,/CONNECTED_EXTERNAL/);
  assert.match(alerts,/previewCommand/);
  assert.match(alerts,/confirmCommand/);
  assert.match(operations,/تم التنفيذ في النظام/);
