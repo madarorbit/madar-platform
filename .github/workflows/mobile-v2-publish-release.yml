@@ -23,24 +23,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      SOURCE_RUN_ID: '30875385769'
+      GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: mobile-v2-beta
+      SOURCE_BRANCH: fix/mobile-apk-public-download
+      ARTIFACT_NAME: MADAR-V2.0-beta-APK
     steps:
-      - name: Download verified APK artifact
-        uses: actions/download-artifact@v4
-        with:
-          repository: madarorbit/madar-platform
-          run-id: ${{ env.SOURCE_RUN_ID }}
-          name: MADAR-V2.0-beta-APK
-          path: release
-          github-token: ${{ github.token }}
+      - name: Download latest verified APK artifact
+        run: |
+          SOURCE_RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow "Mobile V2 Android APK" \
+            --branch "$SOURCE_BRANCH" \
+            --event pull_request \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$SOURCE_RUN_ID"
+          echo "Using verified APK workflow run: $SOURCE_RUN_ID"
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$ARTIFACT_NAME" \
+            --dir release
       - name: Validate APK file
         run: |
           test -s release/MADAR-V2.0-beta.apk
           sha256sum release/MADAR-V2.0-beta.apk
       - name: Publish stable public beta download
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" release/MADAR-V2.0-beta.apk --clobber
