@@ -21,14 +21,6 @@ export async function submitWorkspaceLocalPayment(form:FormData){
  finish(`/workspace-payment/${requestId}`,errorMessage,'تم إرسال الإثبات. ستراجع الإدارة الدفع وتفتح المساحة بعد اعتماده.');
 }
 
-/**
- * Kept only as a safe compatibility boundary for stale clients.
- * MADAR V1 renewal RPCs are no longer called by the application.
- */
-export async function submitSubscriptionRenewal(_form:FormData){
- finish('/account/subscription','تم إيقاف مسار التجديد القديم. استخدم نموذج دفع مَدار V2.0 الظاهر في هذه الصفحة.');
-}
-
 export async function submitV2LocalPayment(form:FormData){
  let proof,errorMessage:string|undefined;
  try{
@@ -51,14 +43,6 @@ export async function savePaymentMethod(form:FormData){
   revalidatePath('/admin/local-payments');revalidatePath('/account/subscription');
  }catch(error){errorMessage=error instanceof Error?error.message:'تعذر حفظ طريقة الدفع.'}
  finish('/admin/local-payments',errorMessage,'تم تحديث طريقة الدفع.');
-}
-
-/**
- * Archived compatibility endpoint. It deliberately performs no V1 mutation.
- */
-export async function reviewSubscriptionRenewal(_form:FormData){
- await requireAdmin();
- finish('/admin/local-payments','طلبات تجديد V1 مؤرشفة للقراءة فقط. راجع دفعات باقات V2 لاتخاذ قرار مالي جديد.');
 }
 
 export async function reviewV2LocalPayment(form:FormData){
