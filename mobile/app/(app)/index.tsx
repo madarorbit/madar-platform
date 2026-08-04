@@ -15,6 +15,8 @@ const money = (value: number, currency: string) => {
 };
 const dateTime = (value: string) => new Date(value).toLocaleString('ar-YE', { dateStyle: 'medium', timeStyle: 'short' });
 
+type DashboardMetric = readonly [label: string, value: string];
+
 export default function DashboardScreen() {
   const { snapshot, loading, refreshing, refresh, stale, online, error } = useMadarApp();
   const { colors } = useMadarTheme();
@@ -22,7 +24,7 @@ export default function DashboardScreen() {
   if (!snapshot) return <Screen contentContainerStyle={{ justifyContent: 'center' }}><EmptyState title="لم نتمكن من فتح لوحة القيادة" body={error || 'تحقق من الاتصال ثم اسحب للتحديث.'} /></Screen>;
   const sector = snapshot.summary.sector || {};
   const currency = snapshot.workspace.currency;
-  const metrics = snapshot.vertical.extension === 'food_service'
+  const metrics: DashboardMetric[] = snapshot.vertical.extension === 'food_service'
     ? [
         ['الطلبات المفتوحة', String(number(sector, 'open_orders', 'openOrders'))], ['حالة المطبخ', String(number(sector, 'kitchen_pending', 'kitchenPending'))],
         ['مبيعات اليوم', money(snapshot.summary.todayRevenue, currency)], ['المكونات الناقصة', String(number(sector, 'missing_ingredients', 'missingIngredients', 'low_stock_items'))],
