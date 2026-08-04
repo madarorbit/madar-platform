@@ -14,6 +14,10 @@ const subscriptions = fs.readFileSync(
   "supabase/migrations/20260724060200_phase_four_subscription_renewals_limits.sql",
   "utf8",
 );
+const v2Access = fs.readFileSync(
+  "supabase/migrations/20260805070100_madar_v2_subscription_access_hardening.sql",
+  "utf8",
+);
 const currency = fs.readFileSync(
   "supabase/migrations/20260724060300_local_payment_currency_alignment.sql",
   "utf8",
@@ -77,14 +81,21 @@ test("payment proofs are validated and stored in a private bucket", () => {
   assert.match(actions, /removeLocalPaymentProof/);
 });
 
-test("renewal approval extends from the later of now or the current end date", () => {
+test("legacy renewal history remains auditable while active billing uses V2", () => {
   assert.match(subscriptions, /private\.submit_subscription_renewal_impl/);
   assert.match(subscriptions, /RENEWAL_ALREADY_PENDING/);
   assert.match(subscriptions, /greatest\(subscription\.ends_at,now\(\)\)/);
-  assert.match(subscriptions, /renewal_count=renewal_count\+1/);
-  assert.match(subscriptions, /subscription\.renewal\.approved/);
   assert.match(subscriptionPage, /V2PaymentForm/);
   assert.match(subscriptionPage, /pricing_current_subscriptions/);
+  assert.match(actions, /submitV2LocalPayment/);
+  assert.doesNotMatch(
+    actions,
+    /submitSubscriptionRenewal[\s\S]*rpc\/submit_subscription_renewal/,
+  );
+  assert.doesNotMatch(
+    actions,
+    /reviewSubscriptionRenewal[\s\S]*rpc\/review_subscription_renewal/,
+  );
 });
 
 test("subscription limits are enforced in the database", () => {
@@ -98,22 +109,25 @@ test("subscription limits are enforced in the database", () => {
   assert.match(subscriptions, /daily_limit/);
 });
 
-test("expired subscriptions block paid workspace pages but preserve renewal access", () => {
-  assert.match(subscriptions, /refresh_workspace_subscription/);
-  assert.match(
-    subscriptions,
-    /when now\(\)<=subscription\.ends_at then 'active'/,
-  );
-  assert.match(subscriptions, /then 'past_due' else 'expired'/);
+test("terminal V2 subscriptions block workspace tools but preserve billing recovery", () => {
+  assert.match(v2Access, /resolve_pricing_subscription_status/);
+  assert.match(v2Access, /trial_ends_at is null/);
+  assert.match(v2Access, /trial_ends_at <= now\(\)/);
+  assert.match(v2Access, /ends_at <= now\(\)/);
+  assert.match(v2Access, /set status = 'expired'/);
   assert.match(business, /allowExpired\s*=\s*false/);
+  assert.match(business, /allowMissing\s*=\s*false/);
+  assert.match(business, /allowCancelled\s*=\s*false/);
   assert.match(
     business,
     /redirect\(["']\/account\/subscription\?expired=1["']\)/,
   );
   assert.match(
     actions,
-    /requireBusinessWorkspace\(\{\s*allowExpired:\s*true\s*\}\)/,
+    /requireBusinessWorkspace\(\{allowExpired:true,allowMissing:true,allowCancelled:true\}\)/,
   );
   assert.match(subscriptionPage, /allowExpired:\s*true/);
+  assert.match(subscriptionPage, /allowMissing:\s*true/);
+  assert.match(subscriptionPage, /allowCancelled:\s*true/);
   assert.match(subscriptionPage, /V2PaymentForm/);
 });
