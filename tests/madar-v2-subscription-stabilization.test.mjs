@@ -70,6 +70,18 @@ test('operational RPCs require server-valid workspace access while billing remai
  assert.match(migration,/pricing\.v2_payment\.approved/);
 });
 
+test('restrictive RLS blocks direct operational data access after expiry',async()=>{
+ const migration=await read('supabase/migrations/20260805070500_madar_v2_rls_access_gate.sql');
+ assert.match(migration,/private\.has_v2_workspace_access/);
+ assert.match(migration,/as restrictive for all to authenticated/i);
+ for(const table of ['business_products','business_sales','integration_write_commands','restaurant_orders','hotel_reservations'])assert.match(migration,new RegExp(`'${table}'`));
+ assert.match(migration,/activity_profile_answers[\s\S]*as restrictive[\s\S]*for select/i);
+ assert.match(migration,/integration_write_attempts[\s\S]*has_v2_workspace_access/i);
+ assert.match(migration,/current_v2_entitlement[\s\S]*v2_active_subscription_entitlement/i);
+ assert.doesNotMatch(migration,/pricing_local_payment_requests[\s\S]*as restrictive for all/i);
+ assert.doesNotMatch(migration,/pricing_subscription_snapshots[\s\S]*as restrictive for all/i);
+});
+
 test('founder controls and overview use V2 subscriptions exclusively',async()=>{
  const actions=await read('app/actions/founder.ts');
  const workspaces=await read('app/admin/founder/workspaces/page.tsx');
