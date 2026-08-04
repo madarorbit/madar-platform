@@ -69,7 +69,7 @@ test('platform switches are enforced below the UI',()=>{
  assert.match(layout,/PlatformStatusBar/);
 });
 
-test('privacy exports require authenticated ownership and omit public file access',()=>{
+test('privacy exports require authenticated ownership and make V2 authoritative',()=>{
  assert.match(privacy,/تنزيل بيانات الحساب الآن/);
  assert.match(privacy,/حذف حسابي/);
  assert.match(privacy,/حذف مساحتي/);
@@ -77,6 +77,10 @@ test('privacy exports require authenticated ownership and omit public file acces
  assert.match(accountExport,/Content-Disposition/);
  assert.match(workspaceExport,/role=eq\.OWNER/);
  assert.match(workspaceExport,/business_products/);
+ assert.match(workspaceExport,/pricing_current_subscriptions/);
+ assert.match(workspaceExport,/pricing_subscription_snapshots/);
+ assert.match(workspaceExport,/subscription_v2/);
+ assert.match(workspaceExport,/legacy_v1_subscription_archive/);
  assert.doesNotMatch(workspaceExport,/service_role/i);
 });
 
