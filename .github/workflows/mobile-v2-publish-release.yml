@@ -42,10 +42,13 @@ jobs:
           sha256sum release/MADAR-V2.0-beta.apk
       - name: Publish stable public beta download
         run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" release/MADAR-V2.0-beta.apk --clobber
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release/MADAR-V2.0-beta.apk \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
           else
             gh release create "$RELEASE_TAG" release/MADAR-V2.0-beta.apk \
+              --repo "$GITHUB_REPOSITORY" \
               --title "مَدار Android V2.0 Beta" \
               --notes "نسخة Android التجريبية الرسمية لحسابات الأعمال في منصة مَدار." \
               --prerelease
