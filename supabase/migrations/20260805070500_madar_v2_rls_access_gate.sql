@@ -88,8 +88,6 @@ from public, anon, authenticated;
 grant execute on function private.has_v2_workspace_access(uuid)
 to authenticated, service_role;
 
--- Keep the historical helper name safe for any remaining callers. It now
--- verifies tenant membership and resolves only server-valid V2 entitlements.
 create or replace function private.current_v2_entitlement(
   target_organization uuid,
   entitlement text
@@ -119,15 +117,12 @@ from public, anon, authenticated;
 grant execute on function private.current_v2_entitlement(uuid, text)
 to authenticated, service_role;
 
--- Every listed table contains organization_id. Restrictive policies are
--- combined with the existing tenant policies, so both membership and a valid
--- subscription are required for direct Data API access.
 do $$
 declare
-  table_name text;
+  protected_table text;
   policy_name text := 'madar v2 workspace access gate';
 begin
-  foreach table_name in array array[
+  foreach protected_table in array array[
     'business_products',
     'business_customers',
     'business_suppliers',
@@ -176,34 +171,33 @@ begin
     'hotel_folios',
     'hotel_folio_charges'
   ] loop
-    if to_regclass(format('public.%I', table_name)) is null then
-      raise exception 'EXPECTED_V2_TABLE_MISSING:%', table_name;
+    if to_regclass(format('public.%I', protected_table)) is null then
+      raise exception 'EXPECTED_V2_TABLE_MISSING:%', protected_table;
     end if;
     if not exists (
       select 1
       from information_schema.columns column_definition
       where column_definition.table_schema = 'public'
-        and column_definition.table_name = table_name
+        and column_definition.table_name = protected_table
         and column_definition.column_name = 'organization_id'
     ) then
-      raise exception 'EXPECTED_ORGANIZATION_COLUMN_MISSING:%', table_name;
+      raise exception 'EXPECTED_ORGANIZATION_COLUMN_MISSING:%', protected_table;
     end if;
 
     execute format(
       'drop policy if exists %I on public.%I',
       policy_name,
-      table_name
+      protected_table
     );
     execute format(
       'create policy %I on public.%I as restrictive for all to authenticated using ((select private.has_v2_workspace_access(organization_id))) with check ((select private.has_v2_workspace_access(organization_id)))',
       policy_name,
-      table_name
+      protected_table
     );
   end loop;
 end;
 $$;
 
--- Child records inherit the gate from their parent tenant object.
 drop policy if exists "madar v2 workspace access gate" on public.activity_profile_answers;
 create policy "madar v2 workspace access gate"
 on public.activity_profile_answers
