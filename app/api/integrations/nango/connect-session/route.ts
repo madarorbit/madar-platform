@@ -48,20 +48,20 @@ export async function POST(request: Request) {
       userDisplayName: profile?.full_name,
       requestedIntegrations,
     });
-    if (result.status === 'disabled' || result.status === 'not-configured') {
-      return Response.json({ ok: false, error: { code: 'NANGO_NOT_AVAILABLE', message: 'خدمة الاتصال الخارجي غير مفعلة حاليًا.' } }, { status: 503 });
+    if (result.status === 'created') {
+      return Response.json({
+        ok: true,
+        token: result.session.token,
+        connectLink: result.session.connectLink,
+        expiresAt: result.session.expiresAt,
+        allowedIntegrations: result.session.allowedIntegrations,
+      }, { headers: { 'Cache-Control': 'no-store' } });
     }
     if (result.status === 'rejected') {
       const invalidIntegration = result.reason === 'NANGO_INTEGRATION_NOT_ALLOWED' || result.reason === 'NANGO_ALLOWLIST_EMPTY';
       return Response.json({ ok: false, error: { code: result.reason, message: invalidIntegration ? 'الموصل المطلوب غير معتمد في مَدار.' : 'تعذر بدء جلسة ربط النظام الخارجي.' } }, { status: invalidIntegration ? 400 : 503 });
     }
-    return Response.json({
-      ok: true,
-      token: result.session.token,
-      connectLink: result.session.connectLink,
-      expiresAt: result.session.expiresAt,
-      allowedIntegrations: result.session.allowedIntegrations,
-    }, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ ok: false, error: { code: 'NANGO_NOT_AVAILABLE', message: 'خدمة الاتصال الخارجي غير مفعلة حاليًا.' } }, { status: 503 });
   } catch (error) {
     console.error('Nango connect session failed', { error: error instanceof Error ? error.name : 'unknown' });
     return Response.json({ ok: false, error: { code: 'NANGO_SESSION_FAILED', message: 'تعذر بدء جلسة الربط الآن.' } }, { status: 503 });
