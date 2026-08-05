@@ -45,7 +45,7 @@ export default function EnterpriseStudentShell({ children }: { children: ReactNo
       <div className="md-workspace-switcher">
         <Link href="/" className="md-brand-mark" aria-label="مَدار | ORBIT"><Image src={siteConfig.assets.logo} alt="مَدار | ORBIT" width={150} height={36} className="h-7 w-auto" /></Link>
         <details>
-          <summary><span className="md-workspace-avatar">ط</span><span className="md-workspace-switcher-copy"><strong>مساحة الطالب</strong><small>التعلّم والتخطيط الشخصي</small></span><Icon name="arrow" className="h-3.5 w-3.5" /></summary>
+          <summary><span className="md-workspace-avatar">ط</span><span className="md-workspace-switcher-copy"><strong>لوحة المعلومات</strong><small>مساحة الطالب · التعلّم والتخطيط الشخصي</small></span><Icon name="arrow" className="h-3.5 w-3.5" /></summary>
           <div className="md-workspace-menu">
             <div className="md-workspace-meta"><span>مساحة شخصية معزولة</span><span>الأدوات الدراسية وملفاتك الخاصة</span></div>
             <Link href="/dashboard"><Icon name="layers" />مساحات الأعمال</Link>
