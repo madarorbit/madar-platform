@@ -10,15 +10,18 @@ import { cx } from "@/components/ui/Enterprise";
 import { siteConfig } from "@/src/config/site";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import NavigationControls from "@/components/navigation/NavigationControls";
+import ShellModuleContext from "@/components/navigation/ShellModuleContext";
 import WorkspaceCommandPalette from "@/components/workspace/WorkspaceCommandPalette";
 import { workspaceMobileNavigation, workspaceNavigationGroups } from "@/src/lib/v2/navigation";
 import type { OperatingMode } from "@/src/lib/v2/account";
 import type { VerticalExtension } from "@/src/lib/v2/verticals";
+import type { ProductNavigationGroup, ProductNavigationItem } from "@/src/lib/ux/navigation";
 import { saveWorkspaceNavigationState } from "@/app/actions/navigation";
 
 const roleNames: Record<string, string> = { OWNER: "المالك", ADMIN: "مدير", EDITOR: "محرر", VIEWER: "مشاهد", MEMBER: "عضو" };
 const subscriptionNames: Record<string, string> = { active: "نشط", trialing: "تجريبي", past_due: "متأخر", expired: "منتهي", cancelled: "ملغى", grace: "مهلة سماح" };
 const NAV_STATE_KEY = "madar:v2:workspace-nav";
+const routesWithNativeHeaders = ["/workspace", "/workspace/products", "/workspace/customers", "/workspace/suppliers", "/workspace/orby"];
 
 export default function EnterpriseWorkspaceShell({
   children, workspaceName, role, currency, subscriptionStatus, extension, specializationName, enabledModules, operatingMode, initialCompact,
@@ -31,9 +34,12 @@ export default function EnterpriseWorkspaceShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [, startTransition] = useTransition();
   const groups = useMemo(() => workspaceNavigationGroups(extension, enabledModules), [extension, enabledModules]);
+  const paletteGroups = groups as ProductNavigationGroup[];
   const mobileItems = useMemo(() => workspaceMobileNavigation(extension, enabledModules), [extension, enabledModules]);
   const flatItems = groups.flatMap((group) => group.items);
   const current = flatItems.find((item) => item.href === "/workspace" ? pathname === item.href : pathname.startsWith(item.href));
+  const currentGroup = groups.find((group) => group.items.some((item) => item.href === current?.href));
+  const hasNativeHeader = routesWithNativeHeaders.some((route) => route === "/workspace" ? pathname === route : pathname.startsWith(route));
   const changeCompact = () => setCompact((value) => {
     const next = !value;
     localStorage.setItem(NAV_STATE_KEY, JSON.stringify({ version: 1, compact: next }));
@@ -52,7 +58,7 @@ export default function EnterpriseWorkspaceShell({
     </details>)}
   </nav>;
 
-  return <div className={cx("md-ux-shell", compact && "is-compact")}> 
+  return <div className={cx("md-ux-shell", compact && "is-compact")}>
     <aside className="md-ux-sidebar md-no-print">
       <div className="md-workspace-switcher">
         <Link href="/dashboard" className="md-brand-mark" aria-label="العودة إلى مَدار"><Image src={siteConfig.assets.logo} alt="مَدار | ORBIT" width={150} height={36} className="h-7 w-auto" /></Link>
@@ -78,7 +84,7 @@ export default function EnterpriseWorkspaceShell({
         <div className="md-topbar-context">
           <button type="button" className="md-mobile-menu-button" onClick={() => setMobileOpen(true)} aria-label="فتح التنقل"><Icon name="layers" /></button>
           <NavigationControls showBreadcrumbs={false} />
-          <div className="md-current-route"><span>{groups.find((group) => group.items.some((item) => item.href === current?.href))?.label || "مساحة العمل"}</span><strong>{current?.label || "مساحة العمل"}</strong></div>
+          <div className="md-current-route"><span>{currentGroup?.label || "مساحة العمل"}</span><strong>{current?.label || "مساحة العمل"}</strong></div>
         </div>
         <button type="button" className="md-global-search" onClick={() => setPaletteOpen(true)}><Icon name="search" className="h-4 w-4" /><span>بحث شامل</span><kbd>⌘ K</kbd></button>
         <div className="md-topbar-actions">
@@ -88,7 +94,10 @@ export default function EnterpriseWorkspaceShell({
           <Link href="/account" className="md-account-button"><Icon name="user" /><span>حسابي</span></Link>
         </div>
       </header>
-      <div className="md-ux-content">{children}</div>
+      <div className={cx("md-ux-content", !hasNativeHeader && "md-adaptive-module-surface")}>
+        {!hasNativeHeader && current && currentGroup && <ShellModuleContext groupLabel={currentGroup.label} current={current as ProductNavigationItem} siblings={currentGroup.items as ProductNavigationItem[]} currentHref={current.href} />}
+        {children}
+      </div>
     </div>
 
     <nav className="md-mobile-bottom-nav md-no-print" aria-label="التنقل السريع">
@@ -99,6 +108,6 @@ export default function EnterpriseWorkspaceShell({
     </nav>
 
     {mobileOpen && <div className="md-mobile-drawer-layer md-no-print" onMouseDown={() => setMobileOpen(false)}><aside onMouseDown={(event) => event.stopPropagation()}><header><div><strong>{workspaceName}</strong><span>{specializationName}</span></div><button type="button" onClick={() => setMobileOpen(false)} aria-label="إغلاق">×</button></header>{navigation(true)}</aside></div>}
-    <WorkspaceCommandPalette groups={groups} open={paletteOpen} onOpenChange={setPaletteOpen} />
+    <WorkspaceCommandPalette groups={paletteGroups} open={paletteOpen} onOpenChange={setPaletteOpen} />
   </div>;
 }

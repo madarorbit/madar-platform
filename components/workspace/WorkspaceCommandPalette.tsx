@@ -3,14 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icons";
-import type { WorkspaceNavigationGroup } from "@/src/lib/v2/navigation";
+import type { ProductNavigationGroup } from "@/src/lib/ux/navigation";
 
 export default function WorkspaceCommandPalette({
   groups,
   open,
   onOpenChange,
 }: {
-  groups: WorkspaceNavigationGroup[];
+  groups: ProductNavigationGroup[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -33,20 +33,23 @@ export default function WorkspaceCommandPalette({
     );
   }, [items, query]);
 
+  const close = () => {
+    setQuery("");
+    onOpenChange(false);
+  };
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const writing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        if (open) setQuery("");
-        onOpenChange(!open);
+        if (open) close(); else onOpenChange(true);
       } else if (event.key === "/" && !writing) {
         event.preventDefault();
         onOpenChange(true);
       } else if (event.key === "Escape" && open) {
-        setQuery("");
-        onOpenChange(false);
+        close();
       }
     };
     window.addEventListener("keydown", handleKey);
@@ -55,15 +58,10 @@ export default function WorkspaceCommandPalette({
 
   useEffect(() => {
     if (!open) return;
-    const frame = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => cancelAnimationFrame(frame);
+    requestAnimationFrame(() => inputRef.current?.focus());
   }, [open]);
 
   if (!open) return null;
-  const close = () => {
-    setQuery("");
-    onOpenChange(false);
-  };
   const go = (href: string) => {
     close();
     router.push(href);
@@ -73,7 +71,7 @@ export default function WorkspaceCommandPalette({
       <section className="md-command-dialog" role="dialog" aria-modal="true" aria-label="البحث الشامل" onMouseDown={(event) => event.stopPropagation()}>
         <div className="md-command-input-wrap">
           <Icon name="search" className="h-5 w-5" />
-          <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث عن صفحة أو وظيفة…" aria-label="البحث في مساحة العمل" />
+          <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث عن صفحة أو وظيفة…" aria-label="البحث في المنتج" />
           <kbd>Esc</kbd>
         </div>
         <div className="md-command-results">
