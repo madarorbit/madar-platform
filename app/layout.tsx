@@ -9,6 +9,7 @@ import ThemeProvider from '@/components/theme/ThemeProvider';
 import NavigationExperience from '@/components/navigation/NavigationExperience';
 import RouteSurface from '@/components/layout/RouteSurface';
 
+// MADAR UX Architecture & Navigation Redesign — production rollout marker.
 const metadataBase=new URL(siteConfig.baseUrl);
 const googleAnalyticsId='G-PT7RKF7295';
 const themeBootstrap=`(()=>{try{const saved=localStorage.getItem('madar-theme');const theme=saved==='light'||saved==='dark'?saved:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const root=document.documentElement;root.dataset.theme=theme;root.style.colorScheme=theme}catch{document.documentElement.dataset.theme='dark'}})();`;
