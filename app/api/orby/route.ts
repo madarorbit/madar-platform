@@ -1,10 +1,11 @@
-import {NextResponse} from 'next/server';
+import {NextResponse,after} from 'next/server';
 import {currentUser,supabaseFetch} from '@/src/lib/supabase/server';
 import {deterministicOrbyResponse,orbyModes,orbySystemPrompt,type OrbyContext,type OrbyMode} from '@/src/lib/orby';
 import type {OrbyContextSource,OrbyKernelResponse} from '@/src/lib/orby/core/contracts';
 import {isOrbyError} from '@/src/lib/orby/core/errors';
 import {createServerOrbyFoundation} from '@/src/lib/orby/server';
 import {mapBusinessSector,OrbyDialogueManager} from '@/src/lib/orby/personality';
+import {exportOrbyObservation,mirrorOrbyRequest} from '@/src/lib/platform-integrations';
 
 export const runtime='nodejs';
 const scalar=<T,>(value:unknown)=>Array.isArray(value)?value[0] as T:value as T;
@@ -25,6 +26,7 @@ async function executeOrbyCore(input:{organizationId:string;userId:string;sessio
 }
 
 export async function POST(request:Request){
+ const startedAt=Date.now();
  try{
   const accessToken=requestAccessToken(request),fetcher:SupabaseFetcher=(path,init={})=>supabaseFetch(path,init,accessToken),user=await currentUser(accessToken);if(!user)return NextResponse.json({error:'يجب تسجيل الدخول أولًا.'},{status:401});
   const body=await request.json() as {organizationId?:string;conversationId?:string|null;mode?:OrbyMode;prompt?:string};const organizationId=String(body.organizationId||''),conversationId=body.conversationId?String(body.conversationId):null,mode=body.mode&&orbyModes[body.mode]?body.mode:null,prompt=String(body.prompt||'').trim();
@@ -36,7 +38,8 @@ export async function POST(request:Request){
   const dialogue=new OrbyDialogueManager().decide({message:prompt,sector:mapBusinessSector(context.activity?.family||context.activity?.type),hasWorkspaceContext:true,hasTargetEntity:true});
   try{const sessionId=await legacyKernelSession(fetcher,organizationId,user.id,conversationId);kernelResponse=await executeOrbyCore({organizationId,userId:user.id,sessionId,mode,prompt,context,dialogue});text=kernelResponse.text.trim();if(!text)throw new Error('EMPTY_ORBY_RESPONSE');}
   catch(error){providerUnavailable=true;console.warn('ORBY provider unavailable; using deterministic fallback',{code:isOrbyError(error)?error.code:error instanceof Error?error.name:'unknown'});source='smart-fallback';text=deterministicOrbyResponse(mode,context,prompt);}
-  const saved=await fetcher('/rest/v1/rpc/save_orby_exchange',{method:'POST',body:JSON.stringify({target_organization:organizationId,target_conversation:conversationId,conversation_title:prompt.slice(0,120),conversation_mode:mode,user_prompt:prompt,assistant_response:text,response_source:source,response_metadata:{provider_unavailable:providerUnavailable,runtime:kernelResponse?'orby-core':'deterministic-fallback',kernel_session_id:kernelResponse?.sessionId||null,provider_id:kernelResponse?.providerId||null,model_id:kernelResponse?.modelId||null,prompt_version:dialogue.promptVersion,intent:dialogue.classification.intent,sector:dialogue.classification.sector,strategy:dialogue.strategy,generated_at:context.analytics.generated_at,source_of_truth:context.activity?.source_of_truth||'MADAR'}})}),savedConversationId=scalar<string>(saved);
+  const saved=await fetcher('/rest/v1/rpc/save_orby_exchange',{method:'POST',body:JSON.stringify({target_organization:organizationId,target_conversation:conversationId,conversation_title:prompt.slice(0,120),conversation_mode:mode,user_prompt:prompt,assistant_response:text,response_source:source,response_metadata:{provider_unavailable:providerUnavailable,runtime:kernelResponse?'orby-core':'deterministic-fallback',kernel_session_id:kernelResponse?.sessionId||null,provider_id:kernelResponse?.providerId||null,model_id:kernelResponse?.modelId||null,prompt_version:dialogue.promptVersion,intent:dialogue.classification.intent,sector:dialogue.classification.sector,strategy:dialogue.strategy,generated_at:context.analytics.generated_at,source_of_truth:context.activity?.source_of_truth||'MADAR'}})}),savedConversationId=scalar<string>(saved),endedAt=Date.now();
+  after(async()=>{await Promise.allSettled([exportOrbyObservation({name:'orby.business.chat',organizationId,userId:user.id,sessionId:savedConversationId,providerId:kernelResponse?.providerId,modelId:kernelResponse?.modelId,mode,source,startedAtMs:startedAt,endedAtMs:endedAt,input:prompt,output:text,metadata:{'madar.intent':dialogue.classification.intent,'madar.sector':dialogue.classification.sector,'madar.strategy':dialogue.strategy,'madar.provider.unavailable':providerUnavailable}}),mirrorOrbyRequest({organizationId,userId:user.id,mode,source,providerId:kernelResponse?.providerId,modelId:kernelResponse?.modelId,inputCharacters:prompt.length,latencyMs:endedAt-startedAt})]);});
   return NextResponse.json({text,source,conversationId:savedConversationId,remaining:usage?.remaining??0,dialogue:{intent:dialogue.classification.intent,strategy:dialogue.strategy,sector:dialogue.classification.sector,sensitivity:dialogue.classification.sensitivity,promptVersion:dialogue.promptVersion},citations:[{label:'مؤشرات مساحة العمل',source:context.activity?.source_of_truth==='EXTERNAL'?'النظام المرتبط عبر MADAR Connect':'مَدار',lastSyncedAt:context.analytics.generated_at,certainty:'confirmed'}]});
  }catch(error){const message=error instanceof Error?error.message:'unknown';console.error('ORBY business assistant failed',message);if(message.includes('ORBY_DAILY_LIMIT'))return NextResponse.json({error:'وصلت إلى حد أوربي اليومي. يمكنك استخدامه مجددًا غدًا.'},{status:429});if(message.includes('NOT_AUTHORIZED'))return NextResponse.json({error:'لا تملك صلاحية الوصول إلى هذه البيانات.'},{status:403});return NextResponse.json({error:'تعذر تشغيل أوربي الآن. أعد المحاولة دون مشاركة معلومات حساسة.'},{status:503});}
 }
