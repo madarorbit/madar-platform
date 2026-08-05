@@ -21,7 +21,7 @@ test('OpenFGA never grants an action denied by MADAR and supports shadow rollout
   assert.match(source, /if \(!input\.internalAllowed\)/);
   assert.match(source, /config\.mode === 'shadow'/);
   assert.match(source, /madar\+openfga/);
-  assert.match(source, /OPENFGA shadow authorization mismatch/);
+  assert.match(source, /OpenFGA shadow authorization mismatch/);
   const model = await read('infra/openfga/model.fga');
   assert.match(model, /define can_manage_integrations: owner or admin/);
   assert.match(model, /define can_manage_billing: owner/);
@@ -29,9 +29,10 @@ test('OpenFGA never grants an action denied by MADAR and supports shadow rollout
 
 test('Svix isolates every organization and limits outbound webhook payloads', async () => {
   const source = await read('src/lib/platform-integrations/svix.ts');
+  const config = await read('src/lib/platform-integrations/config.ts');
   assert.match(source, /madar-org-\$\{organizationId\}/);
   assert.match(source, /get_if_exists=true/);
-  assert.match(source, /40 \* 1024/);
+  assert.match(config, /maxPayloadBytes: 40 \* 1024/);
   assert.match(source, /organization_id: input\.organizationId/);
   assert.match(source, /idempotency-key/);
 });
