@@ -1,13 +1,33 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import {siteConfig} from '@/src/config/site';
-import {Icon,type IconName} from '@/components/ui/Icons';
+import Image from "next/image";
+import Link from "next/link";
+import { siteConfig } from "@/src/config/site";
+import { Icon, type IconName } from "@/components/ui/Icons";
 
-const groups=[
- {title:'المنصة',links:[['الرئيسية','/'],['عن مَدار | ORBIT','/about'],['أوربي','/about#orby'],['المتجر','/store'],['المدونة','/blog']]},
- {title:'الموارد',links:[['الوثائق','/docs'],['مركز المساعدة','/help'],['الأسئلة الشائعة','/faq'],['المجتمع','/community'],['تواصل معنا','/contact']]},
- {title:'الشروط والسياسات',links:[['سياسة الخصوصية','/privacy'],['شروط الاستخدام','/terms'],['سياسة الاسترجاع','/refund-policy'],['اتفاقية الخدمة','/service-agreement']]},
+const groups = [
+  { title: "المنتج", links: [["منصة مَدار", "/about"], ["أوربي", "/about#orby"], ["المتجر", "/store"], ["المدونة", "/blog"]] },
+  { title: "الاستخدام", links: [["ابدأ الآن", "/register"], ["تسجيل الدخول", "/login"], ["الوثائق", "/docs"], ["مركز المساعدة", "/help"]] },
+  { title: "الشركة", links: [["عن مَدار", "/about"], ["الوظائف", "/careers"], ["المجتمع", "/community"], ["تواصل معنا", "/contact"]] },
+  { title: "القانوني", links: [["سياسة الخصوصية", "/privacy"], ["شروط الاستخدام", "/terms"], ["سياسة الاسترجاع", "/refund-policy"], ["اتفاقية الخدمة", "/service-agreement"]] },
 ];
-const socials:{name:string;href:string;icon:IconName}[]=[{name:'حساب مَدار | ORBIT على منصة إكس',href:siteConfig.social.x,icon:'x'},{name:'حساب مَدار | ORBIT للصور والمقاطع',href:siteConfig.social.instagram,icon:'instagram'},{name:'التواصل المباشر مع مَدار | ORBIT',href:siteConfig.social.whatsapp,icon:'whatsapp'}];
+const socials: { name: string; href: string; icon: IconName }[] = [
+  { name: "حساب مَدار على منصة إكس", href: siteConfig.social.x, icon: "x" },
+  { name: "حساب مَدار على إنستجرام", href: siteConfig.social.instagram, icon: "instagram" },
+  { name: "التواصل المباشر مع مَدار", href: siteConfig.social.whatsapp, icon: "whatsapp" },
+];
 
-export default function Footer(){return <footer className="md-footer md-no-print"><div className="md-container py-12 sm:py-14"><div className="grid gap-9 lg:grid-cols-[1.35fr_repeat(3,1fr)]"><div><Link href="/" className="inline-flex items-center rounded-xl text-white"><Image src={siteConfig.assets.logoWhite} alt="شعار مَدار | ORBIT" width={190} height={44} className="h-10 w-auto"/></Link><p className="mt-4 max-w-sm text-sm leading-7 text-slate-400">{siteConfig.description}</p><Link href={siteConfig.links.orby} className="mt-5 inline-flex"><span className="md-orby-chip"><Image src={siteConfig.assets.orby} alt="صورة أوربي" width={32} height={32} unoptimized className="md-orby-avatar md-orby-alive"/><span>تعرّف على أوربي</span></span></Link><div className="mt-6 flex gap-2" aria-label="شبكات مَدار | ORBIT الاجتماعية">{socials.map(s=><a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.name} title={s.name} className="grid h-10 w-10 place-items-center rounded-lg border border-white/10 bg-white/[.035] text-slate-400 transition hover:-translate-y-0.5 hover:border-emerald-300/30 hover:bg-emerald-300/10 hover:text-emerald-200"><Icon name={s.icon} className="h-4.5 w-4.5"/></a>)}</div></div>{groups.map(group=><div key={group.title}><h2 className="text-sm font-black text-white">{group.title}</h2><ul className="mt-4 space-y-2.5">{group.links.map(([label,href])=><li key={href}><Link href={href} className="text-sm text-slate-400 transition hover:text-white">{label}</Link></li>)}</ul></div>)}</div><div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} مَدار | ORBIT. {siteConfig.copyright}</p><a href={`mailto:${siteConfig.email}`} className="font-bold text-slate-400 transition hover:text-white">راسل فريق مَدار | ORBIT</a></div></div></footer>}
+export default function Footer() {
+  return <footer className="md-public-footer md-no-print">
+    <div className="md-container">
+      <div className="md-public-footer-main">
+        <section className="md-public-footer-brand">
+          <Link href="/"><Image src={siteConfig.assets.logoWhite} alt="مَدار | ORBIT" width={190} height={44} /></Link>
+          <p>{siteConfig.description}</p>
+          <Link href={siteConfig.links.orby} className="md-public-footer-orby"><Image src={siteConfig.assets.orby} alt="أوربي" width={34} height={34} unoptimized /><span><strong>أوربي</strong><small>ذكاء الأعمال داخل مَدار</small></span></Link>
+          <div className="md-public-socials" aria-label="حسابات مَدار الاجتماعية">{socials.map((social) => <a key={social.name} href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.name}><Icon name={social.icon} /></a>)}</div>
+        </section>
+        <div className="md-public-footer-links">{groups.map((group) => <section key={group.title}><h2>{group.title}</h2>{group.links.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}</section>)}</div>
+      </div>
+      <div className="md-public-footer-bottom"><p>© {new Date().getFullYear()} مَدار | ORBIT. {siteConfig.copyright}</p><div><span className="md-public-status-dot" />الخدمات تعمل بصورة طبيعية</div><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></div>
+    </div>
+  </footer>;
+}

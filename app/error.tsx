@@ -1,4 +1,3 @@
-'use client';
-import {Icon} from '@/components/ui/Icons';
-
-export default function Error({reset}:{reset:()=>void}){return <main className="md-shell grid min-h-screen place-items-center p-5"><section className="md-panel relative w-full max-w-2xl overflow-hidden text-center"><div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,122,.12),transparent_48%)]"/><div className="relative py-10"><span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-rose-300/20 bg-rose-300/10 text-rose-200"><Icon name="help" className="h-8 w-8"/></span><p className="mt-6 text-sm font-black text-rose-200">تعذر إكمال الطلب</p><h1 className="mt-3 text-3xl font-black sm:text-4xl">حدث خطأ غير متوقع</h1><p className="mx-auto mt-4 max-w-lg leading-8 text-slate-400">لم تتغير بياناتك. أعد المحاولة، وإن استمرت المشكلة فتواصل مع دعم مَدار من حسابك.</p><button className="md-button md-button-primary mt-7" onClick={reset}>إعادة المحاولة</button></div></section></main>}
+"use client";
+import Link from "next/link";
+export default function ErrorPage({reset}:{error:Error&{digest?:string};reset:()=>void}){return <main className="md-route-error"><section><h1>تعذّر عرض الصفحة</h1><p>لم تتغير بياناتك. أعد المحاولة أو ارجع إلى الصفحة الرئيسية.</p><div><button type="button" onClick={reset} className="md-button md-button-primary">إعادة المحاولة</button><Link href="/" className="md-button md-button-secondary">الرئيسية</Link></div></section></main>}
