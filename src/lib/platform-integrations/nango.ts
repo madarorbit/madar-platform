@@ -20,6 +20,13 @@ export type NangoProxyResult =
   | { status: 'rejected'; reason: string }
   | { status: 'completed'; ok: boolean; httpStatus: number; data: unknown; requestId: string | null };
 
+type NangoSessionPayload = {
+  data?: { token?: unknown; connect_link?: unknown; expires_at?: unknown };
+  token?: unknown;
+  connect_link?: unknown;
+  expires_at?: unknown;
+};
+
 const safeEqual = (left: string, right: string) => {
   const a = Buffer.from(left, 'utf8');
   const b = Buffer.from(right, 'utf8');
@@ -72,12 +79,12 @@ export async function createNangoConnectSession(input: {
       cache: 'no-store',
     });
     const raw = await response.text();
-    let payload: { data?: { token?: unknown; connect_link?: unknown; expires_at?: unknown }; token?: unknown; connect_link?: unknown; expires_at?: unknown } | null = null;
+    let payload: NangoSessionPayload | null = null;
     if (raw.trim()) {
-      try { payload = JSON.parse(raw) as typeof payload; } catch { payload = null; }
+      try { payload = JSON.parse(raw) as NangoSessionPayload; } catch { payload = null; }
     }
     if (!response.ok) return { status: 'rejected', reason: `NANGO_HTTP_${response.status}` };
-    const data = payload?.data ?? payload;
+    const data: NangoSessionPayload | null = payload?.data ?? payload;
     if (!data || typeof data.token !== 'string' || typeof data.connect_link !== 'string' || typeof data.expires_at !== 'string') {
       return { status: 'rejected', reason: 'NANGO_INVALID_RESPONSE' };
     }
