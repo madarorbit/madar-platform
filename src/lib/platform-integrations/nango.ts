@@ -15,6 +15,11 @@ export type NangoConnectSessionResult =
   | { status: 'created'; session: NangoConnectSession }
   | { status: 'rejected'; reason: string };
 
+export type NangoProxyResult =
+  | { status: 'disabled' | 'not-configured' }
+  | { status: 'rejected'; reason: string }
+  | { status: 'completed'; ok: boolean; httpStatus: number; data: unknown; requestId: string | null };
+
 const safeEqual = (left: string, right: string) => {
   const a = Buffer.from(left, 'utf8');
   const b = Buffer.from(right, 'utf8');
@@ -72,8 +77,8 @@ export async function createNangoConnectSession(input: {
       try { payload = JSON.parse(raw) as typeof payload; } catch { payload = null; }
     }
     if (!response.ok) return { status: 'rejected', reason: `NANGO_HTTP_${response.status}` };
-    const data = payload?.data || payload;
-    if (typeof data?.token !== 'string' || typeof data.connect_link !== 'string' || typeof data.expires_at !== 'string') {
+    const data = payload?.data ?? payload;
+    if (!data || typeof data.token !== 'string' || typeof data.connect_link !== 'string' || typeof data.expires_at !== 'string') {
       return { status: 'rejected', reason: 'NANGO_INVALID_RESPONSE' };
     }
     return {
@@ -81,11 +86,76 @@ export async function createNangoConnectSession(input: {
       session: { token: data.token, connectLink: data.connect_link, expiresAt: data.expires_at, allowedIntegrations: integrations },
     };
   } catch (error) {
-    const reason = error instanceof Error ? error.name || error.message : 'NANGO_UNKNOWN_ERROR';
+    const reason = error instanceof Error ? error.message || error.name : 'NANGO_UNKNOWN_ERROR';
     console.warn('Nango connect session unavailable; MADAR integration engine is not affected', {
       organizationId: input.organizationId,
       reason,
     });
+    return { status: 'rejected', reason };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Restricted server-only proxy for certified MADAR connectors. It cannot
+ * override Nango's API base URL, integration allowlist, or credential headers.
+ */
+export async function nangoProxyRequest(input: {
+  integrationId: string;
+  connectionId: string;
+  endpoint: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  data?: unknown;
+}): Promise<NangoProxyResult> {
+  const config = platformIntegrationsConfig().nango;
+  if (!config.enabled) return { status: 'disabled' };
+  if (!config.configured) return { status: 'not-configured' };
+  if (!config.allowedIntegrations.includes(input.integrationId)) return { status: 'rejected', reason: 'NANGO_INTEGRATION_NOT_ALLOWED' };
+  if (!input.connectionId.trim() || input.connectionId.length > 300) return { status: 'rejected', reason: 'NANGO_CONNECTION_INVALID' };
+  if (!input.endpoint.startsWith('/') || input.endpoint.startsWith('//') || input.endpoint.includes('..') || input.endpoint.includes('\\') || /[\r\n]/.test(input.endpoint) || input.endpoint.length > 1_000) {
+    return { status: 'rejected', reason: 'NANGO_ENDPOINT_INVALID' };
+  }
+  const method = input.method || 'GET';
+  let body: string | undefined;
+  if (input.data !== undefined) {
+    try { body = JSON.stringify(input.data); } catch { return { status: 'rejected', reason: 'NANGO_BODY_INVALID' }; }
+    if (Buffer.byteLength(body, 'utf8') > 262_144) return { status: 'rejected', reason: 'NANGO_BODY_TOO_LARGE' };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Math.max(config.timeoutMs, 10_000));
+  try {
+    const response = await fetch(`${config.apiUrl}/proxy${input.endpoint}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        'Provider-Config-Key': input.integrationId,
+        'Connection-Id': input.connectionId,
+        Accept: 'application/json',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body,
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    const contentLength = Number(response.headers.get('content-length') || 0);
+    if (contentLength > 5 * 1024 * 1024) return { status: 'rejected', reason: 'NANGO_RESPONSE_TOO_LARGE' };
+    const raw = await response.text();
+    if (Buffer.byteLength(raw, 'utf8') > 5 * 1024 * 1024) return { status: 'rejected', reason: 'NANGO_RESPONSE_TOO_LARGE' };
+    let data: unknown = raw;
+    if (raw.trim()) {
+      try { data = JSON.parse(raw); } catch { data = raw.slice(0, 20_000); }
+    } else data = null;
+    return {
+      status: 'completed',
+      ok: response.ok,
+      httpStatus: response.status,
+      data,
+      requestId: response.headers.get('x-request-id') || response.headers.get('nango-request-id'),
+    };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message || error.name : 'NANGO_PROXY_UNKNOWN_ERROR';
     return { status: 'rejected', reason };
   } finally {
     clearTimeout(timeout);
