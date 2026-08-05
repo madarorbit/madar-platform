@@ -62,6 +62,7 @@ export default function EnterpriseWorkspaceShell({
             <div className="md-workspace-meta"><span>{operatingMode === "MADAR_NATIVE" ? "مَدار هو النظام الأساسي" : "مرتبط بنظام خارجي"}</span><span>{roleNames[role] || "عضو"} · {subscriptionNames[subscriptionStatus] || subscriptionStatus}</span></div>
             <Link href="/dashboard"><Icon name="layers" />تبديل أو إدارة المساحات</Link>
             <Link href="/workspace/setup"><Icon name="settings" />إعدادات المساحة</Link>
+            <Link href="/dashboard-app"><Icon name="automation" />تطبيق لوحة القيادة</Link>
           </div>
         </details>
       </div>
