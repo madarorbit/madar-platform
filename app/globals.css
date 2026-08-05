@@ -3,5 +3,6 @@
 @import "./enterprise-compatibility.css";
 @import "./theme-system.css";
 @import "./ux-launch-polish.css";
+@import "./ux-navigation-redesign.css";
 
 .prose p{margin-bottom:1rem}
