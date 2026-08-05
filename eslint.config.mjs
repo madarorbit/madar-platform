@@ -20,6 +20,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Trigger.dev is an isolated deployment unit with its own package and tsconfig.
+    "infra/trigger-runtime/**",
   ]),
 ]);
 
