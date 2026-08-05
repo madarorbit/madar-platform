@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/src/lib/auth";
 import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
+import { authorizeOrganizationAction } from "@/src/lib/platform-integrations";
 import type { OperatingMode } from "@/src/lib/v2/account";
 import type { VerticalExtension } from "@/src/lib/v2/verticals";
 
@@ -107,6 +108,13 @@ export async function requireBusinessWorkspace({
       },
     } as BusinessWorkspace,
     id = encodeURIComponent(rawWorkspace.id);
+  const authorization = await authorizeOrganizationAction({
+    internalAllowed: true,
+    userId: user.id,
+    organizationId: workspace.id,
+    relation: "can_view",
+  });
+  if (!authorization.allowed) redirect("/account?error=forbidden");
   const [resolvedSubscriptionStatus, activityRows, moduleRows] =
     await Promise.all([
       supabaseFetch("/rest/v1/rpc/resolve_pricing_subscription_status", {

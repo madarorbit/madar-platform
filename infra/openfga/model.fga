@@ -1,0 +1,16 @@
+model
+  schema 1.1
+
+type user
+
+type organization
+  relations
+    define owner: [user]
+    define admin: [user]
+    define member: [user]
+
+    define can_view: owner or admin or member
+    define can_manage_members: owner or admin
+    define can_manage_integrations: owner or admin
+    define can_use_orby: owner or admin or member
+    define can_manage_billing: owner

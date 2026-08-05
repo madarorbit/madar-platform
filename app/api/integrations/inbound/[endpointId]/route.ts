@@ -6,7 +6,7 @@ import {
   SecretsManager,
 } from "@/src/lib/integration/platform";
 import { parseCsv } from "@/src/lib/csv";
-import { dispatchDurableWorker, mirrorUsageEvent } from "@/src/lib/platform-integrations";
+import { dispatchDurableWorker, mirrorUsageEvent, publishOrganizationWebhook } from "@/src/lib/platform-integrations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -233,6 +233,19 @@ export async function POST(
             stream_key: streamKey,
             channel: "inbound",
           },
+        }),
+        publishOrganizationWebhook({
+          organizationId: endpoint.organization_id,
+          eventType: "integration.batch.received",
+          eventId: `integration-batch-${delivery.id}`,
+          payload: {
+            delivery_id: delivery.id,
+            batch_id: batch.id,
+            connection_id: endpoint.connection_id,
+            records: batchRecords.length,
+            stream_key: streamKey,
+          },
+          channels: ["integrations"],
         }),
       ]);
     });
