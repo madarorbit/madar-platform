@@ -70,10 +70,10 @@ export async function publishOrganizationWebhook(input: {
   if (!/^[a-z0-9][a-z0-9._-]{2,127}$/i.test(input.eventType)) return { status: 'rejected', reason: 'EVENT_TYPE_INVALID' };
 
   const eventPayload: JsonObject = {
+    ...input.payload,
     schema_version: 1,
     organization_id: input.organizationId,
     occurred_at: new Date().toISOString(),
-    ...input.payload,
   };
   let serialized: string;
   try { serialized = JSON.stringify(eventPayload); } catch { return { status: 'rejected', reason: 'PAYLOAD_NOT_SERIALIZABLE' }; }
