@@ -39,11 +39,13 @@ export default function WorkspaceCommandPalette({
       const writing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        if (open) setQuery("");
         onOpenChange(!open);
       } else if (event.key === "/" && !writing) {
         event.preventDefault();
         onOpenChange(true);
       } else if (event.key === "Escape" && open) {
+        setQuery("");
         onOpenChange(false);
       }
     };
@@ -53,17 +55,21 @@ export default function WorkspaceCommandPalette({
 
   useEffect(() => {
     if (!open) return;
-    setQuery("");
-    requestAnimationFrame(() => inputRef.current?.focus());
+    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
   }, [open]);
 
   if (!open) return null;
-  const go = (href: string) => {
+  const close = () => {
+    setQuery("");
     onOpenChange(false);
+  };
+  const go = (href: string) => {
+    close();
     router.push(href);
   };
   return (
-    <div className="md-command-layer" role="presentation" onMouseDown={() => onOpenChange(false)}>
+    <div className="md-command-layer" role="presentation" onMouseDown={close}>
       <section className="md-command-dialog" role="dialog" aria-modal="true" aria-label="البحث الشامل" onMouseDown={(event) => event.stopPropagation()}>
         <div className="md-command-input-wrap">
           <Icon name="search" className="h-5 w-5" />
