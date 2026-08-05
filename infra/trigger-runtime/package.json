@@ -1,0 +1,21 @@
+{
+  "name": "@madar/trigger-runtime",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "trigger dev",
+    "deploy": "trigger deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@trigger.dev/sdk": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "trigger.dev": "^4.0.0",
+    "typescript": "^5"
+  }
+}

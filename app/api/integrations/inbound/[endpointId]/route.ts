@@ -1,10 +1,12 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { after } from "next/server";
 import {
   IntegrationDatabase,
   IntegrationQueue,
   SecretsManager,
 } from "@/src/lib/integration/platform";
 import { parseCsv } from "@/src/lib/csv";
+import { dispatchDurableWorker, mirrorUsageEvent } from "@/src/lib/platform-integrations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -200,7 +202,7 @@ export async function POST(
         },
       );
     const queue = new IntegrationQueue(database);
-    await queue.enqueue({
+    const job = await queue.enqueue({
       organizationId: endpoint.organization_id,
       connectionId: endpoint.connection_id,
       jobType: "pipeline.process_batch",
@@ -217,6 +219,23 @@ export async function POST(
       `id=eq.${endpoint.id}`,
       { last_received_at: new Date().toISOString() },
     );
+    after(async () => {
+      await Promise.allSettled([
+        dispatchDurableWorker({ kind: "integration", correlationId: job.id, reason: "inbound-batch-queued" }),
+        mirrorUsageEvent({
+          id: `integration-inbound-${delivery.id}`,
+          type: "integration.records.received",
+          subject: endpoint.organization_id,
+          data: {
+            records: batchRecords.length,
+            batches: 1,
+            connection_id: endpoint.connection_id,
+            stream_key: streamKey,
+            channel: "inbound",
+          },
+        }),
+      ]);
+    });
     return Response.json(
       { ok: true, deliveryId: delivery.id, records: batchRecords.length },
       { status: 202, headers: { "Cache-Control": "no-store" } },
