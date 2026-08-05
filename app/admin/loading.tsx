@@ -1,0 +1,1 @@
+export default function AdminLoading(){return <main className="md-route-loading" aria-label="جارٍ تحميل مركز الإدارة"><div className="md-route-loading-header"/><div className="md-route-loading-grid"><div className="md-route-loading-block"/><div className="md-route-loading-block"/><div className="md-route-loading-block"/></div></main>}
