@@ -1,0 +1,39 @@
+name: Trigger Runtime
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "infra/trigger-runtime/**"
+      - ".github/workflows/trigger-runtime.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/trigger-runtime/**"
+      - ".github/workflows/trigger-runtime.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-trigger-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: infra/trigger-runtime
+    env:
+      TRIGGER_PROJECT_REF: proj_madar_ci_placeholder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: infra/trigger-runtime/package.json
+      - name: Install isolated dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck runtime
+        run: npm run typecheck
