@@ -51,9 +51,10 @@ test('Nango uses allowlisted short-lived connect sessions and signed webhook rec
 });
 
 test('external bindings store references only and expose strictly read-only tenant access', async () => {
-  const [migration, hardening] = await Promise.all([
+  const [migration, hardening, optimization] = await Promise.all([
     read('supabase/migrations/20260805235500_platform_external_bindings.sql'),
     read('supabase/migrations/20260806092500_harden_platform_external_bindings_grants.sql'),
+    read('supabase/migrations/20260806093500_optimize_platform_external_bindings.sql'),
   ]);
   assert.match(migration, /external_id text not null/);
   assert.match(migration, /metadata jsonb/);
@@ -63,6 +64,8 @@ test('external bindings store references only and expose strictly read-only tena
   assert.match(hardening, /revoke all privileges.*authenticated/);
   assert.match(hardening, /grant select.*authenticated/);
   assert.doesNotMatch(hardening, /grant (insert|update|delete|truncate).*authenticated/i);
+  assert.match(optimization, /platform_external_bindings_created_by_idx/);
+  assert.match(optimization, /\(select auth\.uid\(\)\)/);
 });
 
 test('Svix receives only operational metadata from ORBY and inbound integration routes', async () => {
