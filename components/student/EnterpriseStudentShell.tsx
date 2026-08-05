@@ -15,10 +15,11 @@ import WorkspaceCommandPalette from "@/components/workspace/WorkspaceCommandPale
 import { studentNavigationGroups } from "@/src/lib/ux/navigation";
 
 const mobileKeys = new Set(["dashboard", "tasks", "ai", "library"]);
+const STUDENT_DEFAULT_ROUTE = { view:'dashboard' as const, href:'/student?view=dashboard' };
 
 export default function EnterpriseStudentShell({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
-  const activeView = searchParams.get("view") || "dashboard";
+  const activeView = searchParams.get("view") || STUDENT_DEFAULT_ROUTE.view;
   const [compact, setCompact] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);

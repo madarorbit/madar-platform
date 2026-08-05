@@ -49,6 +49,7 @@ export default function NavbarClient({ authenticated, displayName, hasAvatar, is
       <button type="button" onClick={() => setOpen((value) => !value)} className="md-public-menu-button" aria-expanded={open} aria-controls="public-mobile-nav" aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}><Icon name={open ? "check" : "layers"} /></button>
     </div>
     {open && <div id="public-mobile-nav" className="md-public-mobile-nav"><div className="md-container">
+      <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2"><span className="text-xs font-bold text-slate-400">المظهر</span><ThemeToggle /></div>
       <Link href="/search" onClick={close} className="md-public-mobile-search"><Icon name="search" />البحث في مَدار</Link>
       {publicGroups.map((group) => <section key={group.label}><h2>{group.label}</h2>{group.links.map((link) => <Link key={link.href} href={link.href} onClick={close} aria-current={active(link.href) ? "page" : undefined}>{link.label}</Link>)}</section>)}
       <Link href={siteConfig.links.orby} onClick={close} className="md-public-orby-link"><Image src={siteConfig.assets.orby} alt="أوربي" width={42} height={42} unoptimized /><span><strong>أوربي</strong><small>مساعد الأعمال الذكي</small></span></Link>

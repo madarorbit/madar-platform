@@ -15,6 +15,10 @@ import WorkspaceCommandPalette from "@/components/workspace/WorkspaceCommandPale
 import { adminNavigationGroups, routeMatches } from "@/src/lib/ux/navigation";
 
 const mobileKeys = new Set(["admin", "users", "integrations", "health"]);
+const integrationAdminRoutes = {
+  readiness: "/admin/integrations/readiness",
+  audit: "/admin/integrations/audit",
+} as const;
 
 export default function EnterpriseAdminShell({ children, displayName, isFounder }: { children: ReactNode; displayName: string; isFounder: boolean }) {
   const pathname = usePathname() || "/admin";
@@ -48,6 +52,8 @@ export default function EnterpriseAdminShell({ children, displayName, isFounder 
             <div className="md-workspace-meta"><span>{isFounder ? "صلاحيات المؤسس" : "صلاحيات الإدارة"}</span><span>كل إجراء حساس مسجل وقابل للتدقيق</span></div>
             {isFounder && <Link href="/admin/founder"><Icon name="sparkles" />مركز قيادة المؤسس</Link>}
             <Link href="/admin/system-health"><Icon name="check" />صحة المنصة</Link>
+            <Link href={integrationAdminRoutes.readiness}><Icon name="check" />مختبر جاهزية الموصلات</Link>
+            <Link href={integrationAdminRoutes.audit}><Icon name="shield" />تدقيق التكاملات</Link>
             <Link href="/account"><Icon name="user" />العودة إلى الحساب</Link>
           </div>
         </details>
