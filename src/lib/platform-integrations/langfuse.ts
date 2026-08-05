@@ -35,7 +35,7 @@ const attributes = (values: Record<string, AttributeValue>) => Object.entries(va
   .filter(([, value]) => value !== null && value !== undefined)
   .map(([key, value]) => ({ key, value: otlpValue(value as Exclude<AttributeValue, null | undefined>) }));
 
-const unixNano = (milliseconds: number) => String(BigInt(Math.max(0, Math.floor(milliseconds))) * 1_000_000n);
+const unixNano = (milliseconds: number) => String(BigInt(Math.max(0, Math.floor(milliseconds))) * BigInt(1_000_000));
 const hex = (bytes: number) => randomBytes(bytes).toString('hex');
 const clipped = (value: string | undefined) => value ? value.slice(0, 16_000) : undefined;
 
