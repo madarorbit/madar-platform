@@ -37,6 +37,7 @@ type Task = {
   id: string;
   title: string;
   priority: string;
+  status: string;
   due_at: string | null;
 };
 type Insight = {
@@ -146,10 +147,15 @@ export async function GET(request: Request) {
       status: SubscriptionStatus;
       trial_ends_at: string | null;
       ends_at: string | null;
+      locked_entitlements: Record<string, unknown>;
+      pricing_variants:
+        | { level_code: "BASIC" | "PREMIUM" | "FULL"; term_months: number }
+        | Array<{ level_code: "BASIC" | "PREMIUM" | "FULL"; term_months: number }>
+        | null;
     }>(
       await safe(
         supabaseFetch(
-          `/rest/v1/pricing_subscription_snapshots?organization_id=eq.${encodeURIComponent(workspace.id)}&status=in.(trialing,active,past_due)&select=status,trial_ends_at,ends_at&order=created_at.desc&limit=1`,
+          `/rest/v1/pricing_subscription_snapshots?organization_id=eq.${encodeURIComponent(workspace.id)}&status=in.(trialing,active,past_due)&select=status,trial_ends_at,ends_at,locked_entitlements,pricing_variants(level_code,term_months)&order=created_at.desc&limit=1`,
           {},
           accessToken,
         ),
@@ -241,7 +247,7 @@ export async function GET(request: Request) {
       ),
       safe(
         supabaseFetch(
-          `/rest/v1/business_tasks?organization_id=eq.${organizationId}&status=in.(todo,in_progress)&select=id,title,priority,due_at&order=due_at.asc.nullslast&limit=12`,
+          `/rest/v1/business_tasks?organization_id=eq.${organizationId}&status=in.(todo,in_progress)&select=id,title,priority,status,due_at&order=due_at.asc.nullslast&limit=12`,
           {},
           accessToken,
         ),
@@ -287,39 +293,20 @@ export async function GET(request: Request) {
           : specialization.code === "HOTEL"
             ? "hospitality"
             : "commerce";
-    const sectorReport =
-      extension === "food_service"
-        ? rows(
-            await safe(
-              supabaseFetch(
-                `/rest/v1/restaurant_profit_report?organization_id=eq.${organizationId}&select=*`,
-                {},
-                accessToken,
-              ),
-              [],
-            ),
-          )[0]
-        : extension === "hospitality"
-          ? rows(
-              await safe(
-                supabaseFetch(
-                  `/rest/v1/hotel_daily_report?organization_id=eq.${organizationId}&select=*`,
-                  {},
-                  accessToken,
-                ),
-                [],
-              ),
-            )[0]
-          : rows(
-              await safe(
-                supabaseFetch(
-                  `/rest/v1/commerce_profit_report?organization_id=eq.${organizationId}&select=*`,
-                  {},
-                  accessToken,
-                ),
-                [],
-              ),
-            )[0];
+    const reportPath=extension === "food_service"?"restaurant_profit_report":extension === "hospitality"?"hotel_daily_report":"commerce_profit_report";
+    const operationsPath=extension === "food_service"
+      ?`/rest/v1/restaurant_kitchen_tickets?organization_id=eq.${organizationId}&status=in.(NEW,PREPARING,READY)&select=id,ticket_number,status,priority,opened_at,restaurant_orders(order_number,service_mode)&order=priority.desc,opened_at.asc&limit=20`
+      :extension === "hospitality"
+        ?`/rest/v1/hotel_housekeeping_tasks?organization_id=eq.${organizationId}&status=in.(PENDING,ASSIGNED,IN_PROGRESS,INSPECTION,BLOCKED)&select=id,status,task_type,service_date,notes,hotel_rooms(room_number)&order=service_date.asc&limit=20`
+        :null;
+    const [sectorReportData,sectorOperationsData,connectionsData,writeGrantsData,recentActionsData]=await Promise.all([
+      safe(supabaseFetch(`/rest/v1/${reportPath}?organization_id=eq.${organizationId}&select=*`,{},accessToken),[]),
+      operationsPath?safe(supabaseFetch(operationsPath,{},accessToken),[]):Promise.resolve([]),
+      safe(supabaseFetch(`/rest/v1/integration_connections?organization_id=eq.${organizationId}&deleted_at=is.null&select=id,name,status,connection_mode,last_success_at,last_error_code,updated_at&order=updated_at.desc&limit=10`,{},accessToken),[]),
+      safe(supabaseFetch(`/rest/v1/integration_permission_grants?organization_id=eq.${organizationId}&permission=eq.WRITE&revoked_at=is.null&select=connection_id,resource_key,constraints,granted_at`,{},accessToken),[]),
+      safe(supabaseFetch(`/rest/v1/mobile_action_status?organization_id=eq.${organizationId}&user_id=eq.${encodeURIComponent(user.id)}&select=id,action_type,entity_type,entity_id,source_of_truth,preview,result,status,effective_status,error_code,external_error_code,expires_at,confirmed_at,completed_at,created_at,updated_at&order=created_at.desc&limit=12`,{},accessToken),[]),
+    ]);
+    const sectorReport=rows(sectorReportData)[0],sectorOperations=rows<Record<string,unknown>>(sectorOperationsData),connections=rows<Record<string,unknown>>(connectionsData),writeGrants=rows<{connection_id:string;resource_key:string;constraints:Record<string,unknown>;granted_at:string}>(writeGrantsData),recentActions=rows(recentActionsData);
 
     const products = rows<Product>(productData);
     const customers = rows<{ id: string; status: string }>(customerData);
@@ -420,6 +407,12 @@ export async function GET(request: Request) {
         (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9),
     );
 
+    const variant=scalar<{level_code:"BASIC"|"PREMIUM"|"FULL";term_months:number}>(v2Subscription?.pricing_variants),entitlements=v2Subscription?.locked_entitlements||{},subscriptionWritable=subscriptionStatus==='trialing'||subscriptionStatus==='active',writeTools=subscriptionWritable&&entitlements.orby_write_tools===true,reverseWrite=subscriptionWritable&&entitlements.reverse_write===true,isManager=membership.role==='OWNER'||membership.role==='ADMIN',externalSource=workspace.source_of_truth==='EXTERNAL'||workspace.operating_mode==='CONNECTED_EXTERNAL';
+    const grantedResources=new Set(writeGrants.map(item=>item.resource_key)),actionCapabilities:Array<{key:string;label:string;statuses:string[];sourceOfTruth:"MADAR"|"EXTERNAL"}> = [];
+    if(writeTools&&isManager&&(!externalSource||reverseWrite&&grantedResources.has('TASK_UPDATE')))actionCapabilities.push({key:'TASK_STATUS_UPDATE',label:'تحديث حالة المهمة',statuses:['todo','in_progress','done','cancelled'],sourceOfTruth:externalSource?'EXTERNAL':'MADAR'});
+    if(writeTools&&isManager&&extension==='food_service'&&(!externalSource||reverseWrite&&grantedResources.has('RESTAURANT_ORDER_STATUS')))actionCapabilities.push({key:'KITCHEN_TICKET_STATUS',label:'تحديث تذكرة المطبخ',statuses:['PREPARING','READY','SERVED','CANCELLED'],sourceOfTruth:externalSource?'EXTERNAL':'MADAR'});
+    if(writeTools&&isManager&&extension==='hospitality'&&(!externalSource||reverseWrite&&grantedResources.has('HOUSEKEEPING_STATUS')))actionCapabilities.push({key:'HOUSEKEEPING_STATUS',label:'تحديث مهمة التنظيف',statuses:['ASSIGNED','IN_PROGRESS','INSPECTION','COMPLETED','BLOCKED'],sourceOfTruth:externalSource?'EXTERNAL':'MADAR'});
+
     return NextResponse.json(
       {
         profile: {
@@ -457,6 +450,26 @@ export async function GET(request: Request) {
           extension,
         },
         subscriptionStatus,
+        subscription: {
+          level: variant?.level_code || "BASIC",
+          termMonths: variant?.term_months || 1,
+          trialEndsAt: v2Subscription?.trial_ends_at || null,
+          endsAt: v2Subscription?.ends_at || null,
+          entitlements,
+        },
+        permissions: {
+          canManage: isManager,
+          canUseOrby: Number(entitlements.orby_daily_messages ?? 0)!==0,
+          canUseWriteTools: writeTools && isManager,
+          canReverseWrite: writeTools && isManager && reverseWrite && grantedResources.size>0,
+          actionCapabilities,
+        },
+        synchronization: {
+          sourceOfTruth: externalSource ? "EXTERNAL" : "MADAR",
+          connections,
+          writeGrants,
+          lastSuccessfulAt: connections.map(item=>String(item.last_success_at||'')).filter(Boolean).sort().at(-1)||null,
+        },
         status: alerts.some(
           (alert) =>
             alert.severity === "critical" || alert.severity === "warning",
@@ -481,8 +494,11 @@ export async function GET(request: Request) {
             id: task.id,
             title: task.title,
             priority: task.priority,
+            status: task.status,
             dueAt: task.due_at,
           })),
+        sectorOperations,
+        recentActions,
         recentSales: recentSales.map((sale) => ({
           id: sale.id,
           total: number(sale.total),

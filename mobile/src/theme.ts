@@ -1,19 +1,5 @@
-export const colors = {
-  background: '#090B10',
-  surface: '#11151D',
-  surfaceElevated: '#171C26',
-  border: 'rgba(255,255,255,0.09)',
-  text: '#F8FAFC',
-  muted: '#94A3B8',
-  faint: '#64748B',
-  mint: '#70E4D4',
-  mintSoft: 'rgba(112,228,212,0.12)',
-  violet: '#9B7BFF',
-  violetSoft: 'rgba(155,123,255,0.13)',
-  amber: '#F7C873',
-  amberSoft: 'rgba(247,200,115,0.12)',
-  red: '#FB7185',
-  redSoft: 'rgba(251,113,133,0.12)',
-  sky: '#7DD3FC',
-  skySoft: 'rgba(125,211,252,0.12)',
-};
+export type MadarTheme={dark:boolean;colors:{background:string;surface:string;surfaceElevated:string;border:string;text:string;muted:string;faint:string;mint:string;mintSoft:string;violet:string;violetSoft:string;amber:string;amberSoft:string;red:string;redSoft:string;sky:string;skySoft:string;nav:string}};
+
+const accents={mint:'#70E4D4',violet:'#9B7BFF',amber:'#F7C873',red:'#FB7185',sky:'#38BDF8'};
+export const darkTheme:MadarTheme={dark:true,colors:{background:'#080A0F',surface:'#11151D',surfaceElevated:'#181D27',border:'rgba(255,255,255,0.09)',text:'#F8FAFC',muted:'#A4AFC0',faint:'#687386',mint:accents.mint,mintSoft:'rgba(112,228,212,0.12)',violet:accents.violet,violetSoft:'rgba(155,123,255,0.14)',amber:accents.amber,amberSoft:'rgba(247,200,115,0.12)',red:accents.red,redSoft:'rgba(251,113,133,0.12)',sky:accents.sky,skySoft:'rgba(56,189,248,0.12)',nav:'rgba(14,18,26,0.98)'}};
+export const lightTheme:MadarTheme={dark:false,colors:{background:'#F4F6F9',surface:'#FFFFFF',surfaceElevated:'#F8FAFC',border:'rgba(15,23,42,0.10)',text:'#101826',muted:'#526071',faint:'#7B8796',mint:'#087F73',mintSoft:'rgba(8,127,115,0.10)',violet:'#6746D9',violetSoft:'rgba(103,70,217,0.10)',amber:'#A56708',amberSoft:'rgba(165,103,8,0.10)',red:'#C73552',redSoft:'rgba(199,53,82,0.10)',sky:'#0877A8',skySoft:'rgba(8,119,168,0.10)',nav:'rgba(255,255,255,0.98)'}};

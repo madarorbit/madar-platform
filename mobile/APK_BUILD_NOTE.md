@@ -1,4 +1,4 @@
-# MADAR prototype APK build
+# MADAR Dashboard V2 APK build
 
 The prototype APK is built directly in GitHub Actions from the managed Expo project:
 
@@ -8,4 +8,4 @@ The prototype APK is built directly in GitHub Actions from the managed Expo proj
 4. Compile `app-debug.apk` with Gradle and Java 17.
 5. Upload the APK and its SHA-256 checksum as the `madar-mobile-prototype-apk` artifact.
 
-This prototype build is signed with Android's generated debug key and is intended only for direct testing. Google Play distribution must use the production EAS/AAB profile and a permanent release signing key.
+This preview build is signed with Android's generated debug key and is intended only for direct testing. Google Play distribution must use the production EAS/AAB profile, a permanent release signing key, and the approved V2 migration/release gates.

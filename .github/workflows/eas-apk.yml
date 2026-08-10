@@ -48,8 +48,8 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install mobile dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install locked mobile dependencies
+        run: npm ci --no-audit --no-fund
 
       - name: Verify mobile project
         run: |

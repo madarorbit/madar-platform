@@ -1,0 +1,9 @@
+import {NextResponse} from 'next/server';
+import {currentUser,supabaseFetch} from '@/src/lib/supabase/server';
+
+export const runtime='nodejs';
+export const dynamic='force-dynamic';
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const tokenFrom=(request:Request)=>{const header=request.headers.get('authorization')||'';const[scheme,token]=header.split(/\s+/,2);return scheme?.toLowerCase()==='bearer'&&token?token:undefined;};
+
+export async function POST(request:Request,{params}:{params:Promise<{actionId:string}>}){const token=tokenFrom(request),user=await currentUser(token);if(!user)return NextResponse.json({error:'يجب تسجيل الدخول أولًا.'},{status:401});const{actionId}=await params,body=await request.json() as {decision?:string},decision=body.decision==='confirmed'?'confirmed':body.decision==='rejected'?'rejected':null;if(!uuid.test(actionId)||!decision)return NextResponse.json({error:'قرار الإجراء غير صالح.'},{status:400});try{const result=await supabaseFetch('/rest/v1/rpc/decide_mobile_action_v2',{method:'POST',body:JSON.stringify({target_action:actionId,decision})},token),action=(Array.isArray(result)?result[0]:result) as {status?:string};if(action?.status==='EXPIRED')return NextResponse.json({error:'انتهت صلاحية المعاينة. أنشئ معاينة جديدة.'},{status:409});if(action?.status==='CONFLICT')return NextResponse.json({error:'تغير السجل منذ المعاينة. حدّث البيانات وأنشئ معاينة جديدة.'},{status:409});return NextResponse.json({ok:true,action},{headers:{'Cache-Control':'no-store'}});}catch(error){const message=error instanceof Error?error.message:'';if(message.includes('EXPIRED'))return NextResponse.json({error:'انتهت صلاحية المعاينة. أنشئ معاينة جديدة.'},{status:409});if(message.includes('CONFLICT'))return NextResponse.json({error:'تغير السجل منذ المعاينة. حدّث البيانات وأنشئ معاينة جديدة.'},{status:409});return NextResponse.json({error:'تعذر تأكيد الإجراء أو لا تملك صلاحيته.'},{status:403});}}

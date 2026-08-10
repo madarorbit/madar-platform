@@ -1,6 +1,6 @@
 {
   "name": "madar-mobile",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -8,6 +8,7 @@
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor@latest",
+    "export:android": "expo export --platform android",
     "build:apk": "eas build --platform android --profile preview"
   },
   "dependencies": {
