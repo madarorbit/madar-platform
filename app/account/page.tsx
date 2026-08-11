@@ -1,29 +1,114 @@
-import PageShell from '@/components/ui/PageShell';
-import {Section,PageHero} from '@/components/ui/Section';
-import {Card,Grid} from '@/components/ui/Enterprise';
-import {Icon,type IconName} from '@/components/ui/Icons';
-import Link from 'next/link';
-import {requireUser} from '@/src/lib/auth';
-import {currentProfile,supabaseFetch} from '@/src/lib/supabase/server';
-import {logout} from '@/app/actions/auth';
-export const dynamic='force-dynamic';
+import Image from "next/image";
+import Link from "next/link";
+import { logout } from "@/app/actions/auth";
+import { Badge, ButtonLink, Card, Notice } from "@/components/ui/Enterprise";
+import { Icon } from "@/components/ui/Icons";
+import PageShell from "@/components/ui/PageShell";
+import { PageHero, Section } from "@/components/ui/Section";
+import { requireUser } from "@/src/lib/auth";
+import {
+  serviceStateCtas,
+  serviceStateLabels,
+  type ServiceState,
+} from "@/src/lib/services/catalog";
+import { getAccountServices } from "@/src/lib/services/server";
+import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
 
-type AccountCard={href:string;label:string;description:string;icon:IconName;featured?:boolean};
-export default async function AccountPage(){
- await requireUser();const profile=await currentProfile(),isAdmin=['ADMIN','SUPER_ADMIN'].includes(profile?.role||''),isFounder=profile?.role==='SUPER_ADMIN',unread=(await supabaseFetch('/rest/v1/notifications?read_at=is.null&select=id'))?.length||0;
- const memberships=await supabaseFetch(`/rest/v1/organization_members?user_id=eq.${encodeURIComponent(profile?.id||'')}&select=organizations(type,status)`),hasBusiness=memberships?.some((membership:{organizations?:{type?:string}})=>membership.organizations?.type!=='STUDENT');
- const cards:AccountCard[]=[
-  {href:'/student',label:'مساحة الطالب الجامعية',description:'المكتبة والمهام والملاحظات ومساعد أوربي.',icon:'document',featured:true},
-  {href:'/dashboard',label:'لوحة العميل',description:'الوصول إلى مساحة العمل وخطوات التشغيل.',icon:'home'},
-  {href:'/account/profile',label:'الملف الشخصي',description:'الاسم والهاتف وصورة الحساب.',icon:'user'},
-  {href:'/account/orders',label:'طلبات متجر مَدار',description:'متابعة الدفع والتنفيذ والتسليم.',icon:'store'},
-  {href:'/account/purchases',label:'المكتبة الرقمية',description:'الملفات والمنتجات الرقمية المملوكة.',icon:'layers'},
-  {href:'/account/notifications',label:`الإشعارات${unread>0?` — ${unread} غير مقروءة`:''}`,description:'التحديثات والتنبيهات المهمة.',icon:'megaphone'},
-  {href:'/account/support',label:'الدعم والملاحظات',description:'إرسال بلاغ أو اقتراح ومتابعته.',icon:'help'},
-  {href:'/account/privacy',label:'الخصوصية والبيانات',description:'تصدير البيانات وطلبات الحذف.',icon:'shield'},
- ];
- if(hasBusiness){cards.splice(2,0,{href:'/mobile',label:'تطبيق مَدار V2.0',description:'صفحة الإصدار وتحميل APK أو فتح المتجر.',icon:'automation',featured:true});cards.splice(3,0,{href:'/account/subscription',label:'الاشتراك والفوترة',description:'حالة الخطة والتجديد ووسيلة الدفع.',icon:'chart'});}
- if(isAdmin)cards.unshift({href:'/admin',label:'لوحة إدارة المنصة',description:'العملاء والمتجر والمساحات والتشغيل.',icon:'automation',featured:true});
- if(isFounder)cards.unshift({href:'/admin/founder',label:'مركز قيادة المؤسس',description:'التحكم الأعلى المحمي في جميع أجزاء مَدار.',icon:'sparkles',featured:true});
- return <PageShell><PageHero eyebrow="حسابي" title={profile?.full_name||'حساب مَدار'} description="إدارة بياناتك وطلباتك ومساحاتك ودعم النسخة التجريبية من مركز مؤسسي واحد."/><Section><Grid className="sm:grid-cols-2 xl:grid-cols-3" auto={false}>{cards.map(card=><Link href={card.href} key={card.href}><Card interactive className={`flex h-full items-start gap-4 ${card.featured?'border-violet-300/20 bg-gradient-to-l from-violet-400/10 to-emerald-400/5':''}`}><span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${card.featured?'bg-violet-300/15 text-violet-100':'bg-white/[.05] text-emerald-200'}`}><Icon name={card.icon}/></span><span><strong className="block text-lg">{card.label}</strong><span className="mt-2 block text-sm leading-6 text-slate-400">{card.description}</span></span><Icon name="arrow" className="mr-auto mt-2 h-4 w-4 shrink-0 text-slate-600"/></Card></Link>)}</Grid><form action={logout} className="mt-8"><button className="md-button md-button-danger">تسجيل الخروج</button></form></Section></PageShell>;
+export const dynamic = "force-dynamic";
+
+const badgeVariant = (state: ServiceState) =>
+  state === "ACTIVE" ? "success" as const
+    : state === "PENDING_APPROVAL" || state === "SETUP_REQUIRED" ? "warning" as const
+      : state === "REJECTED" || state === "SUSPENDED" || state === "EXPIRED" ? "danger" as const
+        : "default" as const;
+
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const [user, profile, accountServices, query] = await Promise.all([
+    requireUser(),
+    currentProfile(),
+    getAccountServices(),
+    searchParams,
+  ]);
+  const unread = (await supabaseFetch("/rest/v1/notifications?read_at=is.null&select=id").catch(() => []))?.length || 0;
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(profile?.role || "");
+  const activeCount = accountServices.filter((service) => service.state === "ACTIVE").length;
+
+  return (
+    <PageShell>
+      <PageHero
+        eyebrow="MADAR Account"
+        title={`مرحبًا ${profile?.full_name || "بك"}`}
+        description="حساب واحد لإدارة بياناتك وخدمات مَدار المستقلة وطلبات التفعيل من مركز واضح وآمن."
+      />
+      <Section>
+        {query.error === "forbidden" ? <Notice title="ليست لديك صلاحية لفتح الصفحة المطلوبة" variant="danger" /> : null}
+        <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+          <aside className="space-y-4">
+            <Card className="overflow-hidden p-0">
+              <div className="h-24 bg-gradient-to-l from-violet-500/30 via-emerald-400/10 to-transparent" />
+              <div className="p-5 pt-0">
+                <div className="-mt-10 flex items-end justify-between gap-4">
+                  {profile?.avatar_url ? (
+                    <Image src="/account/avatar" alt="صورة الحساب" width={80} height={80} unoptimized className="h-20 w-20 rounded-2xl border-4 border-[#101625] object-cover" />
+                  ) : (
+                    <span className="grid h-20 w-20 place-items-center rounded-2xl border-4 border-[#101625] bg-violet-300/15 text-violet-100"><Icon name="user" className="h-8 w-8" /></span>
+                  )}
+                  <Badge variant="success">حساب نشط</Badge>
+                </div>
+                <h2 className="mt-4 text-2xl font-black">{profile?.full_name || "حساب مَدار"}</h2>
+                <p dir="ltr" className="mt-1 text-right text-sm text-slate-400">{user.email}</p>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-white/[.035] p-3"><span className="text-xs text-slate-500">الخدمات النشطة</span><strong className="mt-1 block text-xl">{activeCount}</strong></div>
+                  <div className="rounded-xl bg-white/[.035] p-3"><span className="text-xs text-slate-500">الإشعارات</span><strong className="mt-1 block text-xl">{unread}</strong></div>
+                </div>
+                <div className="mt-5 grid gap-2">
+                  <ButtonLink href="/account/profile" variant="secondary"><Icon name="settings" />إعدادات الحساب</ButtonLink>
+                  <ButtonLink href="/account/notifications" variant="ghost"><Icon name="bell" />الإشعارات</ButtonLink>
+                  {isAdmin ? <ButtonLink href="/admin" variant="secondary"><Icon name="shield" />إدارة مَدار</ButtonLink> : null}
+                </div>
+              </div>
+            </Card>
+            <Card className="p-5">
+              <h3 className="font-black">روابط الحساب</h3>
+              <nav className="mt-4 grid gap-2 text-sm">
+                <Link href="/account/orders" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="store" />طلبات المتجر</Link>
+                <Link href="/account/support" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="help" />الدعم</Link>
+                <Link href="/account/privacy" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="shield" />الخصوصية والبيانات</Link>
+              </nav>
+              <form action={logout} className="mt-4 border-t border-white/10 pt-4"><button className="md-button md-button-danger w-full">تسجيل الخروج</button></form>
+            </Card>
+          </aside>
+
+          <div>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div><span className="md-eyebrow">خدمات مَدار</span><h2 className="mt-3 text-3xl font-black">اختر ما تحتاجه الآن</h2><p className="mt-2 max-w-2xl text-slate-400">كل خدمة لها إعداد واشتراك ودفع وحالة تفعيل مستقلة. يمكنك تشغيل أكثر من خدمة بالحساب نفسه.</p></div>
+            </div>
+            <div className="mt-6 grid gap-5">
+              {accountServices.map((service) => (
+                <Card key={service.definition.code} className={`relative overflow-hidden p-5 sm:p-6 ${service.state === "ACTIVE" ? "border-emerald-300/20" : ""}`}>
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                    <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-300/15 to-emerald-300/10 text-emerald-100"><Icon name={service.definition.icon} className="h-6 w-6" /></span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3"><h3 className="text-xl font-black sm:text-2xl">{service.definition.name}</h3><Badge variant={badgeVariant(service.state)}>{serviceStateLabels[service.state]}</Badge></div>
+                      <p className="mt-2 leading-7 text-slate-300">{service.definition.description}</p>
+                      {service.subscription ? <p className="mt-3 text-xs text-slate-500">ينتهي الاشتراك: {new Date(service.subscription.ends_at).toLocaleDateString("ar-YE")}</p> : null}
+                      {service.request?.rejection_reason && service.state === "REJECTED" ? <p className="mt-3 text-sm text-rose-200">{service.request.rejection_reason}</p> : null}
+                    </div>
+                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:min-w-44">
+                      {service.href ? (
+                        <ButtonLink href={service.href} variant={service.state === "ACTIVE" ? "primary" : "secondary"}>{serviceStateCtas[service.state]}<Icon name="arrow" /></ButtonLink>
+                      ) : (
+                        <button disabled className="md-button md-button-secondary">{serviceStateCtas[service.state]}</button>
+                      )}
+                      {service.definition.code === "MADAR_RETAIL" && service.state === "ACTIVE" ? <button disabled className="md-button md-button-ghost text-xs">تطبيق Android قريبًا</button> : null}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+    </PageShell>
+  );
 }

@@ -28,7 +28,7 @@ test('ORBY enforces daily quotas before generation',()=>{
  assert.match(migration,/100000/);
  assert.match(migration,/ORBY_DAILY_LIMIT/);
  assert.match(api,/rpc\/consume_orby_quota/);
- assert.ok(api.indexOf('rpc/consume_orby_quota')<api.indexOf('kernelResponse=await executeOrbyCore'));
+ assert.ok(api.indexOf('rpc/consume_orby_quota')<api.indexOf('kernelResponse = await executeOrbyCore'));
 });
 
 test('ORBY context comes from checked workspace analytics only',()=>{
@@ -41,9 +41,9 @@ test('ORBY context comes from checked workspace analytics only',()=>{
 });
 
 test('AI provider failure falls back without leaking provider details',()=>{
- assert.match(api,/source='smart-fallback'/);
+ assert.match(api,/source\s*=\s*["']smart-fallback["']/);
  assert.match(api,/deterministicOrbyResponse/);
- assert.match(api,/provider_unavailable:providerUnavailable/);
+ assert.match(api,/provider_unavailable:\s*providerUnavailable/);
  assert.doesNotMatch(api,/provider_error/);
  assert.match(orby,/هذا رد تشغيلي تلقائي من بيانات مَدار/);
 });
@@ -52,8 +52,8 @@ test('ORBY business chat runs through the governed core and preserves its sessio
  assert.match(api,/createServerOrbyFoundation/);
  assert.match(api,/foundation\.kernel\.execute/);
  assert.match(api,/kernel_session_id/);
- assert.match(api,/provider_id:kernelResponse\?\.providerId/);
- assert.match(api,/model_id:kernelResponse\?\.modelId/);
+ assert.match(api,/provider_id:\s*kernelResponse\?\.providerId/);
+ assert.match(api,/model_id:\s*kernelResponse\?\.modelId/);
  assert.doesNotMatch(api,/generateText/);
  assert.doesNotMatch(api,/google\/gemini-3-flash/);
 });

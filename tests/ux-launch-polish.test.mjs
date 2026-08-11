@@ -38,36 +38,19 @@ test("enterprise navigation exposes history controls, breadcrumbs, progress and 
   assert.match(css, /md-page-enter/);
 });
 
-test("student and business spaces open on focused dashboards with separate navigation", async () => {
-  const [
-    studentShell,
-    studentPage,
-    workspaceShell,
-    workspacePage,
-    workspaceNavigation,
-  ] = await Promise.all([
-    read("components/student/EnterpriseStudentShell.tsx"),
-    read("app/student/page.tsx"),
+test("account services and business space have focused navigation", async () => {
+  const [accountPage, workspaceShell, workspacePage, workspaceNavigation] = await Promise.all([
+    read("app/account/page.tsx"),
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
     read("app/workspace/page.tsx"),
     read("src/lib/v2/navigation.ts"),
   ]);
-  assert.match(studentShell, /view:'dashboard'/);
-  assert.match(studentShell, /لوحة المعلومات/);
-  for (const view of [
-    "courses",
-    "tasks",
-    "library",
-    "calendar",
-    "notes",
-    "focus",
-    "ai",
-  ])
-    assert.match(studentPage, new RegExp(`view==='${view}'`));
+  assert.match(accountPage, /getAccountServices/);
+  assert.match(accountPage, /خدمات مَدار/);
+  assert.doesNotMatch(accountPage, /student|طالب/i);
   assert.match(workspaceShell, /workspaceNavigation/);
   assert.match(workspaceNavigation, /لوحة المعلومات/);
   assert.match(workspacePage, /ملخص مباشر/);
-  assert.doesNotMatch(studentPage, /href={`#\$\{item\[0\]\}`}/);
 });
 
 test("official identity and supplied ORBY artwork are used without a boxed logo placeholder", async () => {

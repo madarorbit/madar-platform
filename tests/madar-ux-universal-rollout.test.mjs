@@ -4,19 +4,19 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("student and admin use the unified app-shell architecture", async () => {
-  const [student, admin, navigation] = await Promise.all([
-    read("components/student/EnterpriseStudentShell.tsx"),
+test("workspace and admin use the unified app-shell architecture", async () => {
+  const [workspace, admin, navigation] = await Promise.all([
+    read("components/workspace/EnterpriseWorkspaceShell.tsx"),
     read("components/admin/EnterpriseAdminShell.tsx"),
     read("src/lib/ux/navigation.ts"),
   ]);
-  for (const shell of [student, admin]) {
+  for (const shell of [workspace, admin]) {
     assert.match(shell, /md-ux-shell/);
     assert.match(shell, /WorkspaceCommandPalette/);
     assert.match(shell, /md-mobile-bottom-nav/);
     assert.match(shell, /ShellModuleContext/);
   }
-  assert.match(navigation, /studentNavigationGroups/);
+  assert.doesNotMatch(navigation, /studentNavigationGroups/);
   assert.match(navigation, /adminNavigationGroups/);
   assert.match(navigation, /مركز قيادة المؤسس/);
 });
@@ -45,11 +45,10 @@ test("public pages share grouped navigation and one content architecture", async
 });
 
 test("universal rollout includes loading, recovery, and responsive contracts", async () => {
-  const [css, rootLoading, rootError, studentError, adminError] = await Promise.all([
+  const [css, rootLoading, rootError, adminError] = await Promise.all([
     read("app/ux-universal-rollout.css"),
     read("app/loading.tsx"),
     read("app/error.tsx"),
-    read("app/student/error.tsx"),
     read("app/admin/error.tsx"),
   ]);
   assert.match(css, /md-shell-module-context/);
@@ -57,6 +56,5 @@ test("universal rollout includes loading, recovery, and responsive contracts", a
   assert.match(css, /prefers-reduced-motion/);
   assert.match(rootLoading, /md-route-loading/);
   assert.match(rootError, /إعادة المحاولة/);
-  assert.match(studentError, /لم تتغير/);
   assert.match(adminError, /لم يُنفّذ أي إجراء/);
 });

@@ -67,8 +67,9 @@ test('ORBY endpoint accepts mobile bearer sessions without weakening web session
  const route=await read('app/api/orby/route.ts');
  assert.match(route,/requestAccessToken/);
  assert.match(route,/currentUser\(accessToken\)/);
- assert.match(route,/supabaseFetch\(path,init,accessToken\)/);
- assert.match(route,/organization_members\?organization_id=eq\./);
+ assert.match(route,/supabaseFetch\(path,\s*init,\s*accessToken\)/);
+ assert.match(route,/workspace_subscriptions\?organization_id=eq\./);
+ assert.match(route,/service_code=in\.\(CONNECT_EXISTING,BUILD_ON_MADAR\)/);
  assert.match(route,/consume_orby_quota/);
  assert.match(route,/save_orby_exchange/);
  assert.doesNotMatch(route,/service.role|SUPABASE_SERVICE_ROLE_KEY/i);

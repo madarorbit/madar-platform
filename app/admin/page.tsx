@@ -1,17 +1,201 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Link from 'next/link';
-import {requireAdmin} from '@/src/lib/auth';
-import {supabaseFetch} from '@/src/lib/supabase/server';
-import {money} from '@/src/lib/order-status';
-import {Badge,ButtonLink,Card,Grid,PageHeader,Section,Stat} from '@/components/ui/Enterprise';
-import {Icon} from '@/components/ui/Icons';
-export const dynamic='force-dynamic';
+import Link from "next/link";
+import { requireAdmin } from "@/src/lib/auth";
+import { supabaseFetch } from "@/src/lib/supabase/server";
+import { money } from "@/src/lib/order-status";
+import {
+  Badge,
+  ButtonLink,
+  Card,
+  Grid,
+  PageHeader,
+  Section,
+  Stat,
+} from "@/components/ui/Enterprise";
+import { Icon } from "@/components/ui/Icons";
+export const dynamic = "force-dynamic";
 
-export default async function AdminPage(){
- const profile=await requireAdmin();let stats:any={};
- try{const[products,services,users,applications,workspaceRequests,orders,feedback,renewals,privacy]=await Promise.all([supabaseFetch('/rest/v1/products?select=status'),supabaseFetch('/rest/v1/services?select=status'),supabaseFetch('/rest/v1/profiles?select=id'),supabaseFetch('/rest/v1/job_applications?select=id,status'),supabaseFetch('/rest/v1/workspace_requests?select=id,status'),supabaseFetch('/rest/v1/orders?select=id,status,payment_status,total'),supabaseFetch('/rest/v1/platform_feedback?select=id,status'),supabaseFetch('/rest/v1/subscription_renewal_requests?select=id,status'),supabaseFetch('/rest/v1/data_privacy_requests?select=id,status')]);stats={products,services,users,applications,workspaceRequests,orders,feedback,renewals,privacy}}catch{}
- const count=(rows:any[],status?:string)=>rows?.filter(item=>!status||item.status===status).length||0,review=stats.orders?.filter((item:any)=>item.payment_status==='under_review').length||0,revenue=stats.orders?.filter((item:any)=>item.payment_status==='approved').reduce((total:number,item:any)=>total+Number(item.total),0)||0;
- const tools=[['orders','طلبات ومدفوعات المتجر','store'],['reports','تقارير المتجر','chart'],['coupons','القسائم','megaphone'],['products','منتجات متجر مَدار','layers'],['services','خدمات مَدار','briefcase'],['categories','التصنيفات','document'],['users','المستخدمون','community'],['applications','طلبات التوظيف','briefcase'],['workspace-requests','طلبات فتح المساحات','automation'],['local-payments','الدفع المحلي والاشتراكات','shield'],['beta-operations','تشغيل النسخة التجريبية والدعم','help'],['system-health','صحة المنصة','check']] as const;
- const roleName=profile.role==='SUPER_ADMIN'?'المؤسس والمشرف الأعلى':'مشرف المنصة';
- return <main className="md-shell"><PageHeader eyebrow="لوحة الإدارة" title="إدارة منصة مَدار" description="مركز مؤسسي موحد لمتابعة المتجر والعملاء والمساحات والاشتراكات والدعم وصحة التشغيل." actions={profile.role==='SUPER_ADMIN'?<ButtonLink href="/admin/founder"><Icon name="sparkles"/>مركز قيادة المؤسس</ButtonLink>:undefined}/><Section><div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div><h2 className="md-heading">ملخص التشغيل</h2><p className="mt-2 text-sm text-slate-400">مرحبًا {profile.full_name}</p></div><Badge variant={profile.role==='SUPER_ADMIN'?'brand':'success'}>{roleName}</Badge></div><Grid className="sm:grid-cols-2 xl:grid-cols-4" auto={false}><Stat label="كل طلبات المتجر" value={stats.orders?.length||0}/><Stat label="دفعات تنتظر المراجعة" value={review}/><Stat label="الإيراد المعتمد" value={money(revenue)}/><Stat label="المنتجات المنشورة" value={count(stats.products,'published')}/><Stat label="المستخدمون" value={stats.users?.length||0}/><Stat label="مساحات تنتظر القبول" value={count(stats.workspaceRequests,'pending_review')}/><Stat label="بلاغات مفتوحة" value={stats.feedback?.filter((item:any)=>!['resolved','closed'].includes(item.status)).length||0}/><Stat label="تجديدات معلقة" value={count(stats.renewals,'under_review')}/><Stat label="طلبات خصوصية مفتوحة" value={stats.privacy?.filter((item:any)=>['requested','processing'].includes(item.status)).length||0}/><Stat label="طلبات توظيف جديدة" value={count(stats.applications,'new')}/><Stat label="الخدمات المنشورة" value={count(stats.services,'published')}/><Stat label="حالة الإدارة" value="نشطة" detail="جاهزة لمتابعة العمليات"/></Grid><div className="mt-10"><h2 className="md-heading">أدوات التحكم</h2><p className="mt-2 text-slate-400">انتقل مباشرة إلى القسم المطلوب دون البحث داخل صفحات متفرقة.</p><Grid className="mt-5 sm:grid-cols-2 xl:grid-cols-3" auto={false}>{tools.map(([path,label,icon])=><Link href={`/admin/${path}`} key={path}><Card interactive className="flex h-full items-center gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-violet-300/10 text-violet-200"><Icon name={icon}/></span><strong>{label}</strong><Icon name="arrow" className="mr-auto h-4 w-4 text-slate-500"/></Card></Link>)}</Grid></div>{profile.role==='SUPER_ADMIN'&&<Card className="mt-10 border-violet-300/20 bg-gradient-to-l from-violet-400/10 to-emerald-400/5"><div className="flex flex-col items-start justify-between gap-5 lg:flex-row lg:items-center"><div><Badge variant="brand">صلاحيات المؤسس</Badge><h2 className="mt-3 text-2xl font-black">تحكم كامل ومحمي في المنصة</h2><p className="mt-3 max-w-3xl leading-8 text-slate-300">إدارة الحسابات والمساحات والاشتراكات، تشغيل الصيانة والتسجيل والمتجر وأوربي، إرسال الإشعارات العامة ومراجعة سجل كل القرارات الحساسة.</p></div><ButtonLink href="/admin/founder" size="lg">فتح مركز المؤسس</ButtonLink></div></Card>}</Section></main>;
+export default async function AdminPage() {
+  const profile = await requireAdmin();
+  let stats: any = {};
+  try {
+    const [
+      products,
+      services,
+      users,
+      applications,
+      workspaceRequests,
+      orders,
+      feedback,
+      renewals,
+      privacy,
+    ] = await Promise.all([
+      supabaseFetch("/rest/v1/products?select=status"),
+      supabaseFetch("/rest/v1/services?select=status"),
+      supabaseFetch("/rest/v1/profiles?select=id"),
+      supabaseFetch("/rest/v1/job_applications?select=id,status"),
+      supabaseFetch("/rest/v1/workspace_requests?select=id,status"),
+      supabaseFetch("/rest/v1/orders?select=id,status,payment_status,total"),
+      supabaseFetch("/rest/v1/platform_feedback?select=id,status"),
+      supabaseFetch("/rest/v1/subscription_renewal_requests?select=id,status"),
+      supabaseFetch("/rest/v1/data_privacy_requests?select=id,status"),
+    ]);
+    stats = {
+      products,
+      services,
+      users,
+      applications,
+      workspaceRequests,
+      orders,
+      feedback,
+      renewals,
+      privacy,
+    };
+  } catch {}
+  const count = (rows: any[], status?: string) =>
+      rows?.filter((item) => !status || item.status === status).length || 0,
+    review =
+      stats.orders?.filter(
+        (item: any) => item.payment_status === "under_review",
+      ).length || 0,
+    revenue =
+      stats.orders
+        ?.filter((item: any) => item.payment_status === "approved")
+        .reduce((total: number, item: any) => total + Number(item.total), 0) ||
+      0;
+  const tools = [
+    ["orders", "طلبات ومدفوعات المتجر", "store"],
+    ["reports", "تقارير المتجر", "chart"],
+    ["coupons", "القسائم", "megaphone"],
+    ["products", "منتجات متجر مَدار", "layers"],
+    ["services", "خدمات مَدار", "briefcase"],
+    ["categories", "التصنيفات", "document"],
+    ["users", "المستخدمون", "community"],
+    ["applications", "طلبات التوظيف", "briefcase"],
+    ["workspace-requests", "طلبات تفعيل الخدمات", "automation"],
+    ["local-payments", "الخدمات والأسعار والدفع", "shield"],
+    ["support-operations", "الدعم والخصوصية", "help"],
+    ["system-health", "صحة المنصة", "check"],
+  ] as const;
+  const roleName =
+    profile.role === "SUPER_ADMIN" ? "المؤسس والمشرف الأعلى" : "مشرف المنصة";
+  return (
+    <main className="md-shell">
+      <PageHeader
+        eyebrow="لوحة الإدارة"
+        title="إدارة منصة مَدار"
+        description="مركز مؤسسي موحد لمتابعة المتجر والعملاء والمساحات والاشتراكات والدعم وصحة التشغيل."
+        actions={
+          profile.role === "SUPER_ADMIN" ? (
+            <ButtonLink href="/admin/founder">
+              <Icon name="sparkles" />
+              مركز قيادة المؤسس
+            </ButtonLink>
+          ) : undefined
+        }
+      />
+      <Section>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="md-heading">ملخص التشغيل</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              مرحبًا {profile.full_name}
+            </p>
+          </div>
+          <Badge variant={profile.role === "SUPER_ADMIN" ? "brand" : "success"}>
+            {roleName}
+          </Badge>
+        </div>
+        <Grid className="sm:grid-cols-2 xl:grid-cols-4" auto={false}>
+          <Stat label="كل طلبات المتجر" value={stats.orders?.length || 0} />
+          <Stat label="دفعات تنتظر المراجعة" value={review} />
+          <Stat label="الإيراد المعتمد" value={money(revenue)} />
+          <Stat
+            label="المنتجات المنشورة"
+            value={count(stats.products, "published")}
+          />
+          <Stat label="المستخدمون" value={stats.users?.length || 0} />
+          <Stat
+            label="مساحات تنتظر القبول"
+            value={count(stats.workspaceRequests, "pending_review")}
+          />
+          <Stat
+            label="بلاغات مفتوحة"
+            value={
+              stats.feedback?.filter(
+                (item: any) => !["resolved", "closed"].includes(item.status),
+              ).length || 0
+            }
+          />
+          <Stat
+            label="تجديدات معلقة"
+            value={count(stats.renewals, "under_review")}
+          />
+          <Stat
+            label="طلبات خصوصية مفتوحة"
+            value={
+              stats.privacy?.filter((item: any) =>
+                ["requested", "processing"].includes(item.status),
+              ).length || 0
+            }
+          />
+          <Stat
+            label="طلبات توظيف جديدة"
+            value={count(stats.applications, "new")}
+          />
+          <Stat
+            label="الخدمات المنشورة"
+            value={count(stats.services, "published")}
+          />
+          <Stat
+            label="حالة الإدارة"
+            value="نشطة"
+            detail="جاهزة لمتابعة العمليات"
+          />
+        </Grid>
+        <div className="mt-10">
+          <h2 className="md-heading">أدوات التحكم</h2>
+          <p className="mt-2 text-slate-400">
+            انتقل مباشرة إلى القسم المطلوب دون البحث داخل صفحات متفرقة.
+          </p>
+          <Grid className="mt-5 sm:grid-cols-2 xl:grid-cols-3" auto={false}>
+            {tools.map(([path, label, icon]) => (
+              <Link href={`/admin/${path}`} key={path}>
+                <Card interactive className="flex h-full items-center gap-4">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-violet-300/10 text-violet-200">
+                    <Icon name={icon} />
+                  </span>
+                  <strong>{label}</strong>
+                  <Icon
+                    name="arrow"
+                    className="mr-auto h-4 w-4 text-slate-500"
+                  />
+                </Card>
+              </Link>
+            ))}
+          </Grid>
+        </div>
+        {profile.role === "SUPER_ADMIN" && (
+          <Card className="mt-10 border-violet-300/20 bg-gradient-to-l from-violet-400/10 to-emerald-400/5">
+            <div className="flex flex-col items-start justify-between gap-5 lg:flex-row lg:items-center">
+              <div>
+                <Badge variant="brand">صلاحيات المؤسس</Badge>
+                <h2 className="mt-3 text-2xl font-black">
+                  تحكم كامل ومحمي في المنصة
+                </h2>
+                <p className="mt-3 max-w-3xl leading-8 text-slate-300">
+                  إدارة الحسابات والمساحات والاشتراكات، تشغيل الصيانة والتسجيل
+                  والمتجر وأوربي، إرسال الإشعارات العامة ومراجعة سجل كل القرارات
+                  الحساسة.
+                </p>
+              </div>
+              <ButtonLink href="/admin/founder" size="lg">
+                فتح مركز المؤسس
+              </ButtonLink>
+            </div>
+          </Card>
+        )}
+      </Section>
+    </main>
+  );
 }

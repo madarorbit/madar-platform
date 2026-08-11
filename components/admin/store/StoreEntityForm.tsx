@@ -1,104 +1,506 @@
-'use client';
+"use client";
 
-import {useActionState} from 'react';
-import {saveStoreEntity,type StoreActionState} from '@/app/actions/store';
+import { useActionState } from "react";
+import { saveStoreEntity, type StoreActionState } from "@/app/actions/store";
 
-type Option={id:string;name:string;category_id?:string|null};
-type Props={
- kind:'product'|'service'|'plan';
- initial?:Record<string,unknown>;
- categories:Option[];
- subcategories:Option[];
- tags?:Option[];
- selectedTagIds?:string[];
+type Option = { id: string; name: string; category_id?: string | null };
+type Props = {
+  kind: "product" | "service" | "plan";
+  initial?: Record<string, unknown>;
+  categories: Option[];
+  subcategories: Option[];
+  tags?: Option[];
+  selectedTagIds?: string[];
 };
 
-const statusOptions=[['draft','مسودة'],['published','منشور'],['archived','مؤرشف']] as const;
-const availabilityOptions=[['available','متاح'],['coming_soon','قريبًا'],['sold_out','نفد'],['disabled','معطل']] as const;
-const typeOptions:Record<Props['kind'],ReadonlyArray<readonly[string,string]>>={
- product:[['digital_product','منتج رقمي'],['ready_system','نظام جاهز'],['bundle','باقة'],['template','قالب'],['student_resource','مورد طلابي']],
- service:[['service','خدمة']],
- plan:[['subscription','اشتراك'],['bundle','باقة']],
+const statusOptions = [
+  ["draft", "مسودة"],
+  ["published", "منشور"],
+  ["archived", "مؤرشف"],
+] as const;
+const availabilityOptions = [
+  ["available", "متاح"],
+  ["coming_soon", "قريبًا"],
+  ["sold_out", "نفد"],
+  ["disabled", "معطل"],
+] as const;
+const typeOptions: Record<
+  Props["kind"],
+  ReadonlyArray<readonly [string, string]>
+> = {
+  product: [
+    ["digital_product", "منتج رقمي"],
+    ["ready_system", "نظام جاهز"],
+    ["bundle", "باقة"],
+    ["template", "قالب"],
+  ],
+  service: [["service", "خدمة"]],
+  plan: [
+    ["subscription", "اشتراك"],
+    ["bundle", "باقة"],
+  ],
 };
 
-export default function StoreEntityForm({kind,initial={},categories,subcategories,tags=[],selectedTagIds=[]}:Props){
- const[state,action,pending]=useActionState<StoreActionState,FormData>(saveStoreEntity,{});
- const value=(key:string)=>String(initial[key]??'');
- const checked=(key:string,defaultValue=false)=>initial[key]===undefined?defaultValue:Boolean(initial[key]);
- const categoryId=value('category_id');
- const visibleSubcategories=subcategories.filter(item=>!categoryId||item.category_id===categoryId);
- const itemTypeKey=kind==='product'?'product_type':kind==='service'?'service_type':'plan_type';
- const deliveryDefault=normalizeDelivery(value('delivery_type'),kind);
+export default function StoreEntityForm({
+  kind,
+  initial = {},
+  categories,
+  subcategories,
+  tags = [],
+  selectedTagIds = [],
+}: Props) {
+  const [state, action, pending] = useActionState<StoreActionState, FormData>(
+    saveStoreEntity,
+    {},
+  );
+  const value = (key: string) => String(initial[key] ?? "");
+  const checked = (key: string, defaultValue = false) =>
+    initial[key] === undefined ? defaultValue : Boolean(initial[key]);
+  const categoryId = value("category_id");
+  const visibleSubcategories = subcategories.filter(
+    (item) => !categoryId || item.category_id === categoryId,
+  );
+  const itemTypeKey =
+    kind === "product"
+      ? "product_type"
+      : kind === "service"
+        ? "service_type"
+        : "plan_type";
+  const deliveryDefault = normalizeDelivery(value("delivery_type"), kind);
 
- return <form action={action} className="grid gap-5">
-  <input type="hidden" name="id" value={value('id')}/>
-  <input type="hidden" name="kind" value={kind}/>
-  {state.error&&<p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/5 p-4 text-red-100">{state.error}</p>}
-  {state.success&&<p role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 text-emerald-100">{state.success}</p>}
+  return (
+    <form action={action} className="grid gap-5">
+      <input type="hidden" name="id" value={value("id")} />
+      <input type="hidden" name="kind" value={kind} />
+      {state.error && (
+        <p
+          role="alert"
+          className="rounded-xl border border-red-400/20 bg-red-400/5 p-4 text-red-100"
+        >
+          {state.error}
+        </p>
+      )}
+      {state.success && (
+        <p
+          role="status"
+          className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 text-emerald-100"
+        >
+          {state.success}
+        </p>
+      )}
 
-  <section className="md-panel grid gap-4 md:grid-cols-2">
-   <div className="md:col-span-2"><h2 className="text-lg font-black">المعلومات الأساسية</h2><p className="mt-1 text-sm text-slate-400">كل الحقول محفوظة في قاعدة البيانات ولا تعتمد على بيانات ثابتة داخل الواجهة.</p></div>
-   <Field name="name" label="الاسم" defaultValue={value('name')} required/>
-   <Field name="slug" label="الرابط المختصر" defaultValue={value('slug')} dir="ltr" required/>
-   <label className="text-sm font-bold">الفئة<select name="category_id" defaultValue={categoryId} className="field mt-2"><option value="">بدون فئة</option>{categories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-   <label className="text-sm font-bold">الفئة الفرعية<select name="subcategory_id" defaultValue={value('subcategory_id')} className="field mt-2"><option value="">بدون فئة فرعية</option>{visibleSubcategories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-   <label className="text-sm font-bold">نوع العنصر<select name="item_type" defaultValue={value(itemTypeKey)||typeOptions[kind][0][0]} className="field mt-2">{typeOptions[kind].map(([optionValue,label])=><option key={optionValue} value={optionValue}>{label}</option>)}</select></label>
-   <Field name="sort_order" label="الترتيب" defaultValue={value('sort_order')||'0'} type="number"/>
-   <label className="md:col-span-2 text-sm font-bold">الوصف المختصر<textarea name="short_description" defaultValue={value('short_description')} maxLength={500} rows={3} className="field mt-2"/></label>
-   <label className="md:col-span-2 text-sm font-bold">الوصف الكامل<textarea name="long_description" defaultValue={value('long_description')} maxLength={12000} rows={8} className="field mt-2"/></label>
-  </section>
+      <section className="md-panel grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <h2 className="text-lg font-black">المعلومات الأساسية</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            كل الحقول محفوظة في قاعدة البيانات ولا تعتمد على بيانات ثابتة داخل
+            الواجهة.
+          </p>
+        </div>
+        <Field
+          name="name"
+          label="الاسم"
+          defaultValue={value("name")}
+          required
+        />
+        <Field
+          name="slug"
+          label="الرابط المختصر"
+          defaultValue={value("slug")}
+          dir="ltr"
+          required
+        />
+        <label className="text-sm font-bold">
+          الفئة
+          <select
+            name="category_id"
+            defaultValue={categoryId}
+            className="field mt-2"
+          >
+            <option value="">بدون فئة</option>
+            {categories.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm font-bold">
+          الفئة الفرعية
+          <select
+            name="subcategory_id"
+            defaultValue={value("subcategory_id")}
+            className="field mt-2"
+          >
+            <option value="">بدون فئة فرعية</option>
+            {visibleSubcategories.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm font-bold">
+          نوع العنصر
+          <select
+            name="item_type"
+            defaultValue={value(itemTypeKey) || typeOptions[kind][0][0]}
+            className="field mt-2"
+          >
+            {typeOptions[kind].map(([optionValue, label]) => (
+              <option key={optionValue} value={optionValue}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Field
+          name="sort_order"
+          label="الترتيب"
+          defaultValue={value("sort_order") || "0"}
+          type="number"
+        />
+        <label className="md:col-span-2 text-sm font-bold">
+          الوصف المختصر
+          <textarea
+            name="short_description"
+            defaultValue={value("short_description")}
+            maxLength={500}
+            rows={3}
+            className="field mt-2"
+          />
+        </label>
+        <label className="md:col-span-2 text-sm font-bold">
+          الوصف الكامل
+          <textarea
+            name="long_description"
+            defaultValue={value("long_description")}
+            maxLength={12000}
+            rows={8}
+            className="field mt-2"
+          />
+        </label>
+      </section>
 
-  <section className="md-panel grid gap-4 md:grid-cols-3">
-   <h2 className="md:col-span-3 text-lg font-black">التسعير والحالة</h2>
-   <Field name="price" label={kind==='service'?'السعر الابتدائي':'السعر'} defaultValue={value(kind==='service'?'price_from':'price')||'0'} type="number" step="0.01"/>
-   <Field name="compare_at_price" label="السعر قبل التخفيض" defaultValue={value('compare_at_price')} type="number" step="0.01"/>
-   <Field name="currency" label="العملة" defaultValue={value('currency')||'SAR'} dir="ltr"/>
-   <label className="text-sm font-bold">حالة النشر<select name="status" defaultValue={value('status')||'draft'} className="field mt-2">{statusOptions.map(([optionValue,label])=><option key={optionValue} value={optionValue}>{label}</option>)}</select></label>
-   <label className="text-sm font-bold">الظهور<select name="visibility" defaultValue={value('visibility')||'hidden'} className="field mt-2"><option value="hidden">مخفي</option><option value="visible">مرئي</option></select></label>
-   <label className="text-sm font-bold">التوفر<select name="availability" defaultValue={value('availability')||'available'} className="field mt-2">{availabilityOptions.map(([optionValue,label])=><option key={optionValue} value={optionValue}>{label}</option>)}</select></label>
-   {kind==='plan'&&<><label className="text-sm font-bold">دورة الفوترة<select name="billing_interval" defaultValue={value('billing_interval')||'monthly'} className="field mt-2"><option value="one_time">مرة واحدة</option><option value="monthly">شهري</option><option value="quarterly">ربع سنوي</option><option value="yearly">سنوي</option></select></label><Field name="trial_days" label="أيام التجربة" defaultValue={value('trial_days')||'0'} type="number"/></>}
-  </section>
+      <section className="md-panel grid gap-4 md:grid-cols-3">
+        <h2 className="md:col-span-3 text-lg font-black">التسعير والحالة</h2>
+        <Field
+          name="price"
+          label={kind === "service" ? "السعر الابتدائي" : "السعر"}
+          defaultValue={
+            value(kind === "service" ? "price_from" : "price") || "0"
+          }
+          type="number"
+          step="0.01"
+        />
+        <Field
+          name="compare_at_price"
+          label="السعر قبل التخفيض"
+          defaultValue={value("compare_at_price")}
+          type="number"
+          step="0.01"
+        />
+        <Field
+          name="currency"
+          label="العملة"
+          defaultValue={value("currency") || "SAR"}
+          dir="ltr"
+        />
+        <label className="text-sm font-bold">
+          حالة النشر
+          <select
+            name="status"
+            defaultValue={value("status") || "draft"}
+            className="field mt-2"
+          >
+            {statusOptions.map(([optionValue, label]) => (
+              <option key={optionValue} value={optionValue}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm font-bold">
+          الظهور
+          <select
+            name="visibility"
+            defaultValue={value("visibility") || "hidden"}
+            className="field mt-2"
+          >
+            <option value="hidden">مخفي</option>
+            <option value="visible">مرئي</option>
+          </select>
+        </label>
+        <label className="text-sm font-bold">
+          التوفر
+          <select
+            name="availability"
+            defaultValue={value("availability") || "available"}
+            className="field mt-2"
+          >
+            {availabilityOptions.map(([optionValue, label]) => (
+              <option key={optionValue} value={optionValue}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {kind === "plan" && (
+          <>
+            <label className="text-sm font-bold">
+              دورة الفوترة
+              <select
+                name="billing_interval"
+                defaultValue={value("billing_interval") || "monthly"}
+                className="field mt-2"
+              >
+                <option value="one_time">مرة واحدة</option>
+                <option value="monthly">شهري</option>
+                <option value="quarterly">ربع سنوي</option>
+                <option value="yearly">سنوي</option>
+              </select>
+            </label>
+            <Field
+              name="trial_days"
+              label="أيام التجربة"
+              defaultValue={value("trial_days") || "0"}
+              type="number"
+            />
+          </>
+        )}
+      </section>
 
-  <section className="md-panel grid gap-4 md:grid-cols-2">
-   <h2 className="md:col-span-2 text-lg font-black">التسليم والروابط والوسائط</h2>
-   <Field name="thumbnail_url" label="رابط صورة الغلاف" defaultValue={value('thumbnail_url')} dir="ltr"/>
-   <Field name="video_url" label="رابط الفيديو التعريفي" defaultValue={value('video_url')} dir="ltr"/>
-   <Field name="external_url" label="الرابط الخارجي" defaultValue={value('external_url')} dir="ltr"/>
-   <Field name="purchase_url" label="رابط الشراء أو التفعيل" defaultValue={value('purchase_url')} dir="ltr"/>
-   <Field name="delivery_duration" label="مدة التسليم" defaultValue={value('delivery_duration')}/>
-   <label className="text-sm font-bold">نوع التسليم<select name="delivery_type" defaultValue={deliveryDefault} className="field mt-2"><option value="instant_download">تنزيل فوري</option><option value="manual_delivery">تسليم يدوي</option><option value="external_link">رابط خارجي</option><option value="account_activation">تفعيل حساب</option><option value="scheduled_service">خدمة مجدولة</option></select></label>
-  </section>
+      <section className="md-panel grid gap-4 md:grid-cols-2">
+        <h2 className="md:col-span-2 text-lg font-black">
+          التسليم والروابط والوسائط
+        </h2>
+        <Field
+          name="thumbnail_url"
+          label="رابط صورة الغلاف"
+          defaultValue={value("thumbnail_url")}
+          dir="ltr"
+        />
+        <Field
+          name="video_url"
+          label="رابط الفيديو التعريفي"
+          defaultValue={value("video_url")}
+          dir="ltr"
+        />
+        <Field
+          name="external_url"
+          label="الرابط الخارجي"
+          defaultValue={value("external_url")}
+          dir="ltr"
+        />
+        <Field
+          name="purchase_url"
+          label="رابط الشراء أو التفعيل"
+          defaultValue={value("purchase_url")}
+          dir="ltr"
+        />
+        <Field
+          name="delivery_duration"
+          label="مدة التسليم"
+          defaultValue={value("delivery_duration")}
+        />
+        <label className="text-sm font-bold">
+          نوع التسليم
+          <select
+            name="delivery_type"
+            defaultValue={deliveryDefault}
+            className="field mt-2"
+          >
+            <option value="instant_download">تنزيل فوري</option>
+            <option value="manual_delivery">تسليم يدوي</option>
+            <option value="external_link">رابط خارجي</option>
+            <option value="account_activation">تفعيل حساب</option>
+            <option value="scheduled_service">خدمة مجدولة</option>
+          </select>
+        </label>
+      </section>
 
-  <section className="md-panel grid gap-4 md:grid-cols-2">
-   <h2 className="md:col-span-2 text-lg font-black">المحتوى والفهرسة</h2>
-   <label className="text-sm font-bold">المزايا — سطر لكل ميزة<textarea name="features" defaultValue={textList(initial.features)} rows={7} className="field mt-2"/></label>
-   <label className="text-sm font-bold">محتويات التسليم — سطر لكل عنصر<textarea name="includes" defaultValue={textList(initial.includes)} rows={7} className="field mt-2"/></label>
-   <label className="md:col-span-2 text-sm font-bold">الكلمات المفتاحية — سطر أو فاصلة<textarea name="keywords" defaultValue={textList(initial.keywords)} rows={4} className="field mt-2"/></label>
-   <Field name="seo_title" label="Meta Title" defaultValue={value('seo_title')}/>
-   <Field name="seo_description" label="Meta Description" defaultValue={value('seo_description')}/>
-  </section>
+      <section className="md-panel grid gap-4 md:grid-cols-2">
+        <h2 className="md:col-span-2 text-lg font-black">المحتوى والفهرسة</h2>
+        <label className="text-sm font-bold">
+          المزايا — سطر لكل ميزة
+          <textarea
+            name="features"
+            defaultValue={textList(initial.features)}
+            rows={7}
+            className="field mt-2"
+          />
+        </label>
+        <label className="text-sm font-bold">
+          محتويات التسليم — سطر لكل عنصر
+          <textarea
+            name="includes"
+            defaultValue={textList(initial.includes)}
+            rows={7}
+            className="field mt-2"
+          />
+        </label>
+        <label className="md:col-span-2 text-sm font-bold">
+          الكلمات المفتاحية — سطر أو فاصلة
+          <textarea
+            name="keywords"
+            defaultValue={textList(initial.keywords)}
+            rows={4}
+            className="field mt-2"
+          />
+        </label>
+        <Field
+          name="seo_title"
+          label="Meta Title"
+          defaultValue={value("seo_title")}
+        />
+        <Field
+          name="seo_description"
+          label="Meta Description"
+          defaultValue={value("seo_description")}
+        />
+      </section>
 
-  <section className="md-panel">
-   <h2 className="text-lg font-black">الوسوم</h2><p className="mt-1 text-sm text-slate-400">اختر أي عدد من الوسوم لتحسين البحث والربط بين عناصر المتجر.</p>
-   <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{tags.map(tag=><label key={tag.id} className="flex items-center gap-2 rounded-xl border border-white/10 p-3 text-sm"><input name="tag_ids" value={tag.id} type="checkbox" defaultChecked={selectedTagIds.includes(tag.id)}/>{tag.name}</label>)}{!tags.length&&<p className="text-sm text-slate-500">أنشئ الوسوم أولًا من إدارة الوسوم.</p>}</div>
-  </section>
+      <section className="md-panel">
+        <h2 className="text-lg font-black">الوسوم</h2>
+        <p className="mt-1 text-sm text-slate-400">
+          اختر أي عدد من الوسوم لتحسين البحث والربط بين عناصر المتجر.
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {tags.map((tag) => (
+            <label
+              key={tag.id}
+              className="flex items-center gap-2 rounded-xl border border-white/10 p-3 text-sm"
+            >
+              <input
+                name="tag_ids"
+                value={tag.id}
+                type="checkbox"
+                defaultChecked={selectedTagIds.includes(tag.id)}
+              />
+              {tag.name}
+            </label>
+          ))}
+          {!tags.length && (
+            <p className="text-sm text-slate-500">
+              أنشئ الوسوم أولًا من إدارة الوسوم.
+            </p>
+          )}
+        </div>
+      </section>
 
-  <section className="md-panel">
-   <h2 className="text-lg font-black">خيارات التحكم</h2>
-   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Check name="is_active" label="نشط" checked={checked('is_active')}/><Check name="is_free" label="مجاني" checked={checked('is_free')}/><Check name="requires_approval" label="يحتاج موافقة" checked={checked('requires_approval',kind!=='product')}/><Check name="is_featured" label="مميز" checked={checked('is_featured')}/><Check name="show_in_store" label="يظهر في المتجر" checked={checked('show_in_store')}/><Check name="show_on_home" label="يظهر في الرئيسية" checked={checked('show_on_home')}/><Check name="allow_reviews" label="يقبل التقييمات" checked={checked('allow_reviews',true)}/><Check name="allow_comments" label="يقبل التعليقات" checked={checked('allow_comments')}/></div>
-   <p className="mt-4 text-xs leading-6 text-amber-200">لن يظهر العنصر للعميل إلا عند اجتماع: منشور + مرئي + نشط + يظهر في المتجر.</p>
-  </section>
+      <section className="md-panel">
+        <h2 className="text-lg font-black">خيارات التحكم</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Check name="is_active" label="نشط" checked={checked("is_active")} />
+          <Check name="is_free" label="مجاني" checked={checked("is_free")} />
+          <Check
+            name="requires_approval"
+            label="يحتاج موافقة"
+            checked={checked("requires_approval", kind !== "product")}
+          />
+          <Check
+            name="is_featured"
+            label="مميز"
+            checked={checked("is_featured")}
+          />
+          <Check
+            name="show_in_store"
+            label="يظهر في المتجر"
+            checked={checked("show_in_store")}
+          />
+          <Check
+            name="show_on_home"
+            label="يظهر في الرئيسية"
+            checked={checked("show_on_home")}
+          />
+          <Check
+            name="allow_reviews"
+            label="يقبل التقييمات"
+            checked={checked("allow_reviews", true)}
+          />
+          <Check
+            name="allow_comments"
+            label="يقبل التعليقات"
+            checked={checked("allow_comments")}
+          />
+        </div>
+        <p className="mt-4 text-xs leading-6 text-amber-200">
+          لن يظهر العنصر للعميل إلا عند اجتماع: منشور + مرئي + نشط + يظهر في
+          المتجر.
+        </p>
+      </section>
 
-  <button disabled={pending} className="md-button md-button-primary justify-self-start px-8">{pending?'جارٍ الحفظ…':'حفظ العنصر'}</button>
- </form>;
+      <button
+        disabled={pending}
+        className="md-button md-button-primary justify-self-start px-8"
+      >
+        {pending ? "جارٍ الحفظ…" : "حفظ العنصر"}
+      </button>
+    </form>
+  );
 }
 
-function normalizeDelivery(value:string,kind:Props['kind']){
- if(value==='instant')return'instant_download';
- if(value==='manual')return'manual_delivery';
- if(value==='external')return'external_link';
- return value||(kind==='service'?'scheduled_service':kind==='plan'?'account_activation':'instant_download');
+function normalizeDelivery(value: string, kind: Props["kind"]) {
+  if (value === "instant") return "instant_download";
+  if (value === "manual") return "manual_delivery";
+  if (value === "external") return "external_link";
+  return (
+    value ||
+    (kind === "service"
+      ? "scheduled_service"
+      : kind === "plan"
+        ? "account_activation"
+        : "instant_download")
+  );
 }
-function Field({name,label,defaultValue='',type='text',required=false,dir,step}:{name:string;label:string;defaultValue?:string;type?:string;required?:boolean;dir?:'ltr'|'rtl';step?:string}){return <label className="text-sm font-bold">{label}<input name={name} defaultValue={defaultValue} type={type} required={required} dir={dir} step={step} className="field mt-2"/></label>}
-function Check({name,label,checked}:{name:string;label:string;checked:boolean}){return <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.025] p-3 text-sm"><input name={name} type="checkbox" defaultChecked={checked}/><span>{label}</span></label>}
-function textList(value:unknown){return Array.isArray(value)?value.join('\n'):String(value||'')}
+function Field({
+  name,
+  label,
+  defaultValue = "",
+  type = "text",
+  required = false,
+  dir,
+  step,
+}: {
+  name: string;
+  label: string;
+  defaultValue?: string;
+  type?: string;
+  required?: boolean;
+  dir?: "ltr" | "rtl";
+  step?: string;
+}) {
+  return (
+    <label className="text-sm font-bold">
+      {label}
+      <input
+        name={name}
+        defaultValue={defaultValue}
+        type={type}
+        required={required}
+        dir={dir}
+        step={step}
+        className="field mt-2"
+      />
+    </label>
+  );
+}
+function Check({
+  name,
+  label,
+  checked,
+}: {
+  name: string;
+  label: string;
+  checked: boolean;
+}) {
+  return (
+    <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.025] p-3 text-sm">
+      <input name={name} type="checkbox" defaultChecked={checked} />
+      <span>{label}</span>
+    </label>
+  );
+}
+function textList(value: unknown) {
+  return Array.isArray(value) ? value.join("\n") : String(value || "");
+}

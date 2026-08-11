@@ -34,12 +34,13 @@ export interface RetailPrincipal extends UserContext {
 type Organization = {
   id: string;
   name: string;
-  type: "INDIVIDUAL" | "MERCHANT" | "COMPANY" | "STUDENT";
+  type: "INDIVIDUAL" | "MERCHANT" | "COMPANY";
   status: string;
 };
 
-type OrganizationMembership = {
-  role: "OWNER" | "ADMIN" | "MEMBER";
+type ServiceSubscription = {
+  organization_id: string;
+  ends_at: string;
   organizations: Organization | Organization[] | null;
 };
 
@@ -47,7 +48,7 @@ function scalar<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-function retailRoleFor(role: OrganizationMembership["role"]): WorkspaceRole {
+function retailRoleFor(role: RetailPrincipal["platformMembershipRole"]): WorkspaceRole {
   if (role === "OWNER") return "OWNER";
   if (role === "ADMIN") return "MANAGER";
   return "STAFF";
@@ -84,19 +85,16 @@ async function resolveRetailPrincipal(accessToken?: string): Promise<RetailPrinc
   const profile = accessToken
     ? await profileForUser(user.id, accessToken)
     : await currentProfile();
-  if (!profile || profile.status !== "active" || profile.account_type === "PERSONAL") return null;
+  if (!profile || profile.status !== "active") return null;
 
   const rows = (await supabaseFetch(
-    `/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name,type,status)`,
+    `/rest/v1/workspace_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&service_code=eq.MADAR_RETAIL&status=eq.active&activation_state=eq.ACTIVE&ends_at=gt.${encodeURIComponent(new Date().toISOString())}&select=organization_id,ends_at,organizations(id,name,type,status)&order=created_at.desc&limit=1`,
     {},
     accessToken,
-  ).catch(() => [])) as OrganizationMembership[];
-  const preferred = profile.default_commercial_organization_id;
-  const membership =
-    rows.find((row) => scalar(row.organizations)?.id === preferred) ??
-    rows.find((row) => scalar(row.organizations)?.type !== "STUDENT");
-  const organization = scalar(membership?.organizations ?? null);
-  if (!membership || !organization || organization.type === "STUDENT" || organization.status !== "active") {
+  ).catch(() => [])) as ServiceSubscription[];
+  const subscription = rows[0];
+  const organization = scalar(subscription?.organizations ?? null);
+  if (!subscription || !organization || organization.status !== "active") {
     return null;
   }
 
@@ -112,8 +110,8 @@ async function resolveRetailPrincipal(accessToken?: string): Promise<RetailPrinc
     ...userContext(user.id, user.email ?? profile.email, profile),
     platformOrganizationId: organization.id,
     platformOrganizationName: organization.name,
-    platformMembershipRole: membership.role,
-    retailRole: retailRoleFor(membership.role),
+    platformMembershipRole: "OWNER",
+    retailRole: retailRoleFor("OWNER"),
   };
 }
 
@@ -164,8 +162,8 @@ export async function requireUser() {
   const principal = await getRetailPrincipal();
   if (!principal) {
     const platformUser = await getUserContext();
-    if (!platformUser) redirect("/login?next=/retail/onboarding");
-    redirect("/onboarding");
+    if (!platformUser) redirect("/login?next=/account");
+    redirect("/account");
   }
   return principal;
 }
@@ -276,7 +274,7 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext | nu
 export async function requireWorkspace() {
   const user = await requireUser();
   const context = await getWorkspaceContext();
-  if (!context) redirect("/retail/onboarding");
+  if (!context) redirect("/account");
   return { ...context, user };
 }
 

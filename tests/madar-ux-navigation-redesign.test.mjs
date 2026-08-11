@@ -15,7 +15,7 @@ test("unified shell includes command search and real mobile navigation", async (
   const source = await read("components/workspace/EnterpriseWorkspaceShell.tsx");
   assert.match(source, /WorkspaceCommandPalette/);
   assert.match(source, /md-mobile-bottom-nav/);
-  assert.match(source, /تبديل أو إدارة المساحات/);
+  assert.match(source, /الحساب والخدمات/);
   assert.match(source, /NavigationControls showBreadcrumbs=\{false\}/);
 });
 

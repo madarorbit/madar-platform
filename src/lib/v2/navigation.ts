@@ -59,12 +59,12 @@ const management: WorkspaceNavigationItem[] = [
 ];
 
 const account: WorkspaceNavigationItem[] = [
-  { key: "subscription", href: "/account/subscription", label: "الاشتراك والفوترة", icon: "document", description: "الباقة والدفع والاستهلاك", keywords: ["اشتراك", "فاتورة"] },
+  { key: "account", href: "/account", label: "الحساب والخدمات", icon: "user", description: "الخدمات والاشتراكات المستقلة", keywords: ["حساب", "اشتراك", "خدمة"] },
   { key: "support", href: "/account/support", label: "الدعم والملاحظات", icon: "help", description: "التواصل والملاحظات", keywords: ["مساعدة", "دعم"] },
 ];
 
 const alwaysEnabled = new Set([
-  "dashboard", "retail", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "subscription", "support",
+  "dashboard", "retail", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "account", "support",
 ]);
 
 export function workspaceNavigationGroups(

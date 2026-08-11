@@ -36,8 +36,11 @@ test('Google OAuth stores identity metadata but no provider access tokens', () =
   assert.doesNotMatch(callbackRoute, /provider_refresh_token|google_access_token|google_refresh_token/i);
 });
 
-test('new Google users are routed through the existing one-time onboarding guard', () => {
-  assert.match(migration, /google_requires_onboarding/);
-  assert.match(migration, /reonboarding_required/);
-  assert.match(callbackRoute, /\/account\/setup/);
+test('Google registration lands in an account without creating a workspace', async () => {
+  const accountMigration = await readFile(new URL('../supabase/migrations/20260811190000_account_services_production.sql', import.meta.url), 'utf8');
+  assert.match(accountMigration, /Account-only profile synchronization/);
+  assert.match(accountMigration, /private\.handle_new_user_v2/);
+  assert.doesNotMatch(accountMigration.match(/create or replace function private\.handle_new_user_v2[\s\S]*?\$\$;/)?.[0] || '', /insert into public\.organizations|workspace_subscriptions/);
+  assert.match(callbackRoute, /safeOAuthReturnTo/);
+  assert.doesNotMatch(callbackRoute, /\/account\/setup/);
 });

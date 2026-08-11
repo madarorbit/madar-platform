@@ -6,7 +6,7 @@ import { authorizeOrganizationAction } from "@/src/lib/platform-integrations";
 import type { OperatingMode } from "@/src/lib/v2/account";
 import type { VerticalExtension } from "@/src/lib/v2/verticals";
 
-export type WorkspaceType = "INDIVIDUAL" | "MERCHANT" | "COMPANY" | "STUDENT";
+export type WorkspaceType = "INDIVIDUAL" | "MERCHANT" | "COMPANY";
 export type WorkspaceRecord = {
   id: string;
   name: string;
@@ -20,7 +20,7 @@ export type WorkspaceRecord = {
   navigation_state?: { version?: number; compact?: boolean };
 };
 export type BusinessWorkspace = WorkspaceRecord & {
-  type: Exclude<WorkspaceType, "STUDENT">;
+  type: WorkspaceType;
   operating_mode: OperatingMode;
   source_of_truth: "MADAR" | "EXTERNAL";
   setup_status: "not_started" | "in_progress" | "ready" | "blocked";
@@ -34,7 +34,6 @@ export type BusinessMembership = Omit<WorkspaceMembership, "organizations"> & {
   organizations: BusinessWorkspace;
 };
 export type WorkspaceSubscriptionStatus =
-  | "trialing"
   | "active"
   | "past_due"
   | "expired"
@@ -65,7 +64,6 @@ const extensionFor = (code: string): VerticalExtension =>
       ? "hospitality"
       : "commerce";
 const subscriptionStatuses: WorkspaceSubscriptionStatus[] = [
-  "trialing",
   "active",
   "past_due",
   "expired",
@@ -78,25 +76,40 @@ export async function requireBusinessWorkspace({
   allowMissing = false,
   allowCancelled = false,
 }: RequireBusinessWorkspaceOptions = {}) {
-  const user = await requireUser(),
-    profile = await currentProfile();
-  if (profile?.account_type === "PERSONAL") redirect("/student");
-  const rows = await supabaseFetch(
-    `/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name,slug,type,status,currency,operating_mode,source_of_truth,setup_status,navigation_state)`,
-  );
-  const memberships = (rows || []) as WorkspaceMembership[],
-    preferred = profile?.default_commercial_organization_id;
+  const user = await requireUser(), profile = await currentProfile();
+  const [rows, serviceRows] = await Promise.all([
+    supabaseFetch(
+      `/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name,slug,type,status,currency,operating_mode,source_of_truth,setup_status,navigation_state)`,
+    ),
+    supabaseFetch(
+      `/rest/v1/workspace_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&service_code=in.(CONNECT_EXISTING,BUILD_ON_MADAR)&select=id,organization_id,status,activation_state,ends_at&order=created_at.desc`,
+    ).catch(() => []),
+  ]);
+  const memberships = (rows || []) as WorkspaceMembership[];
+  const subscriptions = (serviceRows || []) as Array<{
+    organization_id: string;
+    status: string;
+    activation_state: string;
+    ends_at: string;
+  }>;
+  const eligible = subscriptions.filter((subscription) => {
+    if (subscription.activation_state === "ACTIVE" && subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now()) return true;
+    if (allowExpired && (subscription.activation_state === "EXPIRED" || subscription.status === "expired" || new Date(subscription.ends_at).getTime() <= Date.now())) return true;
+    if (allowCancelled && subscription.status === "cancelled") return true;
+    return allowMissing;
+  });
+  const preferred = profile?.default_commercial_organization_id;
   const candidate =
     memberships.find(
-      (row) => organizationOf(row.organizations)?.id === preferred,
+      (row) => organizationOf(row.organizations)?.id === preferred && eligible.some((subscription) => subscription.organization_id === preferred),
     ) ||
     memberships.find(
-      (row) => organizationOf(row.organizations)?.type !== "STUDENT",
+      (row) => eligible.some((subscription) => subscription.organization_id === organizationOf(row.organizations)?.id),
     );
   const rawWorkspace = organizationOf(candidate?.organizations || null);
-  if (!candidate || !rawWorkspace || rawWorkspace.type === "STUDENT")
-    redirect(profile?.account_type === "BUSINESS" ? "/onboarding" : "/student");
-  if (rawWorkspace.status !== "active") redirect("/dashboard");
+  if (!candidate || !rawWorkspace) redirect("/account");
+  if (rawWorkspace.status !== "active") redirect("/account");
+  const selectedSubscription = subscriptions.find((subscription) => subscription.organization_id === rawWorkspace.id);
   const workspace = {
       ...rawWorkspace,
       operating_mode: rawWorkspace.operating_mode || "MADAR_NATIVE",
@@ -115,12 +128,8 @@ export async function requireBusinessWorkspace({
     relation: "can_view",
   });
   if (!authorization.allowed) redirect("/account?error=forbidden");
-  const [resolvedSubscriptionStatus, activityRows, moduleRows] =
+  const [activityRows, moduleRows] =
     await Promise.all([
-      supabaseFetch("/rest/v1/rpc/resolve_pricing_subscription_status", {
-        method: "POST",
-        body: JSON.stringify({ target_organization: workspace.id }),
-      }),
       supabaseFetch(
         `/rest/v1/activity_profiles?organization_id=eq.${id}&status=eq.active&select=id,activity_specializations(code,name_ar,terminology)&limit=1`,
       ).catch(() => []),
@@ -128,17 +137,23 @@ export async function requireBusinessWorkspace({
         `/rest/v1/organization_modules?organization_id=eq.${id}&status=eq.active&select=module_key`,
       ).catch(() => []),
     ]);
-  const subscriptionStatus = scalar<WorkspaceSubscriptionStatus>(
-    resolvedSubscriptionStatus,
-  );
+  const subscriptionStatus: WorkspaceSubscriptionStatus = !selectedSubscription
+    ? "missing"
+    : selectedSubscription.status === "cancelled"
+      ? "cancelled"
+      : selectedSubscription.status === "past_due"
+        ? "past_due"
+        : selectedSubscription.status === "expired" || new Date(selectedSubscription.ends_at).getTime() <= Date.now()
+          ? "expired"
+          : "active";
   if (!subscriptionStatuses.includes(subscriptionStatus))
-    throw new Error("تعذر التحقق من حالة اشتراك مَدار V2.0.");
+    throw new Error("تعذر التحقق من حالة اشتراك خدمة مَدار.");
   if (subscriptionStatus === "missing" && !allowMissing)
-    redirect("/account/subscription?missing=1");
+    redirect("/account?service=missing");
   if (subscriptionStatus === "expired" && !allowExpired)
-    redirect("/account/subscription?expired=1");
+    redirect("/account?service=expired");
   if (subscriptionStatus === "cancelled" && !allowCancelled)
-    redirect("/account/subscription?cancelled=1");
+    redirect("/account?service=cancelled");
   const activity = activityRows?.[0] as
     | {
         id: string;
@@ -188,9 +203,7 @@ export async function requireBusinessWorkspace({
 }
 
 export async function requirePersonalAccount() {
-  const user = await requireUser(),
-    profile = await currentProfile();
-  if (profile?.account_type === "BUSINESS") redirect("/workspace");
+  const user = await requireUser(), profile = await currentProfile();
   return { user, profile };
 }
 export function businessMoney(

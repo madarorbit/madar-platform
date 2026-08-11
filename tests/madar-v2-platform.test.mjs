@@ -6,12 +6,12 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const migrationPath =
   "supabase/migrations/20260802090000_madar_v2_p0_p11_platform.sql";
 
-test("P0 and P1 freeze V1 decisions and enforce one exclusive account path", async () => {
-  const [migration, registration, business, student] = await Promise.all([
+test("P0 and P1 history is preserved while registration now creates one account path", async () => {
+  const [migration, registration, business, transition] = await Promise.all([
     read(migrationPath),
     read("components/auth/RegisterWizard.tsx"),
     read("src/lib/business.ts"),
-    read("app/student/layout.tsx"),
+    read("supabase/migrations/20260811190000_account_services_production.sql"),
   ]);
   for (const decision of [
     "v1_baseline",
@@ -31,10 +31,11 @@ test("P0 and P1 freeze V1 decisions and enforce one exclusive account path", asy
   );
   assert.match(migration, /v2\.account\.student_membership_detached/);
   assert.match(migration, /BUSINESS_ACCOUNT_STUDENT_SPACE_FORBIDDEN/);
-  assert.match(registration, /data-step="4"/);
-  assert.match(registration, /activity_specialization_code/);
-  assert.match(business, /account_type\s*===\s*["']PERSONAL["']/);
-  assert.match(student, /requirePersonalAccount/);
+  assert.match(registration, /إنشاء حساب مَدار/);
+  assert.doesNotMatch(registration, /activity_specialization_code|data-step/);
+  assert.match(business, /workspace_subscriptions/);
+  assert.match(transition, /Account-only profile synchronization/);
+  assert.match(transition, /preserved in madarorbit\/madar-student/);
 });
 
 test("P2 and P3 implement a certified versioned vertical engine and sector UDM contracts", async () => {
@@ -85,30 +86,20 @@ test("P2 and P3 implement a certified versioned vertical engine and sector UDM c
   assert.match(migration, /sector_orby_tools/);
 });
 
-test("P4 pricing creates 18 variants with launch rates, immutable snapshots and controlled changes", async () => {
-  const [migration, pricing, worker, payment] = await Promise.all([
-    read(migrationPath),
-    read("src/lib/v2/pricing.ts"),
-    read("app/api/integrations/worker/route.ts"),
-    read("components/payments/V2PaymentForm.tsx"),
+test("production services use one database-driven plan and central payment flow", async () => {
+  const [transition, setup, payment, admin] = await Promise.all([
+    read("supabase/migrations/20260811190000_account_services_production.sql"),
+    read("app/account/services/[service]/setup/page.tsx"),
+    read("app/workspace-payment/[id]/page.tsx"),
+    read("app/admin/local-payments/page.tsx"),
   ]);
-  assert.match(migration, /\('BASIC','الاشتراك العادي'[^\n]+,5,10\)/);
-  assert.match(migration, /\('PREMIUM','الاشتراك المميز'[^\n]+,20,20\)/);
-  assert.match(migration, /\('FULL','الاشتراك الكامل'[^\n]+,50,30\)/);
-  assert.match(
-    migration,
-    /cross join \(values\(1,0::numeric\),\(6,0\.10::numeric\),\(12,0\.20::numeric\)\)/i,
-  );
-  assert.match(migration, /when 'CONNECTED_EXTERNAL' then 1\.20/);
-  assert.match(migration, /trial_days[^\n]+20/);
-  assert.match(migration, /locked_entitlements/);
-  assert.match(migration, /is_grandfathered/);
-  assert.match(migration, /UPGRADE_REQUIRES_CONFIRMED_PAYMENT/);
-  assert.match(migration, /apply_due_v2_subscription_changes/);
-  assert.match(worker, /apply_due_v2_subscription_changes/);
-  assert.match(pricing, /TERM_DISCOUNTS/);
-  assert.match(payment, /name="variant_id"/);
-  assert.match(payment, /name="currency"/);
+  assert.match(transition, /subscription_plans_one_per_service_uidx/);
+  assert.match(transition, /workspace_subscriptions_user_service_uidx/);
+  assert.match(transition, /PAYMENT_METHOD_CURRENCY_MISMATCH/);
+  assert.match(setup, /service\.plan\.price/);
+  assert.match(payment, /payment_methods\?is_active=eq\.true&currency=eq/);
+  assert.match(admin, /saveServicePlan/);
+  assert.doesNotMatch(`${setup}\n${payment}\n${admin}`, /trial_days|V2PaymentForm/);
 });
 
 test("P5 and P6 activate native modules and implement the complete commerce operating cycle", async () => {

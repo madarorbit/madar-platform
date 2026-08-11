@@ -6,14 +6,6 @@ import { supabaseConfig, siteUrl } from "@/src/lib/env";
 import { safeReturnTo } from "@/src/lib/auth";
 import { email, password } from "@/src/lib/validation";
 import { validateMagicBytes } from "@/src/lib/file-signatures.mjs";
-import {
-  isAccountType,
-  isOperatingMode,
-  isPlanLevel,
-  isPlanTerm,
-  isSupportedCurrency,
-} from "@/src/lib/v2/account";
-import { supabaseFetch } from "@/src/lib/supabase/server";
 type AuthState = {
   error?: string;
   success?: string;
@@ -138,66 +130,14 @@ export async function register(_previous: AuthState, form: FormData) {
         String(form.get("password") || ""),
         String(form.get("confirm") || ""),
       );
-    const accountType = String(form.get("account_type") || "");
-    if (!isAccountType(accountType))
-      throw new Error("اختر نوع الحساب للمتابعة.");
     if (form.get("terms") !== "on") throw new Error("يلزم قبول الشروط.");
-    const data: Record<string, string> = {
-      full_name,
-      account_type: accountType,
-    };
-    let destination = "/student";
-    if (accountType === "BUSINESS") {
-      const operatingMode = String(form.get("operating_mode") || ""),
-        specialization = String(form.get("activity_specialization_code") || ""),
-        planLevel = String(form.get("plan_level") || ""),
-        currency = String(form.get("currency") || ""),
-        termMonths = Number(form.get("term_months")),
-        businessName = String(form.get("business_name") || "").trim(),
-        businessSlug = String(form.get("business_slug") || "")
-          .trim()
-          .toLowerCase();
-      const approved =
-        /^[A-Z0-9_]{3,80}$/.test(specialization) &&
-        Boolean(
-          (
-            await supabaseFetch(
-              `/rest/v1/activity_specializations?code=eq.${encodeURIComponent(specialization)}&status=eq.approved&is_visible=eq.true&launch_enabled=eq.true&select=id&limit=1`,
-            ).catch(() => [])
-          )?.[0],
-        );
-      if (!isOperatingMode(operatingMode) || !approved)
-        throw new Error("اختر نوع النشاط وطريقة تشغيله.");
-      if (
-        !isPlanLevel(planLevel) ||
-        !isPlanTerm(termMonths) ||
-        !isSupportedCurrency(currency)
-      )
-        throw new Error("اختر باقة ومدة وعملة صالحة.");
-      if (businessName.length < 2 || businessName.length > 120)
-        throw new Error("اسم النشاط يجب أن يكون بين حرفين و120 حرفًا.");
-      if (!/^[a-z0-9][a-z0-9-]{1,78}[a-z0-9]$/.test(businessSlug))
-        throw new Error(
-          "الرابط المختصر يجب أن يكون 3 أحرف إنجليزية أو أرقام على الأقل.",
-        );
-      Object.assign(data, {
-        operating_mode: operatingMode,
-        activity_specialization_code: specialization,
-        plan_level: planLevel,
-        currency,
-        term_months: String(termMonths),
-        business_name: businessName,
-        business_slug: businessSlug,
-      });
-      destination = "/workspace/setup";
-    }
     const redirectTo = encodeURIComponent(
-      `${siteUrl()}/auth/callback?next=${destination}`,
+      `${siteUrl()}/auth/callback?next=/account`,
     );
     await auth(`signup?redirect_to=${redirectTo}`, {
       email: userEmail,
       password: userPassword,
-      data,
+      data: { full_name },
     });
   } catch (error) {
     return {

@@ -1,1 +1,0 @@
-export default function StudentLoading(){return <main className="md-route-loading" aria-label="جارٍ تحميل مساحة الطالب"><div className="md-route-loading-header"/><div className="md-route-loading-grid"><div className="md-route-loading-block"/><div className="md-route-loading-block"/><div className="md-route-loading-block"/></div></main>}

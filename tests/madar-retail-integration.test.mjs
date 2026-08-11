@@ -90,7 +90,8 @@ test("Retail integration uses the Platform session and a server-only isolated da
     read("proxy.ts"),
   ]);
   assert.match(context, /currentUser/);
-  assert.match(context, /organization_members/);
+  assert.match(context, /workspace_subscriptions/);
+  assert.match(context, /service_code=eq\.MADAR_RETAIL/);
   assert.match(context, /platform_organization_id/);
   assert.match(context, /authorizeOrganizationAction/);
   assert.doesNotMatch(context, /retail\/supabase\/request/);
@@ -100,8 +101,10 @@ test("Retail integration uses the Platform session and a server-only isolated da
   assert.match(orby, /createServerOrbyFoundation/);
   assert.match(orby, /can_use_orby/);
   assert.match(orby, /read-only|للقراءة|قراءة/iu);
-  assert.match(proxy, /\/retail\/onboarding/);
   assert.match(proxy, /\/retail\/workspace/);
+  const activation = await read("supabase-retail/migrations/20260811190500_account_service_activation.sql");
+  assert.match(activation, /activate_retail_service/);
+  assert.match(activation, /caller_role <> 'service_role'/);
 });
 
 test("Retail PostgreSQL bridge is service-only, allowlisted, and preserves atomic RPCs", async () => {
