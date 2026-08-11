@@ -24,3 +24,12 @@ test("storage policies do not call revoked helpers during avatar, logo or proof 
   assert.match(migration, /create policy "payment proof owner delete"/);
   assert.match(migration, /bucket_id = 'payment-proofs'[\s\S]*storage\.foldername\(name\)\)\[1\] = \(select auth\.uid\(\)\)::text/);
 });
+
+test("admin proof links preserve the Supabase Storage API prefix", async () => {
+  const upload = await read("src/lib/local-payments.ts");
+
+  assert.match(upload, /value\.startsWith\('\/storage\/v1\/'\)/);
+  assert.match(upload, /`\/storage\/v1\/\$\{value\.replace/);
+  assert.match(upload, /absolute\.pathname\.startsWith\('\/storage\/v1\/object\/sign\/payment-proofs\/'\)/);
+  assert.doesNotMatch(upload, /new URL\(data\.signedURL\|\|data\.signedUrl,url\)/);
+});
