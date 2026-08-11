@@ -6,10 +6,11 @@ import {serverToken} from '@/src/lib/supabase/server';
 const allowed=new Set(['image/jpeg','image/png','image/webp','application/pdf']);
 export type UploadedPaymentProof={storagePath:string;originalFilename:string;mimeType:string;fileSize:number};
 
-export async function uploadLocalPaymentProof(file:File,scope:string):Promise<UploadedPaymentProof>{
+export async function uploadLocalPaymentProof(file:File,ownerId:string,scope:string):Promise<UploadedPaymentProof>{
  if(!file.size)throw new Error('اختر صورة أو PDF لإثبات التحويل.');
  if(file.size>10*1024*1024||!allowed.has(file.type)||!await validateMagicBytes(file))throw new Error('الإثبات يجب أن يكون JPG أو PNG أو WebP أو PDF صالحًا وبحجم لا يتجاوز 10MB.');
- const safeScope=scope.replace(/[^a-zA-Z0-9/_-]/g,'').slice(0,160),extension=file.type==='application/pdf'?'pdf':file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',storagePath=`local/${safeScope}/${crypto.randomUUID()}.${extension}`;
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId))throw new Error('تعذر التحقق من مالك إثبات التحويل.');
+ const safeScope=scope.replace(/[^a-zA-Z0-9/_-]/g,'').slice(0,160),extension=file.type==='application/pdf'?'pdf':file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',storagePath=`${ownerId}/local/${safeScope}/${crypto.randomUUID()}.${extension}`;
  const{url,key}=supabaseConfig(),token=await serverToken();
  const response=await fetch(`${url}/storage/v1/object/payment-proofs/${storagePath}`,{method:'POST',headers:{apikey:key,Authorization:`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'false'},body:file,cache:'no-store'});
  if(!response.ok)throw new Error('تعذر رفع إثبات التحويل.');
