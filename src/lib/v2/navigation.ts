@@ -19,6 +19,7 @@ export type WorkspaceNavigationGroup = {
 
 const overview: WorkspaceNavigationItem[] = [
   { key: "dashboard", href: "/workspace", label: "نظرة عامة", icon: "home", description: "المؤشرات والاختصارات اليومية", keywords: ["الرئيسية", "لوحة المعلومات"] },
+  { key: "retail", href: "/retail/workspace", label: "MADAR Retail", icon: "store", description: "تشغيل التجزئة والمخزون والصندوق", keywords: ["تجزئة", "بيع", "مخزون", "صندوق"] },
   { key: "orby", href: "/workspace/orby", label: "أوربي", icon: "sparkles", description: "المساعد الذكي داخل سياق العمل", keywords: ["محادثة", "ذكاء", "تحليل"], orby: true },
   { key: "analytics", href: "/workspace/analytics", label: "التقارير والتحليلات", icon: "chart", description: "الأداء والاتجاهات والفترات", keywords: ["تقارير", "مؤشرات"] },
 ];
@@ -58,12 +59,12 @@ const management: WorkspaceNavigationItem[] = [
 ];
 
 const account: WorkspaceNavigationItem[] = [
-  { key: "subscription", href: "/account/subscription", label: "الاشتراك والفوترة", icon: "document", description: "الباقة والدفع والاستهلاك", keywords: ["اشتراك", "فاتورة"] },
+  { key: "account", href: "/account", label: "الحساب والخدمات", icon: "user", description: "الخدمات والاشتراكات المستقلة", keywords: ["حساب", "اشتراك", "خدمة"] },
   { key: "support", href: "/account/support", label: "الدعم والملاحظات", icon: "help", description: "التواصل والملاحظات", keywords: ["مساعدة", "دعم"] },
 ];
 
 const alwaysEnabled = new Set([
-  "dashboard", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "subscription", "support",
+  "dashboard", "retail", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "account", "support",
 ]);
 
 export function workspaceNavigationGroups(

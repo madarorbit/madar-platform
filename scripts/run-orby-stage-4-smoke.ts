@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {builtinPluginManifests,builtinWorkflowTemplates,defaultGovernanceRules,OrbyBudgetEngine,OrbyEvaluationEngine,OrbyFeatureFlagEngine,OrbyGovernanceEngine,OrbyMultiModelRouter,OrbyObservability,OrbyPluginRegistry,OrbyReleaseManager,OrbyWorkflowCatalog,orbyOsBenchmarkSuite,validateWorkflow} from '../src/lib/orby/os';
 
 async function main(){
- const templates=builtinWorkflowTemplates();assert.equal(templates.length,4);for(const template of templates)assert.equal(validateWorkflow(template.definition).valid,true);
- const catalog=new OrbyWorkflowCatalog();for(const template of templates)catalog.registerTemplate(template);assert.equal(catalog.listTemplates().length,4);assert.equal(catalog.get('business.sales-drop-analysis')?.version,1);
- const plugins=new OrbyPluginRegistry();for(const manifest of builtinPluginManifests())plugins.register(manifest);assert.equal(plugins.manifestsList().length,4);plugins.install('orby.business','1.0.0',{organizationId:'org-1'},{});assert.equal(plugins.installationsList()[0]?.status,'active');
+ const templates=builtinWorkflowTemplates();assert.equal(templates.length,3);for(const template of templates)assert.equal(validateWorkflow(template.definition).valid,true);
+ const catalog=new OrbyWorkflowCatalog();for(const template of templates)catalog.registerTemplate(template);assert.equal(catalog.listTemplates().length,3);assert.equal(catalog.get('business.sales-drop-analysis')?.version,1);
+ const plugins=new OrbyPluginRegistry();for(const manifest of builtinPluginManifests())plugins.register(manifest);assert.equal(plugins.manifestsList().length,3);plugins.install('orby.business','1.0.0',{organizationId:'org-1'},{});assert.equal(plugins.installationsList()[0]?.status,'active');
  const context={identity:{organizationId:'org-1',userId:'user-1'},environment:'production' as const,action:'business.read',executionType:'read' as const,riskLevel:'low' as const,permissions:['data.read']};const decision=new OrbyGovernanceEngine(defaultGovernanceRules()).decide(context);assert.equal(decision.effect,'allow');
  const external=new OrbyGovernanceEngine().decide({...context,action:'channel.external.send',channelKey:'whatsapp'});assert.equal(external.effect,'deny');
  const flags=new OrbyFeatureFlagEngine([{key:'orby_os_enabled',enabled:true,scope:{},rolloutPercentage:100,configuration:{}}]);assert.equal(flags.resolve('orby_os_enabled',context).enabled,true);

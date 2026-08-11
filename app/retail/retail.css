@@ -1,0 +1,96 @@
+.madar-retail {
+  color-scheme: dark;
+  --mr-bg: #070b10;
+  --mr-surface: #0d131b;
+  --mr-surface-2: #121a25;
+  --mr-line: #243040;
+  --mr-text: #f2f7f5;
+  --mr-muted: #9eacb7;
+  --mr-mint: #61f3c2;
+  --mr-violet: #8d73ff;
+  --mr-danger: #ff7e8b;
+  --mr-warning: #ffd166;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 85% -10%, rgba(97, 243, 194, 0.1), transparent 34rem),
+    radial-gradient(circle at 0 25%, rgba(141, 115, 255, 0.1), transparent 30rem),
+    var(--mr-bg);
+  color: var(--mr-text);
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+}
+.madar-retail .container-shell { width: min(1180px, calc(100% - 2rem)); margin-inline: auto; }
+.madar-retail .surface { background: rgba(13, 19, 27, 0.88); border: 1px solid var(--mr-line); border-radius: 1.25rem; }
+.madar-retail .surface-soft { background: rgba(18, 26, 37, 0.72); border: 1px solid rgba(54, 70, 88, 0.72); border-radius: 1rem; }
+.madar-retail .eyebrow { color: var(--mr-mint); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; }
+.madar-retail .muted { color: var(--mr-muted); }
+.madar-retail .text-mint { color: var(--mr-mint); }
+.madar-retail .text-violet { color: var(--mr-violet); }
+
+.madar-retail .button-primary,
+.madar-retail .button-secondary,
+.madar-retail .button-danger {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  border-radius: 0.8rem;
+  padding: 0.65rem 1rem;
+  font-weight: 800;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.madar-retail .button-primary { border: 1px solid var(--mr-mint); background: var(--mr-mint); color: #03120d; }
+.madar-retail .button-primary:hover { transform: translateY(-1px); background: #8affd8; }
+.madar-retail .button-secondary { border: 1px solid #344254; background: #111923; color: var(--mr-text); }
+.madar-retail .button-secondary:hover { border-color: var(--mr-mint); }
+.madar-retail .button-danger { border: 1px solid rgba(255, 126, 139, 0.32); background: rgba(255, 126, 139, 0.12); color: #ff9da7; }
+.madar-retail button:disabled,
+.madar-retail [aria-disabled="true"] { cursor: not-allowed; opacity: 0.55; transform: none !important; }
+
+.madar-retail .field { display: grid; gap: 0.4rem; }
+.madar-retail .field > span,
+.madar-retail .field > label { color: #cbd5dc; font-size: 0.84rem; font-weight: 700; }
+.madar-retail .input {
+  width: 100%;
+  min-height: 2.8rem;
+  border: 1px solid #2c3949;
+  border-radius: 0.75rem;
+  background: #0a1017;
+  padding: 0.68rem 0.8rem;
+  color: var(--mr-text);
+  outline: none;
+}
+.madar-retail .input:focus { border-color: var(--mr-mint); box-shadow: 0 0 0 3px rgba(97, 243, 194, 0.08); }
+.madar-retail textarea.input { min-height: 6rem; resize: vertical; }
+
+.madar-retail .table-wrap { overflow-x: auto; border: 1px solid var(--mr-line); border-radius: 1rem; }
+.madar-retail .data-table { width: 100%; min-width: 700px; border-collapse: collapse; }
+.madar-retail .data-table th,
+.madar-retail .data-table td { border-bottom: 1px solid #202c3a; padding: 0.85rem 0.9rem; text-align: right; white-space: nowrap; }
+.madar-retail .data-table th { background: #101721; color: #aebbc5; font-size: 0.78rem; }
+.madar-retail .data-table tr:last-child td { border-bottom: 0; }
+
+.madar-retail .status-pill { display: inline-flex; border: 1px solid #2e4650; border-radius: 999px; background: rgba(97, 243, 194, 0.08); padding: 0.22rem 0.55rem; color: var(--mr-mint); font-size: 0.72rem; font-weight: 800; }
+.madar-retail .status-warning { border-color: rgba(255, 209, 102, 0.35); background: rgba(255, 209, 102, 0.08); color: var(--mr-warning); }
+.madar-retail .status-danger { border-color: rgba(255, 126, 139, 0.35); background: rgba(255, 126, 139, 0.08); color: var(--mr-danger); }
+.madar-retail .content-grid { display: grid; gap: 1rem; }
+.madar-retail .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.8rem; }
+.madar-retail .metric-card { min-height: 7.5rem; padding: 1rem; }
+.madar-retail .metric-card .value { margin-top: 0.6rem; font-size: clamp(1.1rem, 3vw, 1.65rem); font-weight: 900; }
+
+@media (max-width: 900px) { .madar-retail .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .madar-retail .container-shell { width: min(100% - 1rem, 1180px); }
+  .madar-retail .metric-grid { grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+  .madar-retail .metric-card { min-height: 6.5rem; padding: 0.75rem; }
+  .madar-retail .button-primary,
+  .madar-retail .button-secondary,
+  .madar-retail .button-danger { min-height: 3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .madar-retail *,
+  .madar-retail *::before,
+  .madar-retail *::after { scroll-behavior: auto !important; transition: none !important; }
+}

@@ -21,9 +21,9 @@ test('legacy pages inherit the enterprise system without business changes',async
  assert.doesNotMatch(bridge,/fetch\(|supabase|server action/i);
 });
 
-test('ORBY is present in the main, workspace and student navigation',async()=>{
- const[navbar,workspace,student,config]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('components/student/EnterpriseStudentShell.tsx'),read('src/config/site.ts')]);
- for(const source of [navbar,workspace,student]){assert.match(source,/أوربي/);assert.match(source,/orby-assistant\.svg|siteConfig\.assets\.orby/)}
+test('ORBY is present in the main and workspace navigation',async()=>{
+ const[navbar,workspace,config]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('src/config/site.ts')]);
+ for(const source of [navbar,workspace]){assert.match(source,/أوربي/);assert.match(source,/orby-assistant\.svg|siteConfig\.assets\.orby/)}
  assert.match(config,/orby:'\/brand\/orby-assistant\.svg'/);
 });
 

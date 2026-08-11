@@ -66,7 +66,7 @@ export default async function FounderPage({
       overview.subscriptions.pending_payments > 0
         ? {
             level: "warning",
-            title: `${overview.subscriptions.pending_payments} دفعة V2 تنتظر المراجعة`,
+            title: `${overview.subscriptions.pending_payments} دفعة تنتظر المراجعة`,
             body: "راجع الإثباتات قبل أن تتراكم طلبات فتح المساحات أو تجديدها.",
             href: "/admin/local-payments",
           }
@@ -74,7 +74,7 @@ export default async function FounderPage({
       overview.workspaces.without_v2_subscription > 0
         ? {
             level: "critical",
-            title: `${overview.workspaces.without_v2_subscription} مساحة دون لقطة اشتراك V2`,
+            title: `${overview.workspaces.without_v2_subscription} مساحة دون اشتراك خدمة`,
             body: "هذه المساحات مقفلة احترازيًا وتحتاج تصحيح التهيئة أو دفعًا معتمدًا.",
             href: "/admin/founder/workspaces?subscription=missing",
           }
@@ -100,7 +100,7 @@ export default async function FounderPage({
             level: "info",
             title: `${overview.operations.open_feedback} بلاغات أو ملاحظات مفتوحة`,
             body: "رتبها حسب الأثر على الاستقرار وتجربة العملاء.",
-            href: "/admin/beta-operations",
+            href: "/admin/support-operations",
           }
         : null,
     ].filter(Boolean) as Array<{
@@ -113,12 +113,12 @@ export default async function FounderPage({
     [
       "/admin/local-payments",
       "مراجعة المدفوعات",
-      "اعتماد أو رفض إثباتات باقات V2 وإدارة طرق الدفع.",
+      "اعتماد أو رفض إثباتات الخدمات وإدارة طرق الدفع.",
     ],
     [
       "/admin/founder/workspaces",
       "المساحات والاشتراكات",
-      "إدارة إغلاق المساحات والصلاحية الزمنية V2 دون حذف البيانات.",
+      "إدارة إغلاق المساحات والصلاحية الزمنية دون حذف البيانات.",
     ],
     [
       "/admin/orby-os/observability",
@@ -152,7 +152,7 @@ export default async function FounderPage({
     ],
   ];
   const operationalLinks = [
-    ["/admin/beta-operations", "بلاغات Beta والخصوصية"],
+    ["/admin/support-operations", "الدعم والخصوصية"],
     ["/admin/products", "منتجات متجر مَدار"],
     ["/admin/services", "خدمات مَدار"],
     ["/admin/orders", "طلبات المتجر"],
@@ -166,7 +166,7 @@ export default async function FounderPage({
         <div>
           <p className="font-bold text-emerald-300">FOUNDER COMMAND CENTER</p>
           <h1 className="mt-2 text-3xl font-black sm:text-4xl">
-            مركز قيادة مَدار V2.0
+            مركز قيادة مَدار
           </h1>
           <p className="mt-3 max-w-3xl leading-8 text-slate-300">
             {profile.full_name} · رؤية موحدة للمنصة والعملاء والمدفوعات والربط
@@ -193,12 +193,11 @@ export default async function FounderPage({
         <Metric
           label="حوادث الربط المفتوحة"
           value={overview.operations.integration_incidents}
-          tone={overview.operations.integration_incidents ? "danger" : "success"}
+          tone={
+            overview.operations.integration_incidents ? "danger" : "success"
+          }
         />
-        <Metric
-          label="تجارب نشطة"
-          value={overview.subscriptions.trialing}
-        />
+        <Metric label="تجارب نشطة" value={overview.subscriptions.trialing} />
         <Metric label="اشتراكات نشطة" value={overview.subscriptions.active} />
         <Metric
           label="تحتاج تجديدًا"
@@ -206,9 +205,11 @@ export default async function FounderPage({
           tone={overview.subscriptions.past_due ? "warning" : "neutral"}
         />
         <Metric
-          label="مساحات دون اشتراك V2"
+          label="مساحات دون اشتراك خدمة"
           value={overview.workspaces.without_v2_subscription}
-          tone={overview.workspaces.without_v2_subscription ? "danger" : "success"}
+          tone={
+            overview.workspaces.without_v2_subscription ? "danger" : "success"
+          }
         />
       </section>
 
@@ -221,7 +222,9 @@ export default async function FounderPage({
                 مرتبة بحسب ما يحتاج قرارًا أو متابعة تشغيلية.
               </p>
             </div>
-            <span className="text-sm text-slate-500">{alerts.length} تنبيه</span>
+            <span className="text-sm text-slate-500">
+              {alerts.length} تنبيه
+            </span>
           </div>
           <div className="mt-5 grid gap-3">
             {alerts.length ? (
@@ -252,7 +255,7 @@ export default async function FounderPage({
         </article>
 
         <article className="md-panel">
-          <h2 className="text-2xl font-black">إيرادات V2 المعتمدة</h2>
+          <h2 className="text-2xl font-black">الإيرادات المعتمدة</h2>
           <p className="mt-2 text-sm leading-7 text-slate-400">
             مجموع طلبات الدفع المحلية التي اعتمدتها الإدارة، مع فصل العملات لمنع
             جمع قيم غير قابلة للمقارنة.
@@ -274,7 +277,7 @@ export default async function FounderPage({
               )
             ) : (
               <p className="rounded-xl border border-dashed border-white/10 p-5 text-center text-sm text-slate-500">
-                لا توجد مدفوعات V2 معتمدة بعد.
+                لا توجد مدفوعات معتمدة بعد.
               </p>
             )}
           </div>
@@ -387,7 +390,8 @@ export default async function FounderPage({
       </section>
 
       <p className="mt-8 text-xs text-slate-500">
-        آخر تحديث للمؤشرات: {new Date(overview.generated_at).toLocaleString("ar-YE")}
+        آخر تحديث للمؤشرات:{" "}
+        {new Date(overview.generated_at).toLocaleString("ar-YE")}
       </p>
     </main>
   );

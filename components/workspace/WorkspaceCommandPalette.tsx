@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icons";
 import type { ProductNavigationGroup } from "@/src/lib/ux/navigation";
@@ -33,10 +33,10 @@ export default function WorkspaceCommandPalette({
     );
   }, [items, query]);
 
-  const close = () => {
+  const close = useCallback(() => {
     setQuery("");
     onOpenChange(false);
-  };
+  }, [onOpenChange]);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -54,7 +54,7 @@ export default function WorkspaceCommandPalette({
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onOpenChange, open]);
+  }, [close, onOpenChange, open]);
 
   useEffect(() => {
     if (!open) return;

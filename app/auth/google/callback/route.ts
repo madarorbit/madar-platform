@@ -25,8 +25,6 @@ type ProfileSnapshot = {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
-  account_type_selected_at: string | null;
-  reonboarding_required: boolean;
 };
 
 function clearOAuthCookies(jar: Awaited<ReturnType<typeof cookies>>) {
@@ -108,17 +106,15 @@ export async function GET(request: NextRequest) {
   const userEmail = user.email?.trim();
   if (!userEmail) return fail(jar, 'google_email_missing');
 
-  let needsOnboarding = false;
   try {
     const rows = (await supabaseFetch(
-      `/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=id,full_name,avatar_url,account_type_selected_at,reonboarding_required&limit=1`,
+      `/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=id,full_name,avatar_url&limit=1`,
       {},
       session.access_token,
     )) as ProfileSnapshot[];
     const profile = rows?.[0];
     if (!profile) throw new Error('PROFILE_NOT_CREATED');
 
-    needsOnboarding = !profile.account_type_selected_at || profile.reonboarding_required;
     const metadata = user.user_metadata;
     const fullName = metadataText(metadata, 'full_name', 'name');
     const googleAvatar = metadataText(metadata, 'avatar_url', 'picture');
@@ -133,7 +129,7 @@ export async function GET(request: NextRequest) {
       last_login_at: new Date().toISOString(),
     };
     if (!profile.full_name && fullName) updates.full_name = fullName;
-    if (needsOnboarding) updates.reonboarding_required = true;
+    updates.reonboarding_required = false;
 
     await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}`, {
       method: 'PATCH',
@@ -146,7 +142,7 @@ export async function GET(request: NextRequest) {
   await setSession(session);
   const remembered = jar.get(GOOGLE_OAUTH_NEXT_COOKIE)?.value;
   clearOAuthCookies(jar);
-  const destination = needsOnboarding ? '/account/setup' : safeOAuthReturnTo(remembered);
+  const destination = safeOAuthReturnTo(remembered);
   const response = NextResponse.redirect(new URL(destination, siteUrl()));
   response.headers.set('Cache-Control', 'private, no-store');
   return response;

@@ -16,42 +16,6 @@ export type ProductNavigationGroup = {
   items: ProductNavigationItem[];
 };
 
-export const studentNavigationGroups: ProductNavigationGroup[] = [
-  {
-    key: "overview",
-    label: "نظرة عامة",
-    items: [
-      { key: "dashboard", href: "/student?view=dashboard", label: "لوحة الطالب", icon: "home", description: "ملخص اليوم والتقدم الدراسي", keywords: ["الرئيسية", "الملخص"] },
-      { key: "ai", href: "/student?view=ai", label: "أوربي للتعلّم", icon: "sparkles", description: "مساعد دراسي داخل سياق الطالب", keywords: ["ذكاء", "محادثة", "شرح"], orby: true },
-    ],
-  },
-  {
-    key: "study",
-    label: "الدراسة والتخطيط",
-    items: [
-      { key: "courses", href: "/student?view=courses", label: "المقررات والمعدل", icon: "book", description: "المواد والدرجات وحساب المعدل", keywords: ["مقرر", "معدل", "درجة"] },
-      { key: "tasks", href: "/student?view=tasks", label: "المهام والتذكيرات", icon: "check", description: "التكليفات والمتابعة", keywords: ["واجب", "مهمة"] },
-      { key: "calendar", href: "/student?view=calendar", label: "الجداول والمواعيد", icon: "calendar", description: "المحاضرات والاختبارات والمواعيد", keywords: ["جدول", "اختبار"] },
-    ],
-  },
-  {
-    key: "knowledge",
-    label: "المعرفة والملاحظات",
-    items: [
-      { key: "library", href: "/student?view=library", label: "المكتبة", icon: "document", description: "الملفات والمراجع الخاصة", keywords: ["PDF", "مرجع", "ملف"] },
-      { key: "notes", href: "/student?view=notes", label: "الملاحظات", icon: "note", description: "ملاحظات سريعة ومنظمة", keywords: ["كتابة", "ملخص"] },
-      { key: "focus", href: "/student?view=focus", label: "التركيز والأهداف", icon: "clock", description: "جلسات التركيز والأهداف", keywords: ["وقت", "هدف"] },
-    ],
-  },
-  {
-    key: "account",
-    label: "الحساب",
-    items: [
-      { key: "account", href: "/account", label: "الحساب والإعدادات", icon: "user", description: "الملف الشخصي والأمان", keywords: ["حساب", "إعدادات"] },
-    ],
-  },
-];
-
 const adminBaseGroups: ProductNavigationGroup[] = [
   {
     key: "overview",
@@ -75,11 +39,10 @@ const adminBaseGroups: ProductNavigationGroup[] = [
   },
   {
     key: "customers",
-    label: "الحسابات والمساحات",
+    label: "الحسابات والخدمات",
     items: [
       { key: "users", href: "/admin/users", label: "المستخدمون", icon: "community", description: "الحسابات والحالات والأدوار", keywords: ["مستخدم", "حساب"] },
-      { key: "requests", href: "/admin/workspace-requests", label: "طلبات المساحات", icon: "automation", description: "مراجعة إنشاء وفتح المساحات", keywords: ["مساحة", "طلب"] },
-      { key: "beta", href: "/admin/beta-operations", label: "الدعم التجريبي", icon: "help", description: "الملاحظات وحالات بيتا", keywords: ["دعم", "بيتا"] },
+      { key: "requests", href: "/admin/workspace-requests", label: "طلبات الخدمات", icon: "automation", description: "مراجعة الدفع وتفعيل أو تجديد الخدمات", keywords: ["خدمة", "طلب", "دفع"] },
       { key: "applications", href: "/admin/applications", label: "طلبات التوظيف", icon: "briefcase", description: "المرشحون وطلبات الانضمام", keywords: ["وظيفة", "توظيف"] },
     ],
   },
@@ -87,6 +50,7 @@ const adminBaseGroups: ProductNavigationGroup[] = [
     key: "systems",
     label: "الأنظمة والذكاء",
     items: [
+      { key: "retail", href: "/admin/retail", label: "تشغيل MADAR Retail", icon: "store", description: "مؤشرات Retail التشغيلية بعد التفعيل المركزي", keywords: ["Retail", "تجزئة", "مخزون"] },
       { key: "integrations", href: "/admin/integrations", label: "الاتصالات وجودة البيانات", icon: "automation", description: "الموصلات والمزامنة والجودة", keywords: ["ربط", "تكامل"] },
       { key: "readiness", href: "/admin/integrations/readiness", label: "مختبر جاهزية الموصلات", icon: "check", description: "اختبارات القبول قبل العملاء", keywords: ["مختبر", "جاهزية"] },
       { key: "integration-audit", href: "/admin/integrations/audit", label: "تدقيق التكاملات", icon: "shield", description: "الأحداث والأخطاء وعمليات الوصول", keywords: ["تدقيق", "سجل"] },
@@ -125,6 +89,6 @@ export function adminNavigationGroups(isFounder: boolean): ProductNavigationGrou
 
 export function routeMatches(pathname: string, href: string): boolean {
   const route = href.split("?")[0];
-  if (route === "/admin" || route === "/workspace" || route === "/student") return pathname === route;
+  if (route === "/admin" || route === "/workspace") return pathname === route;
   return pathname === route || pathname.startsWith(`${route}/`);
 }
