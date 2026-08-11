@@ -87,6 +87,7 @@ const adminBaseGroups: ProductNavigationGroup[] = [
     key: "systems",
     label: "الأنظمة والذكاء",
     items: [
+      { key: "retail", href: "/admin/retail", label: "إدارة MADAR Retail", icon: "store", description: "المساحات والخطط والدفع وتدقيق Retail", keywords: ["Retail", "تجزئة", "مخزون"] },
       { key: "integrations", href: "/admin/integrations", label: "الاتصالات وجودة البيانات", icon: "automation", description: "الموصلات والمزامنة والجودة", keywords: ["ربط", "تكامل"] },
       { key: "readiness", href: "/admin/integrations/readiness", label: "مختبر جاهزية الموصلات", icon: "check", description: "اختبارات القبول قبل العملاء", keywords: ["مختبر", "جاهزية"] },
       { key: "integration-audit", href: "/admin/integrations/audit", label: "تدقيق التكاملات", icon: "shield", description: "الأحداث والأخطاء وعمليات الوصول", keywords: ["تدقيق", "سجل"] },

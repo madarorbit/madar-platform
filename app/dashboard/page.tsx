@@ -188,6 +188,25 @@ export default async function Page() {
               >
                 تطبيق لوحة القيادة
               </Link>
+              <Link
+                className="md-button md-button-secondary"
+                href="/retail/onboarding"
+              >
+                MADAR Retail
+              </Link>
+            </div>
+          </Card>
+          <Card className="border-emerald-300/20 bg-emerald-300/[.04] md:col-span-2">
+            <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+              <div>
+                <Badge variant="success">Retail Small Business OS</Badge>
+                <h2 className="mt-3 text-2xl font-black">تشغيل متجر التجزئة من داخل مَدار</h2>
+                <p className="mt-2 max-w-2xl text-slate-300">نفس الحساب وصلاحيات المساحة، مع قاعدة Retail مستقلة للمبيعات والمخزون والصندوق والديون وORBY.</p>
+              </div>
+              <ButtonLink href="/retail/onboarding" size="lg">
+                <Icon name="store" />
+                فتح MADAR Retail
+              </ButtonLink>
             </div>
           </Card>
         </Grid>

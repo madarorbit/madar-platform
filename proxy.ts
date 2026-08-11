@@ -3,7 +3,7 @@ import {NextRequest,NextResponse} from 'next/server';
 const SESSION_MAX_AGE=60*60*24*365;
 const cookieOptions=(maxAge:number,httpOnly=true)=>({httpOnly,secure:process.env.NODE_ENV==='production',sameSite:'lax' as const,path:'/',maxAge});
 const maintenanceAllowed=['/maintenance','/login','/auth','/admin','/api/health','/_next','/favicon','/robots.txt','/sitemap.xml'];
-const sessionProtected=['/admin','/account','/dashboard','/onboarding','/student','/workspace','/workspace-payment'];
+const sessionProtected=['/admin','/account','/dashboard','/onboarding','/student','/workspace','/workspace-payment','/retail/onboarding','/retail/workspace'];
 
 type JwtPayload={exp?:number;sub?:string};
 function jwtPayload(token:string):JwtPayload{try{return JSON.parse(Buffer.from(token.split('.')[1],'base64url').toString()) as JwtPayload}catch{return{}}}

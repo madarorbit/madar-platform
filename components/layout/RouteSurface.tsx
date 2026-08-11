@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 function resolveSurface(pathname: string) {
+  if (pathname.startsWith("/retail")) return "retail";
   if (pathname.startsWith("/workspace")) return "workspace";
   if (pathname.startsWith("/student")) return "student";
   if (pathname.startsWith("/admin")) return "admin";

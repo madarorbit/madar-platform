@@ -3,7 +3,7 @@
 import {usePathname} from 'next/navigation';
 import {useEffect,useRef} from 'react';
 
-const internalPath=/^\/(account|dashboard|admin|workspace|student|onboarding|workspace-payment)(\/|$)/;
+const internalPath=/^\/(account|dashboard|admin|workspace|student|onboarding|workspace-payment|retail\/(onboarding|workspace))(\/|$)/;
 const storageKey=(path:string)=>`madar-scroll:${path}`;
 
 export default function NavigationExperience(){

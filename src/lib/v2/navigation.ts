@@ -19,6 +19,7 @@ export type WorkspaceNavigationGroup = {
 
 const overview: WorkspaceNavigationItem[] = [
   { key: "dashboard", href: "/workspace", label: "نظرة عامة", icon: "home", description: "المؤشرات والاختصارات اليومية", keywords: ["الرئيسية", "لوحة المعلومات"] },
+  { key: "retail", href: "/retail/workspace", label: "MADAR Retail", icon: "store", description: "تشغيل التجزئة والمخزون والصندوق", keywords: ["تجزئة", "بيع", "مخزون", "صندوق"] },
   { key: "orby", href: "/workspace/orby", label: "أوربي", icon: "sparkles", description: "المساعد الذكي داخل سياق العمل", keywords: ["محادثة", "ذكاء", "تحليل"], orby: true },
   { key: "analytics", href: "/workspace/analytics", label: "التقارير والتحليلات", icon: "chart", description: "الأداء والاتجاهات والفترات", keywords: ["تقارير", "مؤشرات"] },
 ];
@@ -63,7 +64,7 @@ const account: WorkspaceNavigationItem[] = [
 ];
 
 const alwaysEnabled = new Set([
-  "dashboard", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "subscription", "support",
+  "dashboard", "retail", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "subscription", "support",
 ]);
 
 export function workspaceNavigationGroups(
