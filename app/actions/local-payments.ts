@@ -13,7 +13,7 @@ export async function submitWorkspaceLocalPayment(form:FormData){
  const requestId=required(form.get('request_id'),'طلب المساحة');let proof,errorMessage:string|undefined;
  try{
   const user=await requireUser(),file=form.get('proof');if(!(file instanceof File))throw new Error('اختر إثبات التحويل.');
-  proof=await uploadLocalPaymentProof(file,`workspace/${user.id}/${requestId}`);
+  proof=await uploadLocalPaymentProof(file,user.id,`workspace/${requestId}`);
   await supabaseFetch('/rest/v1/rpc/submit_workspace_payment_v2',{method:'POST',body:JSON.stringify({target_request:requestId,target_method:required(form.get('payment_method_id'),'طريقة الدفع'),reference:required(form.get('payment_reference'),'رقم العملية'),proof_path:proof.storagePath,proof_name:proof.originalFilename,proof_mime:proof.mimeType,proof_size:proof.fileSize})});
   revalidatePath(`/workspace-payment/${requestId}`);revalidatePath('/account');
  }catch(error){if(proof)await removeLocalPaymentProof(proof.storagePath);errorMessage=error instanceof Error?error.message:'تعذر إرسال إثبات الدفع.'}
