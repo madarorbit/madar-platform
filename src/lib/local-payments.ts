@@ -27,7 +27,9 @@ export async function removeLocalPaymentProof(storagePath:string){
 
 export async function signedLocalPaymentProof(storagePath:string,expiresIn=120){
  const{url,key}=supabaseServiceConfig();
- const response=await fetch(`${url}/storage/v1/object/sign/payment-proofs/${storagePath}`,{method:'POST',headers:{apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({expiresIn}),cache:'no-store'});
+ const headers=new Headers({apikey:key,'Content-Type':'application/json'});
+ if(!key.startsWith('sb_secret_'))headers.set('Authorization',`Bearer ${key}`);
+ const response=await fetch(`${url}/storage/v1/object/sign/payment-proofs/${storagePath}`,{method:'POST',headers,body:JSON.stringify({expiresIn}),cache:'no-store'});
  if(!response.ok)throw new Error('تعذر فتح إثبات الدفع.');
  const data=await response.json(),signedPath=data.signedURL||data.signedUrl;
  if(typeof signedPath!=='string'||!signedPath.startsWith('/object/sign/'))throw new Error('تعذر فتح إثبات الدفع.');

@@ -9,7 +9,7 @@ import { requireWorkspace } from "@/src/lib/retail/server/auth/context";
 export const metadata: Metadata = { title: "لوحة التجارة" };
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
-  const [{ workspace }, params] = await Promise.all([requireWorkspace(), searchParams]);
+  const [{ workspace, user }, params] = await Promise.all([requireWorkspace(), searchParams]);
   const today = localDate(workspace.timezone);
   const snapshot = await getAnalyticsSnapshot(workspace.id, today, today);
   const m = snapshot.metrics;
@@ -26,7 +26,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div className="content-grid">
       <FlashMessage success={params.success} error={params.error} />
-      <PageHeader eyebrow="نظرة اليوم" title={`مرحبًا في ${workspace.name}`} description="الإيراد والربح والصندوق مفاهيم منفصلة؛ تعرض كل بطاقة تعريفها بوضوح." action={<Link className="button-primary" href="/retail/workspace/sales">بيع جديد</Link>} />
+      <PageHeader eyebrow="نظرة اليوم" title={`مرحبًا في ${workspace.name}`} description="الإيراد والربح والصندوق مفاهيم منفصلة؛ تعرض كل بطاقة تعريفها بوضوح." action={<div className="flex flex-wrap gap-2"><Link className="button-secondary" href={`/orby?conversation=new&organization=${encodeURIComponent(user.platformOrganizationId)}`}>فتح ORBY</Link><Link className="button-primary" href="/retail/workspace/sales">بيع جديد</Link></div>} />
       <section className="metric-grid">
         {metrics.map(([label, value, hint]) => <article className="surface metric-card" key={label}><p className="muted text-xs font-bold">{label}</p><p className="value">{value}</p><p className="muted mt-2 text-xs">{hint}</p></article>)}
       </section>

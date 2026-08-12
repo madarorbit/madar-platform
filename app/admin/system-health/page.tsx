@@ -1,179 +1,42 @@
-import Link from "next/link";
-import { requireSuperAdmin } from "@/src/lib/auth";
-import { supabaseFetch } from "@/src/lib/supabase/server";
+import Link from 'next/link';
+import {requireSuperAdmin} from '@/src/lib/auth';
+import {supabaseFetch} from '@/src/lib/supabase/server';
+import {supabaseServiceConfig} from '@/src/lib/supabase/service';
 
-export const dynamic = "force-dynamic";
-export const metadata = { title: "صحة المنصة | مَدار" };
-type Overview = {
-  users: { total: number; active: number; admins: number };
-  workspaces: { total: number; active: number; suspended: number };
-  store: {
-    products: number;
-    services: number;
-    orders: number;
-    approved_revenue: number;
-  };
-  operations: {
-    pending_workspace_requests: number;
-    pending_renewals: number;
-    open_feedback: number;
-    privacy_requests: number;
-  };
-  generated_at: string;
-};
-const scalar = <T,>(value: unknown) =>
-  Array.isArray(value) ? (value[0] as T) : (value as T);
-export default async function SystemHealthPage() {
-  await requireSuperAdmin();
-  const [settings, overview, methods, plans] = await Promise.all([
-      supabaseFetch("/rest/v1/platform_settings?id=eq.1&select=*"),
-      supabaseFetch("/rest/v1/rpc/founder_platform_overview", {
-        method: "POST",
-        body: "{}",
-      }),
-      supabaseFetch(
-        "/rest/v1/payment_methods?select=id,is_active,account_identifier,currency",
-      ),
-      supabaseFetch(
-        "/rest/v1/subscription_plans?select=id,is_active,organization_type",
-      ),
-    ]),
-    config = settings?.[0],
-    stats = scalar<Overview>(overview);
-  const checks = [
-    ["قاعدة البيانات", Boolean(config), "متصلة وتستجيب"],
-    [
-      "تسجيل الحسابات",
-      Boolean(config?.beta_registration_open),
-      config?.beta_registration_open ? "مفتوح" : "مغلق بقرار المؤسس",
-    ],
-    [
-      "فتح المساحات",
-      Boolean(config?.workspace_creation_enabled),
-      config?.workspace_creation_enabled ? "متاح" : "موقوف",
-    ],
-    [
-      "متجر مَدار",
-      Boolean(config?.store_enabled),
-      config?.store_enabled ? "يستقبل الطلبات" : "موقوف",
-    ],
-    [
-      "أوربي",
-      Boolean(config?.orby_enabled),
-      config?.orby_enabled ? "مفعّل" : "موقوف",
-    ],
-    [
-      "وضع الصيانة",
-      !config?.maintenance_mode,
-      config?.maintenance_mode ? "مفعّل" : "غير مفعّل",
-    ],
-    [
-      "خطط الاشتراك",
-      plans?.some((plan: { is_active: boolean }) => plan.is_active),
-      `${plans?.filter((plan: { is_active: boolean }) => plan.is_active).length || 0} خطة نشطة`,
-    ],
-    [
-      "وسائل الدفع الجاهزة",
-      methods?.some(
-        (method: { is_active: boolean; account_identifier: string | null }) =>
-          method.is_active && method.account_identifier,
-      ),
-      `${methods?.filter((method: { is_active: boolean; account_identifier: string | null }) => method.is_active && method.account_identifier).length || 0} طريقة نشطة`,
-    ],
-  ];
-  return (
-    <main className="mx-auto max-w-6xl p-6 py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-bold text-violet-200">مركز المؤسس</p>
-          <h1 className="mt-2 text-4xl font-black">صحة المنصة والاستعداد التشغيلي</h1>
-          <p className="mt-3 text-slate-400">
-            فحص مباشر لإعدادات التشغيل وقاعدة البيانات وتراكم الأعمال قبل
-            الإطلاق.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <a
-            href="/api/health"
-            target="_blank"
-            className="rounded-xl border border-[#70E4D4]/30 px-4 py-3 font-bold text-[#70E4D4]"
-          >
-            فتح API الصحة
-          </a>
-          <Link
-            href="/admin/founder"
-            className="rounded-xl border border-white/15 px-4 py-3 font-bold"
-          >
-            مركز القيادة
-          </Link>
-        </div>
-      </div>
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {checks.map(([label, healthy, detail]) => (
-          <article
-            key={String(label)}
-            className={`rounded-2xl border p-5 ${healthy ? "border-emerald-300/20 bg-emerald-300/[.05]" : "border-amber-300/20 bg-amber-300/[.06]"}`}
-          >
-            <div className="flex items-center justify-between">
-              <strong>{label}</strong>
-              <span
-                className={`h-3 w-3 rounded-full ${healthy ? "bg-emerald-300" : "bg-amber-300"}`}
-              />
-            </div>
-            <p className="mt-3 text-sm text-slate-400">{detail}</p>
-          </article>
-        ))}
-      </section>
-      <section className="mt-10 rounded-3xl border border-white/10 p-6">
-        <h2 className="text-2xl font-black">
-          مؤشرات التشغيل التي تحتاج انتباهًا
-        </h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric
-            label="طلبات فتح معلقة"
-            value={stats.operations.pending_workspace_requests}
-          />
-          <Metric
-            label="تجديدات معلقة"
-            value={stats.operations.pending_renewals}
-          />
-          <Metric
-            label="بلاغات دعم مفتوحة"
-            value={stats.operations.open_feedback}
-          />
-          <Metric
-            label="طلبات خصوصية"
-            value={stats.operations.privacy_requests}
-          />
-        </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Metric label="الحسابات النشطة" value={stats.users.active} />
-          <Metric label="المساحات النشطة" value={stats.workspaces.active} />
-          <Metric label="طلبات المتجر" value={stats.store.orders} />
-        </div>
-      </section>
-      <section className="mt-8 rounded-3xl border border-violet-300/20 bg-violet-300/[.05] p-6">
-        <h2 className="text-xl font-black text-violet-100">قرار الإطلاق</h2>
-        <p className="mt-3 leading-8 text-slate-300">
-          يُعد البناء التقني جاهزًا عندما تنجح اختبارات GitHub وبناء Vercel،
-          ويكون فحص قاعدة البيانات متصلًا، وتوجد وسيلة دفع واحدة صحيحة على
-          الأقل. تعطل Gemini لا يوقف المنصة لأن أوربي يمتلك تحليلًا محليًا
-          احتياطيًا.
-        </p>
-      </section>
-      <p className="mt-6 text-xs text-slate-500">
-        تم توليد الفحص: {new Date(stats.generated_at).toLocaleString("ar-YE")}
-      </p>
-    </main>
-  );
+export const dynamic='force-dynamic';
+export const metadata={title:'صحة المنصة | مَدار'};
+type Overview={users?:{total?:number;active?:number;admins?:number};workspaces?:{total?:number;active?:number;suspended?:number};store?:{products?:number;services?:number;orders?:number;approved_revenue?:number};operations?:{pending_workspace_requests?:number;open_feedback?:number;privacy_requests?:number;integration_incidents?:number};generated_at?:string};
+type CheckState='healthy'|'warning'|'unknown';
+const scalar=<T,>(value:unknown)=>Array.isArray(value)?value[0] as T:value as T;
+const n=(value:unknown)=>typeof value==='number'&&Number.isFinite(value)?value:typeof value==='string'&&value.trim()&&Number.isFinite(Number(value))?Number(value):null;
+async function storageCheck():Promise<{state:CheckState;detail:string}>{try{const{url,key}=supabaseServiceConfig(),headers=new Headers({apikey:key});if(!key.startsWith('sb_secret_'))headers.set('Authorization',`Bearer ${key}`);const response=await fetch(`${url}/storage/v1/bucket`,{headers,cache:'no-store'});if(!response.ok)return{state:'warning',detail:`Storage API أعاد HTTP ${response.status}`};const buckets=await response.json() as unknown[];return{state:'healthy',detail:`Storage API يستجيب · ${Array.isArray(buckets)?buckets.length:0} bucket`};}catch{return{state:'unknown',detail:'تعذر التحقق من Storage من هذه البيئة'};}}
+export default async function SystemHealthPage(){
+ const founder=await requireSuperAdmin();
+ const[settingsRaw,overviewRaw,methods,plans,providers,models,runtimeRows,storage]=await Promise.all([
+  supabaseFetch('/rest/v1/platform_settings?id=eq.1&select=beta_registration_open,workspace_creation_enabled,store_enabled,orby_enabled,maintenance_mode,updated_at').catch(()=>[]),
+  supabaseFetch('/rest/v1/rpc/founder_platform_overview',{method:'POST',body:'{}'}).catch(()=>null),
+  supabaseFetch('/rest/v1/payment_methods?select=id,is_active,account_identifier').catch(()=>[]),
+  supabaseFetch('/rest/v1/subscription_plans?select=id,is_active,is_available,service_code').catch(()=>[]),
+  supabaseFetch('/rest/v1/orby_provider_registry?select=id,enabled,display_name').catch(()=>[]),
+  supabaseFetch('/rest/v1/orby_model_registry?select=id,enabled,display_name,provider_id').catch(()=>[]),
+  supabaseFetch('/rest/v1/orby_runtime_config?organization_id=is.null&select=config,updated_at&order=updated_at.desc&limit=1').catch(()=>[]),
+  storageCheck(),
+ ]);
+ const config=settingsRaw?.[0],stats=scalar<Overview>(overviewRaw)||{},providerList=providers as Array<{id:string;enabled:boolean;display_name:string}>,modelList=models as Array<{id:string;enabled:boolean;display_name:string;provider_id:string}>,runtime=(runtimeRows as Array<{config?:{enabled?:boolean;defaultModelId?:string};updated_at:string}>)?.[0],activeMethods=(methods as Array<{is_active:boolean;account_identifier:string|null}>).filter(item=>item.is_active&&item.account_identifier).length,activePlans=(plans as Array<{is_active:boolean;is_available:boolean;service_code:string}>).filter(item=>item.is_active&&item.is_available).length,activeProviders=providerList.filter(item=>item.enabled),activeModels=modelList.filter(item=>item.enabled),orbyHealthy=Boolean(config?.orby_enabled&&runtime?.config?.enabled&&activeProviders.length&&activeModels.length);
+ const checks:Array<{label:string;state:CheckState;detail:string}>=[
+  {label:'قاعدة البيانات',state:overviewRaw?'healthy':'warning',detail:overviewRaw?'RPC المؤسس وقاعدة البيانات يستجيبان':'تعذر قراءة Founder overview'},
+  {label:'Supabase Auth',state:founder?'healthy':'unknown',detail:'تم التحقق من جلسة Super Admin لهذه الصفحة'},
+  {label:'Storage',...storage},
+  {label:'ORBY Core',state:orbyHealthy?'healthy':runtime?'warning':'unknown',detail:orbyHealthy?`${activeProviders.length} Provider · ${activeModels.length} Model مفعّل`:runtime?'ORBY غير مكتمل الإعداد أو موقوف':'تعذر قراءة Runtime Config'},
+  {label:'متجر مَدار',state:config?config.store_enabled?'healthy':'warning':'unknown',detail:config?.store_enabled?'مفعّل من Platform Settings':'موقوف أو غير معروف'},
+  {label:'وضع الصيانة',state:config?!config.maintenance_mode?'healthy':'warning':'unknown',detail:config?.maintenance_mode?'الصيانة مفعّلة':'غير مفعّل'},
+  {label:'وسائل الدفع',state:activeMethods>0?'healthy':'warning',detail:`${activeMethods} وسيلة دفع نشطة ومهيأة`},
+  {label:'خطط الخدمات',state:activePlans>0?'healthy':'warning',detail:`${activePlans} خطة متاحة ونشطة`},
+ ];
+ return <main className="mx-auto max-w-7xl p-5 py-8 sm:p-8"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="font-bold text-violet-200">Platform Health</p><h1 className="mt-2 text-4xl font-black">صحة مَدار الفعلية</h1><p className="mt-3 max-w-2xl text-slate-400">قراءات مباشرة من قاعدة البيانات وAuth وStorage وORBY. الحالة غير القابلة للتحقق تظهر Unknown بدل أخضر وهمي.</p></div><div className="flex flex-wrap gap-2"><a href="/api/health" target="_blank" rel="noreferrer" className="md-button md-button-secondary">Health API</a><Link href="/admin/orby-os" className="md-button md-button-secondary">ORBY Core</Link><Link href="/admin/founder" className="md-button md-button-primary">مركز القيادة</Link></div></div>
+ <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{checks.map(check=><article key={check.label} className={`rounded-2xl border p-5 ${check.state==='healthy'?'border-emerald-300/20 bg-emerald-300/[.05]':check.state==='warning'?'border-amber-300/20 bg-amber-300/[.06]':'border-slate-400/15 bg-white/[.025]'}`}><div className="flex items-center justify-between gap-3"><strong>{check.label}</strong><span className={`h-3 w-3 rounded-full ${check.state==='healthy'?'bg-emerald-300':check.state==='warning'?'bg-amber-300':'bg-slate-500'}`}/></div><p className="mt-3 text-sm leading-6 text-slate-400">{check.detail}</p><span className="mt-3 inline-block text-[10px] font-bold uppercase tracking-wider text-slate-500">{check.state==='healthy'?'Healthy':check.state==='warning'?'Attention':'Unknown'}</span></article>)}</section>
+ <section className="mt-8 rounded-3xl border border-white/10 p-6"><div className="flex items-center justify-between gap-3"><div><h2 className="text-2xl font-black">التشغيل والمخاطر</h2><p className="mt-1 text-sm text-slate-500">القيم المفقودة لا تسقط الصفحة؛ تظهر كغير متاحة.</p></div>{runtime?.config?.defaultModelId?<span className="md-badge">ORBY: {runtime.config.defaultModelId}</span>:null}</div><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Metric label="طلبات فتح معلقة" value={stats.operations?.pending_workspace_requests}/><Metric label="حوادث ربط مفتوحة" value={stats.operations?.integration_incidents}/><Metric label="بلاغات دعم مفتوحة" value={stats.operations?.open_feedback}/><Metric label="طلبات خصوصية" value={stats.operations?.privacy_requests}/></div><div className="mt-5 grid gap-4 sm:grid-cols-3"><Metric label="الحسابات النشطة" value={stats.users?.active}/><Metric label="المساحات النشطة" value={stats.workspaces?.active}/><Metric label="طلبات المتجر" value={stats.store?.orders}/></div></section>
+ <section className="mt-8 grid gap-4 lg:grid-cols-2"><div className="rounded-2xl border border-white/10 p-5"><h2 className="font-black">ORBY Providers</h2><div className="mt-3 grid gap-2">{providerList.length?providerList.map(item=><div key={item.id} className="flex items-center justify-between rounded-xl bg-white/[.025] p-3 text-sm"><span>{item.display_name}</span><span className={item.enabled?'text-emerald-300':'text-slate-500'}>{item.enabled?'Enabled':'Disabled'}</span></div>):<p className="text-sm text-slate-500">Not configured / Unknown</p>}</div></div><div className="rounded-2xl border border-white/10 p-5"><h2 className="font-black">ORBY Models</h2><div className="mt-3 grid gap-2">{modelList.length?modelList.map(item=><div key={item.id} className="flex items-center justify-between rounded-xl bg-white/[.025] p-3 text-sm"><span>{item.display_name}</span><span className={item.enabled?'text-emerald-300':'text-slate-500'}>{item.enabled?'Enabled':'Disabled'}</span></div>):<p className="text-sm text-slate-500">Not configured / Unknown</p>}</div></div></section>
+ <p className="mt-6 text-xs text-slate-500">آخر توليد للـOverview: {stats.generated_at?new Date(stats.generated_at).toLocaleString('ar-YE'):'غير متاح'} · Platform Settings: {config?.updated_at?new Date(config.updated_at).toLocaleString('ar-YE'):'غير متاح'}</p></main>;
 }
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[.03] p-4">
-      <p className="text-xs text-slate-500">{label}</p>
-      <strong className="mt-2 block text-3xl">
-        {value.toLocaleString("ar-YE")}
-      </strong>
-    </div>
-  );
-}
+function Metric({label,value}:{label:string;value:unknown}){const numeric=n(value);return <div className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><p className="text-xs text-slate-500">{label}</p><strong className="mt-2 block text-3xl">{numeric===null?'—':numeric.toLocaleString('ar-YE')}</strong></div>}

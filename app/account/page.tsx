@@ -6,109 +6,30 @@ import { Icon } from "@/components/ui/Icons";
 import PageShell from "@/components/ui/PageShell";
 import { PageHero, Section } from "@/components/ui/Section";
 import { requireUser } from "@/src/lib/auth";
-import {
-  serviceStateCtas,
-  serviceStateLabels,
-  type ServiceState,
-} from "@/src/lib/services/catalog";
+import { serviceStateCtas,serviceStateLabels,type ServiceState } from "@/src/lib/services/catalog";
 import { getAccountServices } from "@/src/lib/services/server";
 import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const badgeVariant = (state: ServiceState) =>
-  state === "ACTIVE" ? "success" as const
-    : state === "PENDING_APPROVAL" || state === "SETUP_REQUIRED" ? "warning" as const
-      : state === "REJECTED" || state === "SUSPENDED" || state === "EXPIRED" ? "danger" as const
-        : "default" as const;
+const badgeVariant=(state:ServiceState)=>state==="ACTIVE"?"success" as const:state==="PENDING_APPROVAL"||state==="SETUP_REQUIRED"?"warning" as const:state==="REJECTED"||state==="SUSPENDED"||state==="EXPIRED"?"danger" as const:"default" as const;
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const [user, profile, accountServices, query] = await Promise.all([
-    requireUser(),
-    currentProfile(),
-    getAccountServices(),
-    searchParams,
-  ]);
+  const [user, profile, accountServices, query, usageRaw] = await Promise.all([requireUser(),currentProfile(),getAccountServices(),searchParams,supabaseFetch('/rest/v1/rpc/orby_usage_status',{method:'POST',body:'{}'}).catch(()=>null)]);
   const unread = (await supabaseFetch("/rest/v1/notifications?read_at=is.null&select=id").catch(() => []))?.length || 0;
   const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(profile?.role || "");
   const activeCount = accountServices.filter((service) => service.state === "ACTIVE").length;
-
-  return (
-    <PageShell>
-      <PageHero
-        eyebrow="MADAR Account"
-        title={`مرحبًا ${profile?.full_name || "بك"}`}
-        description="حساب واحد لإدارة بياناتك وخدمات مَدار المستقلة وطلبات التفعيل من مركز واضح وآمن."
-      />
-      <Section>
-        {query.error === "forbidden" ? <Notice title="ليست لديك صلاحية لفتح الصفحة المطلوبة" variant="danger" /> : null}
-        <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-          <aside className="space-y-4">
-            <Card className="overflow-hidden p-0">
-              <div className="h-24 bg-gradient-to-l from-violet-500/30 via-emerald-400/10 to-transparent" />
-              <div className="p-5 pt-0">
-                <div className="-mt-10 flex items-end justify-between gap-4">
-                  {profile?.avatar_url ? (
-                    <Image src="/account/avatar" alt="صورة الحساب" width={80} height={80} unoptimized className="h-20 w-20 rounded-2xl border-4 border-[#101625] object-cover" />
-                  ) : (
-                    <span className="grid h-20 w-20 place-items-center rounded-2xl border-4 border-[#101625] bg-violet-300/15 text-violet-100"><Icon name="user" className="h-8 w-8" /></span>
-                  )}
-                  <Badge variant="success">حساب نشط</Badge>
-                </div>
-                <h2 className="mt-4 text-2xl font-black">{profile?.full_name || "حساب مَدار"}</h2>
-                <p dir="ltr" className="mt-1 text-right text-sm text-slate-400">{user.email}</p>
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-white/[.035] p-3"><span className="text-xs text-slate-500">الخدمات النشطة</span><strong className="mt-1 block text-xl">{activeCount}</strong></div>
-                  <div className="rounded-xl bg-white/[.035] p-3"><span className="text-xs text-slate-500">الإشعارات</span><strong className="mt-1 block text-xl">{unread}</strong></div>
-                </div>
-                <div className="mt-5 grid gap-2">
-                  <ButtonLink href="/account/profile" variant="secondary"><Icon name="settings" />إعدادات الحساب</ButtonLink>
-                  <ButtonLink href="/account/notifications" variant="ghost"><Icon name="bell" />الإشعارات</ButtonLink>
-                  {isAdmin ? <ButtonLink href="/admin" variant="secondary"><Icon name="shield" />إدارة مَدار</ButtonLink> : null}
-                </div>
-              </div>
-            </Card>
-            <Card className="p-5">
-              <h3 className="font-black">روابط الحساب</h3>
-              <nav className="mt-4 grid gap-2 text-sm">
-                <Link href="/account/orders" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="store" />طلبات المتجر</Link>
-                <Link href="/account/support" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="help" />الدعم</Link>
-                <Link href="/account/privacy" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="shield" />الخصوصية والبيانات</Link>
-              </nav>
-              <form action={logout} className="mt-4 border-t border-white/10 pt-4"><button className="md-button md-button-danger w-full">تسجيل الخروج</button></form>
-            </Card>
-          </aside>
-
-          <div>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div><span className="md-eyebrow">خدمات مَدار</span><h2 className="mt-3 text-3xl font-black">اختر ما تحتاجه الآن</h2><p className="mt-2 max-w-2xl text-slate-400">كل خدمة لها إعداد واشتراك ودفع وحالة تفعيل مستقلة. يمكنك تشغيل أكثر من خدمة بالحساب نفسه.</p></div>
-            </div>
-            <div className="mt-6 grid gap-5">
-              {accountServices.map((service) => (
-                <Card key={service.definition.code} className={`relative overflow-hidden p-5 sm:p-6 ${service.state === "ACTIVE" ? "border-emerald-300/20" : ""}`}>
-                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                    <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-300/15 to-emerald-300/10 text-emerald-100"><Icon name={service.definition.icon} className="h-6 w-6" /></span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-3"><h3 className="text-xl font-black sm:text-2xl">{service.definition.name}</h3><Badge variant={badgeVariant(service.state)}>{serviceStateLabels[service.state]}</Badge></div>
-                      <p className="mt-2 leading-7 text-slate-300">{service.definition.description}</p>
-                      {service.subscription ? <p className="mt-3 text-xs text-slate-500">ينتهي الاشتراك: {new Date(service.subscription.ends_at).toLocaleDateString("ar-YE")}</p> : null}
-                      {service.request?.rejection_reason && service.state === "REJECTED" ? <p className="mt-3 text-sm text-rose-200">{service.request.rejection_reason}</p> : null}
-                    </div>
-                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:min-w-44">
-                      {service.href ? (
-                        <ButtonLink href={service.href} variant={service.state === "ACTIVE" ? "primary" : "secondary"}>{serviceStateCtas[service.state]}<Icon name="arrow" /></ButtonLink>
-                      ) : (
-                        <button disabled className="md-button md-button-secondary">{serviceStateCtas[service.state]}</button>
-                      )}
-                      {service.definition.code === "MADAR_RETAIL" && service.state === "ACTIVE" ? <button disabled className="md-button md-button-ghost text-xs">تطبيق Android قريبًا</button> : null}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
+  const usage=(Array.isArray(usageRaw)?usageRaw[0]:usageRaw) as{tier?:string;remaining?:number;daily_limit?:number}|null;
+  return <PageShell>
+    <PageHero eyebrow="MADAR Account" title={`مرحبًا ${profile?.full_name || "بك"}`} description="حساب واحد لإدارة بياناتك وخدمات مَدار المستقلة وطلبات التفعيل من مركز واضح وآمن." />
+    <Section>{query.error === "forbidden" ? <Notice title="ليست لديك صلاحية لفتح الصفحة المطلوبة" variant="danger" /> : null}
+      <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+        <aside className="space-y-4"><Card className="overflow-hidden p-0"><div className="h-24 bg-gradient-to-l from-violet-500/30 via-emerald-400/10 to-transparent" /><div className="p-5 pt-0"><div className="-mt-10 flex items-end justify-between gap-4">{profile?.avatar_url ? <Image src="/account/avatar" alt="صورة الحساب" width={80} height={80} unoptimized className="h-20 w-20 rounded-2xl border-4 border-[#101625] object-cover" /> : <span className="grid h-20 w-20 place-items-center rounded-2xl border-4 border-[#101625] bg-violet-300/15 text-violet-100"><Icon name="user" className="h-8 w-8" /></span>}<Badge variant="success">حساب نشط</Badge></div><h2 className="mt-4 text-2xl font-black">{profile?.full_name || "حساب مَدار"}</h2><p dir="ltr" className="mt-1 text-right text-sm text-slate-400">{user.email}</p><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white/[.035] p-3"><span className="text-xs text-slate-500">الخدمات النشطة</span><strong className="mt-1 block text-xl">{activeCount}</strong></div><div className="rounded-xl bg-white/[.035] p-3"><span className="text-xs text-slate-500">الإشعارات</span><strong className="mt-1 block text-xl">{unread}</strong></div></div><div className="mt-5 grid gap-2"><ButtonLink href="/orby" variant="primary"><Icon name="sparkles" />فتح ORBY {usage?.tier==='plus'?<span className="ms-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px]">Plus</span>:null}</ButtonLink><ButtonLink href="/account/profile" variant="secondary"><Icon name="settings" />إعدادات الحساب</ButtonLink><ButtonLink href="/account/notifications" variant="ghost"><Icon name="bell" />الإشعارات</ButtonLink>{isAdmin ? <ButtonLink href="/admin" variant="secondary"><Icon name="shield" />إدارة مَدار</ButtonLink> : null}</div></div></Card>
+          <Card className="p-5"><div className="flex items-center justify-between gap-3"><h3 className="font-black">ORBY</h3><Badge variant={usage?.tier==='plus'?'success':'default'}>{usage?.tier==='plus'?'Plus':activeCount?'Customer':'Free'}</Badge></div><p className="mt-2 text-xs leading-6 text-slate-400">مساعدك العام وحلقة الوصول الذكية لخدماتك المصرح بها.</p>{usage?.tier!=='plus'?<p className="mt-3 text-xs text-slate-500">المتبقي اليوم: {Number(usage?.remaining??5)} من {Number(usage?.daily_limit??5)}</p>:<p className="mt-3 text-xs text-violet-200">استخدام مرن مع حماية Fair-use خلفية.</p>}<Link href="/orby/plus" className="mt-3 inline-block text-xs font-bold text-violet-200 underline">إدارة ORBY Plus</Link></Card>
+          <Card className="p-5"><h3 className="font-black">روابط الحساب</h3><nav className="mt-4 grid gap-2 text-sm"><Link href="/account/orders" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="store" />طلبات المتجر</Link><Link href="/account/support" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="help" />الدعم</Link><Link href="/account/privacy" className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/[.04]"><Icon name="shield" />الخصوصية والبيانات</Link></nav><form action={logout} className="mt-4 border-t border-white/10 pt-4"><button className="md-button md-button-danger w-full">تسجيل الخروج</button></form></Card></aside>
+        <div><div className="flex flex-wrap items-end justify-between gap-3"><div><span className="md-eyebrow">خدمات مَدار</span><h2 className="mt-3 text-3xl font-black">اختر ما تحتاجه الآن</h2><p className="mt-2 max-w-2xl text-slate-400">كل خدمة لها إعداد واشتراك ودفع وحالة تفعيل مستقلة. يمكنك تشغيل أكثر من خدمة بالحساب نفسه.</p></div></div>
+          <div className="mt-6 grid gap-5">{accountServices.map(service=><Card key={service.definition.code} className={`relative overflow-hidden p-0 ${service.state === "ACTIVE" ? "border-emerald-300/20" : ""}`}><div className="grid sm:grid-cols-[13rem_minmax(0,1fr)]"><div className="relative aspect-square min-h-48 overflow-hidden bg-black/30 sm:aspect-auto"><Image src={service.definition.coverImage} alt={`صورة ${service.definition.name}`} fill sizes="(max-width:640px) 100vw, 208px" className="object-cover" priority={service.definition.code==='MADAR_RETAIL'}/></div><div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:p-6"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-3"><h3 className="text-xl font-black sm:text-2xl">{service.definition.name}</h3><Badge variant={badgeVariant(service.state)}>{serviceStateLabels[service.state]}</Badge></div><p className="mt-2 leading-7 text-slate-300">{service.definition.description}</p><p className="mt-2 text-sm leading-6 text-slate-500">{service.definition.detail}</p>{service.subscription?<p className="mt-3 text-xs text-slate-500">ينتهي الاشتراك: {new Date(service.subscription.ends_at).toLocaleDateString("ar-YE")}</p>:null}{service.request?.rejection_reason&&service.state==="REJECTED"?<p className="mt-3 text-sm text-rose-200">{service.request.rejection_reason}</p>:null}</div><div className="flex shrink-0 flex-col items-stretch gap-2 sm:min-w-44">{service.href?<ButtonLink href={service.href} variant={service.state === "ACTIVE" ? "primary" : "secondary"}>{serviceStateCtas[service.state]}<Icon name="arrow" /></ButtonLink>:<button disabled className="md-button md-button-secondary">{serviceStateCtas[service.state]}</button>}{service.state==='ACTIVE'?<Link href={`/orby?conversation=new${service.subscription?.organization_id?`&organization=${service.subscription.organization_id}`:''}`} className="md-button md-button-ghost text-xs">فتح ORBY في سياق الخدمة</Link>:null}{service.definition.code === "MADAR_RETAIL" && service.state === "ACTIVE" ? <button disabled className="md-button md-button-ghost text-xs">تطبيق Android قريبًا</button> : null}</div></div></div></Card>)}</div>
         </div>
-      </Section>
-    </PageShell>
-  );
+      </div>
+    </Section>
+  </PageShell>;
 }
