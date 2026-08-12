@@ -28,5 +28,7 @@ export async function signedLocalPaymentProof(storagePath:string,expiresIn=120){
  const{url,key}=supabaseConfig(),token=await serverToken();
  const response=await fetch(`${url}/storage/v1/object/sign/payment-proofs/${storagePath}`,{method:'POST',headers:{apikey:key,Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({expiresIn}),cache:'no-store'});
  if(!response.ok)throw new Error('تعذر فتح إثبات الدفع.');
- const data=await response.json();return new URL(data.signedURL||data.signedUrl,url).toString();
+ const data=await response.json(),signedPath=data.signedURL||data.signedUrl;
+ if(typeof signedPath!=='string'||!signedPath.startsWith('/object/sign/'))throw new Error('تعذر فتح إثبات الدفع.');
+ return encodeURI(`${url.replace(/\/$/,'')}/storage/v1${signedPath}`);
 }
