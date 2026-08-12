@@ -81,7 +81,7 @@ test("ORBY Retail refuses mutations and cites deterministic Retail evidence", as
   assert.ok(debt.evidence.every((item) => item.source.startsWith("retail_")));
 });
 
-test("Retail integration uses the Platform session and a server-only isolated database", async () => {
+test("Retail integration uses the Platform session and the primary server-only database", async () => {
   const [context, database, sync, orby, proxy] = await Promise.all([
     read("src/lib/retail/server/auth/context.ts"),
     read("src/lib/retail/supabase/server.ts"),
@@ -95,22 +95,23 @@ test("Retail integration uses the Platform session and a server-only isolated da
   assert.match(context, /platform_organization_id/);
   assert.match(context, /authorizeOrganizationAction/);
   assert.doesNotMatch(context, /retail\/supabase\/request/);
-  assert.match(database, /RETAIL_SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(database, /supabaseServiceConfig/);
+  assert.doesNotMatch(database, /RETAIL_SUPABASE_(?:URL|SERVICE_ROLE_KEY)/);
   assert.doesNotMatch(database, /NEXT_PUBLIC_RETAIL.*SERVICE/i);
   assert.match(sync, /authorizeRetailRequest/);
   assert.match(orby, /createServerOrbyFoundation/);
   assert.match(orby, /can_use_orby/);
   assert.match(orby, /read-only|للقراءة|قراءة/iu);
   assert.match(proxy, /\/retail\/workspace/);
-  const activation = await read("supabase-retail/migrations/20260811190500_account_service_activation.sql");
+  const activation = await read("supabase/migrations/20260812180836_retail_account_service_activation_unified.sql");
   assert.match(activation, /activate_retail_service/);
   assert.match(activation, /caller_role <> 'service_role'/);
 });
 
 test("Retail PostgreSQL bridge is service-only, allowlisted, and preserves atomic RPCs", async () => {
   const [bridge, hardening] = await Promise.all([
-    read("supabase-retail/migrations/20260811180000_platform_integration.sql"),
-    read("supabase-retail/migrations/20260811181500_platform_bridge_hardening.sql"),
+    read("supabase/migrations/20260812180827_retail_platform_integration_unified.sql"),
+    read("supabase/migrations/20260812180844_retail_platform_bridge_hardening.sql"),
   ]);
   assert.match(bridge, /caller_role <> 'service_role'/);
   assert.match(bridge, /PLATFORM_OPERATION_NOT_ALLOWED/);
@@ -120,4 +121,27 @@ test("Retail PostgreSQL bridge is service-only, allowlisted, and preserves atomi
   assert.match(bridge, /public\.retail_analytics_snapshot/);
   assert.doesNotMatch(bridge, /execute\s+operation_name/i);
   assert.match(hardening, /revoke execute on function %s from authenticated/);
+  assert.match(hardening, /procedure\.proname = any/);
+  assert.doesNotMatch(hardening, /procedure\.proname <> 'retail_platform_execute'/);
+});
+
+test("Retail tables are namespaced and tenant RLS does not alter MADAR privileges", async () => {
+  const [foundation, security, rlsTest] = await Promise.all([
+    read("supabase/migrations/20260812180712_retail_foundation_unified.sql"),
+    read("supabase/migrations/20260812180807_retail_security_unified.sql"),
+    read("supabase/tests/001_retail_core_and_rls.sql"),
+  ]);
+  for (const table of [
+    "retail_profiles",
+    "retail_workspace_members",
+    "retail_products",
+    "retail_sales",
+    "retail_inventory_movements",
+    "retail_cash_transactions",
+  ]) {
+    assert.match(`${foundation}\n${security}\n${rlsTest}`, new RegExp(`public\\.${table}\\b`));
+  }
+  assert.match(security, /enable row level security/);
+  assert.match(rlsTest, /RLS_TENANT_LEAK/);
+  assert.doesNotMatch(security, /revoke all on all tables in schema public/);
 });

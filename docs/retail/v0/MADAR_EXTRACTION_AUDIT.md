@@ -6,7 +6,7 @@
 |---|---|---|
 | Google/Auth/sessions | `REUSE` | مسارات مَدار الحالية وcookies وPKCE هي المصدر الوحيد؛ حُذف Auth Runtime الخاص بـRetail. |
 | profiles/organization permissions | `REUSE + ADAPT` | profile و`organization_members` من المنصة؛ mapping OWNER/ADMIN/MEMBER إلى أدوار Retail. |
-| Retail PostgreSQL والledgers | `REUSE` | بقي مشروع Supabase Retail منفصلًا؛ أضيف `platform_organization_id` وجسر service-only. |
+| Retail PostgreSQL والledgers | `REUSE + ADAPT` | نُقلت إلى Supabase الرئيسي بأسماء `retail_*`، مع `platform_organization_id` وجسر service-only. |
 | Financial RPCs/idempotency | `REUSE` | بقيت RPCs الأصلية دون إعادة كتابة، وتُستدعى بالactor الحقيقي داخل المعاملة. |
 | RLS | `REUSE + HARDEN` | السياسات بقيت؛ أُلغي التنفيذ المباشر لـauthenticated وأصبح BFF هو trust boundary. |
 | ORBY Core/providers/models | `REUSE` | Retail يستخدم نواة مَدار ومزوداتها وModel Registry بدل OpenRouter adapter مستقل. |
@@ -18,4 +18,4 @@
 | Provider key/config الخاص بـRetail | `DO_NOT_COPY` | يمنع ازدواج المزودات والسياسات والتكاليف. |
 | مستودع/Vercel Runtime المنفصل | `LEGACY` | لا يعتمد runtime المدمج عليهما؛ المصدر القانوني أصبح هذا المستودع ومشروع Vercel الرئيسي. |
 
-قاعدة البيانات المنفصلة مقصودة لعزل البيانات وصحة الدفاتر، وليست حدود هوية ثانية. الأسرار لا تُنسخ إلى Git ولا إلى العميل.
+العزل الآن داخل القاعدة الرئيسية: namespace واضح، `workspace_id`، عضوية Retail وRLS. قاعدة Retail القديمة لا يعتمد عليها Runtime.

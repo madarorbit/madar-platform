@@ -1,14 +1,12 @@
--- MADAR Retail integration bridge.
--- MADAR Platform owns authentication and authorization; Retail data remains in
--- this isolated project. Only the server-side service role may cross the bridge.
+-- MADAR Retail integration bridge inside the primary MADAR database.
+-- MADAR Platform owns authentication and authorization. Retail keeps an
+-- explicit table namespace and workspace boundary, not a second Auth system.
 
-alter table public.profiles drop constraint if exists profiles_id_fkey;
-
-alter table public.profiles
+alter table public.retail_profiles
   add column if not exists identity_source text not null default 'RETAIL_AUTH';
 
-alter table public.profiles drop constraint if exists profiles_identity_source_check;
-alter table public.profiles
+alter table public.retail_profiles drop constraint if exists profiles_identity_source_check;
+alter table public.retail_profiles
   add constraint profiles_identity_source_check
   check (identity_source in ('RETAIL_AUTH', 'MADAR_PLATFORM'));
 
@@ -19,11 +17,11 @@ create unique index if not exists retail_workspaces_platform_organization_uidx
   on public.retail_workspaces(platform_organization_id)
   where platform_organization_id is not null;
 
-alter table public.onboarding_drafts
+alter table public.retail_onboarding_drafts
   add column if not exists platform_organization_id uuid;
 
-create index if not exists onboarding_drafts_platform_organization_idx
-  on public.onboarding_drafts(platform_organization_id, completed_at);
+create index if not exists retail_onboarding_drafts_platform_organization_idx
+  on public.retail_onboarding_drafts(platform_organization_id, completed_at);
 
 create or replace function public.retail_platform_execute(
   actor_user uuid,
@@ -51,7 +49,7 @@ begin
   operation_args := coalesce(operation_args, '{}'::jsonb);
 
   if not exists (
-    select 1 from public.profiles
+    select 1 from public.retail_profiles
     where id = actor_user and status = 'active' and identity_source = 'MADAR_PLATFORM'
   ) then
     raise exception 'PLATFORM_IDENTITY_REQUIRED';
@@ -81,17 +79,17 @@ begin
     where platform_organization_id = platform_organization;
 
     if linked_workspace is not null then
-      insert into public.workspace_members(workspace_id, user_id, role, status)
+      insert into public.retail_workspace_members(workspace_id, user_id, role, status)
       values(linked_workspace, actor_user, requested_role, 'active')
       on conflict (workspace_id, user_id) do update
       set role = excluded.role, status = 'active', updated_at = now();
-      update public.profiles set active_workspace_id = linked_workspace where id = actor_user;
+      update public.retail_profiles set active_workspace_id = linked_workspace where id = actor_user;
       return jsonb_build_object('workspace_id', linked_workspace, 'idempotent', true);
     end if;
 
     if requested_role not in ('OWNER', 'MANAGER') then raise exception 'ONBOARDING_MANAGER_REQUIRED'; end if;
     if not exists (
-      select 1 from public.onboarding_drafts
+      select 1 from public.retail_onboarding_drafts
       where user_id = actor_user and platform_organization_id = platform_organization
     ) then
       raise exception 'ONBOARDING_DRAFT_REQUIRED';
@@ -104,7 +102,7 @@ begin
     update public.retail_workspaces
     set platform_organization_id = platform_organization
     where id = target_workspace;
-    update public.workspace_members
+    update public.retail_workspace_members
     set role = requested_role, status = 'active', updated_at = now()
     where workspace_id = target_workspace and user_id = actor_user;
     return result;

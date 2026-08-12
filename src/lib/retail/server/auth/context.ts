@@ -174,7 +174,7 @@ export async function syncRetailIdentity(
   principal?: RetailPrincipal,
 ) {
   const client = createClient();
-  const { error: profileError } = await client.from("profiles").upsert(
+  const { error: profileError } = await client.from("retail_profiles").upsert(
     {
       id: user.id,
       email: user.email,
@@ -198,7 +198,7 @@ export async function syncRetailIdentity(
   if (!workspace) return null;
 
   const [{ error: memberError }, { error: activeError }] = await Promise.all([
-    client.from("workspace_members").upsert(
+    client.from("retail_workspace_members").upsert(
       {
         workspace_id: workspace.id,
         user_id: principal.id,
@@ -207,7 +207,7 @@ export async function syncRetailIdentity(
       },
       { onConflict: "workspace_id,user_id" },
     ),
-    client.from("profiles").update({ active_workspace_id: workspace.id }).eq("id", principal.id),
+    client.from("retail_profiles").update({ active_workspace_id: workspace.id }).eq("id", principal.id),
   ]);
   if (memberError) throw memberError;
   if (activeError) throw activeError;
@@ -244,8 +244,8 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext | nu
   await syncRetailIdentity(principal, principal);
 
   const { data: subscription, error: subscriptionError } = await client
-    .from("subscriptions")
-    .select("status,trial_ends_at,ends_at,grace_ends_at,plans(name_ar,limits)")
+    .from("retail_subscriptions")
+    .select("status,trial_ends_at,ends_at,grace_ends_at,plans:retail_plans(name_ar,limits)")
     .eq("workspace_id", workspace.id)
     .maybeSingle();
   if (subscriptionError) throw subscriptionError;

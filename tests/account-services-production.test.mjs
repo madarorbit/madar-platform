@@ -71,8 +71,8 @@ test("Retail provisioning bridges only after central approval and remains retrya
   const [mainMigration, delegatedSectorMigration, retailMigration, contextRestoreMigration, action, bridge] = await Promise.all([
     read(mainMigrationPath),
     read("supabase/migrations/20260811192000_service_sector_admin_provisioning.sql"),
-    read("supabase-retail/migrations/20260811190500_account_service_activation.sql"),
-    read("supabase-retail/migrations/20260811192500_activation_context_restore.sql"),
+    read("supabase/migrations/20260812180836_retail_account_service_activation_unified.sql"),
+    read("supabase/migrations/20260812180840_retail_activation_context_restore_unified.sql"),
     read("app/actions/services.ts"),
     read("src/lib/retail/server/service-activation.ts"),
   ]);

@@ -1,5 +1,6 @@
--- Retail remains an isolated database. This service-role-only entry point lets
--- MADAR Platform provision or renew a Retail workspace after central approval.
+-- Retail lives in the primary MADAR database under retail_* tables. This
+-- service-role-only entry point provisions or renews a workspace only after
+-- central approval.
 
 alter table public.retail_workspaces
   add column if not exists platform_activation_request_id uuid;
@@ -28,7 +29,7 @@ declare
     ''
   );
   setup jsonb := coalesce(service_setup, '{}'::jsonb);
-  selected_plan public.plans%rowtype;
+  selected_plan public.retail_plans%rowtype;
   linked_workspace uuid;
   result jsonb;
   retail_subtype text := upper(coalesce(setup->>'subtype', 'GENERAL_RETAIL'));
@@ -59,12 +60,12 @@ begin
   if invoice_value !~ '^[A-Z0-9-]{1,8}$' then raise exception 'INVALID_INVOICE_PREFIX'; end if;
 
   if not exists (
-    select 1 from public.profiles
+    select 1 from public.retail_profiles
     where id = actor_user and status = 'active' and identity_source = 'MADAR_PLATFORM'
   ) then raise exception 'PLATFORM_IDENTITY_REQUIRED'; end if;
 
   select * into selected_plan
-  from public.plans
+  from public.retail_plans
   where status = 'active' and is_public
   order by created_at
   limit 1
@@ -85,7 +86,7 @@ begin
   where platform_organization_id = platform_organization;
 
   if linked_workspace is null then
-    insert into public.onboarding_drafts(
+    insert into public.retail_onboarding_drafts(
       user_id, current_step, trade_name, owner_name, phone, city, country,
       currency, subtype, price_display, inventory_policy, allow_credit_sales,
       invoice_prefix, selected_plan_id, platform_organization_id
@@ -134,15 +135,15 @@ begin
     where id = linked_workspace;
   end if;
 
-  insert into public.workspace_members(workspace_id, user_id, role, status)
+  insert into public.retail_workspace_members(workspace_id, user_id, role, status)
   values(linked_workspace, actor_user, 'OWNER', 'active')
   on conflict (workspace_id, user_id) do update
   set role = 'OWNER', status = 'active', updated_at = now();
 
-  update public.profiles set active_workspace_id = linked_workspace, updated_at = now()
+  update public.retail_profiles set active_workspace_id = linked_workspace, updated_at = now()
   where id = actor_user;
 
-  update public.subscriptions
+  update public.retail_subscriptions
   set plan_id = selected_plan.id,
       status = 'active',
       starts_at = case when ends_at is null or ends_at <= now() then now() else starts_at end,
@@ -153,7 +154,7 @@ begin
       updated_at = now()
   where workspace_id = linked_workspace;
 
-  perform private.write_audit(
+  perform private.retail_write_audit(
     linked_workspace,
     actor_user,
     'service.activated',

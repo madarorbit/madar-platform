@@ -2,43 +2,31 @@
 
 ## النموذج المعتمد
 
-MADAR Retail أصبح سطحًا مدمجًا داخل مستودع ومشروع Vercel الخاصين بـMADAR Platform، بينما تبقى بياناته في مشروع Supabase مستقل:
+MADAR Retail سطح مدمج داخل مستودع ومشروع Vercel وقاعدة Supabase الخاصة بـMADAR Platform:
 
 - GitHub: `madarorbit/madar-platform`
 - Vercel: مشروع `madar-platform`
 - المسار العام: `/retail`
 - مساحة العمل المحمية: `/retail/workspace`
 - إدارة Retail: `/admin/retail`
-- Supabase Retail: `madar-retail`، ref `gjfeseljmillalmeygej`
+- Supabase: مشروع مَدار الرئيسي، مع جداول `retail_*`
 
 النشر القديم على `https://madar-retail.vercel.app` لا يُحذف أثناء الانتقال. يُعامل كنسخة Legacy حتى اكتمال اختبار النسخة المدمجة، ثم يمكن تحويله إلى redirect في تغيير مستقل وقابل للتراجع.
 
 ## متغيرات Vercel
 
-تُضاف إلى مشروع `madar-platform` في Preview وProduction:
-
-```text
-RETAIL_SUPABASE_URL=https://gjfeseljmillalmeygej.supabase.co
-RETAIL_SUPABASE_SERVICE_ROLE_KEY=<Retail service-role secret>
-```
-
-قواعد إلزامية:
-
-- المفتاح Server-only ولا يبدأ بـ`NEXT_PUBLIC_`.
-- يؤخذ من مشروع Retail فقط، ولا يُستخدم مفتاح Supabase الخاص بمنصة مَدار.
-- لا يُكتب في Git أو logs أو browser bundle.
-- وصول المتصفح يكون عبر جلسة مَدار وواجهات BFF فقط.
-
-لا يحتاج مشروع Supabase Retail إلى Google OAuth أو جلسات مستخدمين جديدة؛ تسجيل الدخول وGoogle callback والجلسة تأتي من MADAR Platform.
+لا توجد متغيرات `RETAIL_SUPABASE_*`. يستخدم Retail القيم الحالية
+`NEXT_PUBLIC_SUPABASE_URL` و`SUPABASE_SERVICE_ROLE_KEY` الخاصة بمَدار، وتبقى
+قيمة service role على الخادم فقط.
 
 ## مسار الإصدار
 
 1. تشغيل lint وtypecheck والاختبارات.
 2. رفع فرع التكامل إلى GitHub وفتح Pull Request.
-3. ضبط متغيري Retail على Preview.
-4. التحقق من Preview: الدخول الرئيسي، onboarding، العمليات المالية، العزل، ORBY، وAdmin.
+3. تطبيق migrations الموحدة على Supabase الرئيسي.
+4. التحقق من Preview: الدخول الرئيسي، العمليات المالية، العزل، ORBY، وAdmin.
 5. دمج Pull Request إلى `main` بعد نجاح Preview.
-6. التحقق من Production على دومين مَدار، مع إبقاء النسخة القديمة متاحة مؤقتًا للرجوع.
+6. التحقق من Production على دومين مَدار.
 
 ## تحقق ما بعد النشر
 

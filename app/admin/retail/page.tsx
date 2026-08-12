@@ -11,11 +11,11 @@ export default async function RetailOperationsPage() {
   await requirePlatformAdmin();
   const supabase = await createClient();
   const [profiles, workspaces, subscriptions, audits, devices] = await Promise.all([
-    supabase.from("profiles").select("id,email,full_name,platform_role,status,created_at").order("created_at", { ascending: false }).limit(100),
+    supabase.from("retail_profiles").select("id,email,full_name,platform_role,status,created_at").order("created_at", { ascending: false }).limit(100),
     supabase.from("retail_workspaces").select("id,name,status,currency,created_at").order("created_at", { ascending: false }).limit(100),
-    supabase.from("subscriptions").select("id,workspace_id,status,ends_at").order("created_at", { ascending: false }).limit(100),
-    supabase.from("audit_logs").select("id,action,entity_type,workspace_id,created_at").order("created_at", { ascending: false }).limit(40),
-    supabase.from("sync_devices").select("id,status,last_seen_at").limit(1000),
+    supabase.from("retail_subscriptions").select("id,workspace_id,status,ends_at").order("created_at", { ascending: false }).limit(100),
+    supabase.from("retail_audit_logs").select("id,action,entity_type,workspace_id,created_at").order("created_at", { ascending: false }).limit(40),
+    supabase.from("retail_sync_devices").select("id,status,last_seen_at").limit(1000),
   ]);
   const results = [profiles, workspaces, subscriptions, audits, devices];
   const failed = results.find((result) => result.error);
@@ -29,7 +29,7 @@ export default async function RetailOperationsPage() {
   return <main className="container-shell py-6">
     <header className="flex flex-wrap items-center justify-between gap-4"><Brand /><div className="flex flex-wrap gap-2"><Link className="button-secondary" href="/admin/local-payments">إدارة السعر والدفع</Link><Link className="button-primary" href="/admin/workspace-requests">طلبات التفعيل</Link></div></header>
     <div className="mt-7 content-grid">
-      <div><p className="eyebrow">RETAIL OPERATIONS</p><h1 className="mt-1 text-3xl font-black">تشغيل MADAR Retail</h1><p className="muted mt-2 max-w-3xl leading-7">مؤشرات قاعدة Retail المستقلة للمتابعة فقط. التفعيل والإيقاف والأسعار وطرق الدفع تُدار مركزيًا من لوحة مَدار.</p></div>
+      <div><p className="eyebrow">RETAIL OPERATIONS</p><h1 className="mt-1 text-3xl font-black">تشغيل MADAR Retail</h1><p className="muted mt-2 max-w-3xl leading-7">مؤشرات Retail المعزولة حسب مساحة التجارة داخل قاعدة مَدار. التفعيل والإيقاف والأسعار وطرق الدفع تُدار مركزيًا من لوحة مَدار.</p></div>
       <section className="metric-grid">{[["مستخدمو Retail", profiles.data?.length || 0], ["المساحات", workspaces.data?.length || 0], ["اشتراكات فعالة", activeSubscriptions], ["أجهزة مزامنة نشطة", activeDevices]].map(([label, value]) => <article className="surface metric-card" key={String(label)}><p className="muted text-xs">{label}</p><p className="value">{value}</p></article>)}</section>
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="surface p-5"><h2 className="text-lg font-black">المساحات المفعلة مركزيًا</h2><div className="mt-3 grid gap-2">{(workspaces.data || []).map((workspace) => { const subscription = subscriptions.data?.find((item) => item.workspace_id === workspace.id); return <div className="surface-soft flex items-start justify-between gap-3 p-3" key={workspace.id}><div><strong>{workspace.name}</strong><p className="muted mt-1 text-xs">{workspace.currency} · {subscription?.ends_at ? `حتى ${new Date(subscription.ends_at).toLocaleDateString("ar-YE")}` : "لا يوجد تاريخ صلاحية"}</p></div><span className={`status-pill ${workspace.status === "suspended" ? "status-danger" : ""}`}>{workspace.status}</span></div>; })}{!workspaces.data?.length ? <p className="muted py-8 text-center">لا توجد مساحة Retail مفعلة بعد.</p> : null}</div></article>

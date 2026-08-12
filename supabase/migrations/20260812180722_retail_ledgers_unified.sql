@@ -1,9 +1,9 @@
 -- MADAR Retail V0 — immutable operational ledgers and financial documents.
 
-create table public.sync_devices (
+create table public.retail_sync_devices (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
-  user_id uuid not null references public.profiles(id) on delete cascade,
+  user_id uuid not null references public.retail_profiles(id) on delete cascade,
   device_id uuid not null,
   device_name text,
   platform text not null default 'web' check (platform in ('web', 'android', 'ios', 'desktop')),
@@ -15,10 +15,10 @@ create table public.sync_devices (
   unique (workspace_id, device_id)
 );
 
-create table public.sync_operations (
+create table public.retail_sync_operations (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
-  user_id uuid not null references public.profiles(id) on delete restrict,
+  user_id uuid not null references public.retail_profiles(id) on delete restrict,
   device_id uuid,
   operation_id uuid not null,
   operation_type text not null,
@@ -34,10 +34,10 @@ create table public.sync_operations (
   unique (workspace_id, operation_id)
 );
 
-create index sync_operations_workspace_created_idx
-  on public.sync_operations(workspace_id, created_at desc);
+create index retail_sync_operations_workspace_created_idx
+  on public.retail_sync_operations(workspace_id, created_at desc);
 
-create table public.cash_accounts (
+create table public.retail_cash_accounts (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   name text not null default 'الصندوق الرئيسي',
@@ -52,11 +52,11 @@ create table public.cash_accounts (
     references public.retail_workspaces(id, currency) on delete cascade
 );
 
-create unique index cash_accounts_one_primary_idx
-  on public.cash_accounts(workspace_id)
+create unique index retail_cash_accounts_one_primary_idx
+  on public.retail_cash_accounts(workspace_id)
   where is_primary;
 
-create table public.sales (
+create table public.retail_sales (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   customer_id uuid,
@@ -72,7 +72,7 @@ create table public.sales (
   currency text not null check (currency ~ '^[A-Z]{3}$'),
   notes text,
   sold_at timestamptz not null default now(),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   operation_id uuid not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -85,15 +85,15 @@ create table public.sales (
   check (amount_paid <= total),
   check (returned_total <= total),
   foreign key (workspace_id, customer_id)
-    references public.customers(workspace_id, id) on delete restrict,
+    references public.retail_customers(workspace_id, id) on delete restrict,
   foreign key (workspace_id, currency)
     references public.retail_workspaces(id, currency) on delete restrict
 );
 
-create index sales_workspace_date_idx on public.sales(workspace_id, sold_at desc);
-create index sales_customer_date_idx on public.sales(workspace_id, customer_id, sold_at desc);
+create index retail_sales_workspace_date_idx on public.retail_sales(workspace_id, sold_at desc);
+create index retail_sales_customer_date_idx on public.retail_sales(workspace_id, customer_id, sold_at desc);
 
-create table public.sale_items (
+create table public.retail_sale_items (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   sale_id uuid not null,
@@ -116,15 +116,15 @@ create table public.sale_items (
   check (returned_quantity <= quantity),
   check (returned_refund_amount <= net_line_total),
   foreign key (workspace_id, sale_id)
-    references public.sales(workspace_id, id) on delete cascade,
+    references public.retail_sales(workspace_id, id) on delete cascade,
   foreign key (workspace_id, product_id)
-    references public.products(workspace_id, id) on delete restrict
+    references public.retail_products(workspace_id, id) on delete restrict
 );
 
-create index sale_items_sale_idx on public.sale_items(workspace_id, sale_id);
-create index sale_items_product_idx on public.sale_items(workspace_id, product_id);
+create index retail_sale_items_sale_idx on public.retail_sale_items(workspace_id, sale_id);
+create index retail_sale_items_product_idx on public.retail_sale_items(workspace_id, product_id);
 
-create table public.purchases (
+create table public.retail_purchases (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   supplier_id uuid,
@@ -138,7 +138,7 @@ create table public.purchases (
   currency text not null check (currency ~ '^[A-Z]{3}$'),
   notes text,
   purchased_at timestamptz not null default now(),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   operation_id uuid not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -148,15 +148,15 @@ create table public.purchases (
   unique (workspace_id, operation_id),
   check (amount_paid <= total),
   foreign key (workspace_id, supplier_id)
-    references public.suppliers(workspace_id, id) on delete restrict,
+    references public.retail_suppliers(workspace_id, id) on delete restrict,
   foreign key (workspace_id, currency)
     references public.retail_workspaces(id, currency) on delete restrict
 );
 
-create index purchases_workspace_date_idx on public.purchases(workspace_id, purchased_at desc);
-create index purchases_supplier_date_idx on public.purchases(workspace_id, supplier_id, purchased_at desc);
+create index retail_purchases_workspace_date_idx on public.retail_purchases(workspace_id, purchased_at desc);
+create index retail_purchases_supplier_date_idx on public.retail_purchases(workspace_id, supplier_id, purchased_at desc);
 
-create table public.purchase_items (
+create table public.retail_purchase_items (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   purchase_id uuid not null,
@@ -169,15 +169,15 @@ create table public.purchase_items (
   unique (workspace_id, id),
   check (line_total = round(quantity * unit_cost, 2)),
   foreign key (workspace_id, purchase_id)
-    references public.purchases(workspace_id, id) on delete cascade,
+    references public.retail_purchases(workspace_id, id) on delete cascade,
   foreign key (workspace_id, product_id)
-    references public.products(workspace_id, id) on delete restrict
+    references public.retail_products(workspace_id, id) on delete restrict
 );
 
-create index purchase_items_purchase_idx on public.purchase_items(workspace_id, purchase_id);
-create index purchase_items_product_idx on public.purchase_items(workspace_id, product_id);
+create index retail_purchase_items_purchase_idx on public.retail_purchase_items(workspace_id, purchase_id);
+create index retail_purchase_items_product_idx on public.retail_purchase_items(workspace_id, product_id);
 
-create table public.expenses (
+create table public.retail_expenses (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   category text not null check (char_length(btrim(category)) between 1 and 80),
@@ -188,7 +188,7 @@ create table public.expenses (
   attachment_path text,
   expense_date date not null default current_date,
   occurred_at timestamptz not null default now(),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   operation_id uuid not null,
   created_at timestamptz not null default now(),
   unique (workspace_id, id),
@@ -197,9 +197,9 @@ create table public.expenses (
     references public.retail_workspaces(id, currency) on delete restrict
 );
 
-create index expenses_workspace_date_idx on public.expenses(workspace_id, expense_date desc);
+create index retail_expenses_workspace_date_idx on public.retail_expenses(workspace_id, expense_date desc);
 
-create table public.receivables (
+create table public.retail_receivables (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   customer_id uuid not null,
@@ -215,14 +215,14 @@ create table public.receivables (
   unique (workspace_id, sale_id),
   check (balance_due <= original_amount),
   foreign key (workspace_id, customer_id)
-    references public.customers(workspace_id, id) on delete restrict,
+    references public.retail_customers(workspace_id, id) on delete restrict,
   foreign key (workspace_id, sale_id)
-    references public.sales(workspace_id, id) on delete restrict
+    references public.retail_sales(workspace_id, id) on delete restrict
 );
 
-create index receivables_open_idx on public.receivables(workspace_id, customer_id, status, created_at);
+create index retail_receivables_open_idx on public.retail_receivables(workspace_id, customer_id, status, created_at);
 
-create table public.payables (
+create table public.retail_payables (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   supplier_id uuid not null,
@@ -238,14 +238,14 @@ create table public.payables (
   unique (workspace_id, purchase_id),
   check (balance_due <= original_amount),
   foreign key (workspace_id, supplier_id)
-    references public.suppliers(workspace_id, id) on delete restrict,
+    references public.retail_suppliers(workspace_id, id) on delete restrict,
   foreign key (workspace_id, purchase_id)
-    references public.purchases(workspace_id, id) on delete restrict
+    references public.retail_purchases(workspace_id, id) on delete restrict
 );
 
-create index payables_open_idx on public.payables(workspace_id, supplier_id, status, created_at);
+create index retail_payables_open_idx on public.retail_payables(workspace_id, supplier_id, status, created_at);
 
-create table public.debt_transactions (
+create table public.retail_debt_transactions (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   party_type text not null check (party_type in ('CUSTOMER', 'SUPPLIER')),
@@ -262,7 +262,7 @@ create table public.debt_transactions (
   reference_id uuid not null,
   notes text,
   occurred_at timestamptz not null default now(),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   operation_id uuid not null,
   created_at timestamptz not null default now(),
   unique (workspace_id, id),
@@ -272,21 +272,21 @@ create table public.debt_transactions (
     (party_type = 'SUPPLIER' and supplier_id is not null and customer_id is null and payable_id is not null and receivable_id is null)
   ),
   foreign key (workspace_id, customer_id)
-    references public.customers(workspace_id, id) on delete restrict,
+    references public.retail_customers(workspace_id, id) on delete restrict,
   foreign key (workspace_id, supplier_id)
-    references public.suppliers(workspace_id, id) on delete restrict,
+    references public.retail_suppliers(workspace_id, id) on delete restrict,
   foreign key (workspace_id, receivable_id)
-    references public.receivables(workspace_id, id) on delete restrict,
+    references public.retail_receivables(workspace_id, id) on delete restrict,
   foreign key (workspace_id, payable_id)
-    references public.payables(workspace_id, id) on delete restrict
+    references public.retail_payables(workspace_id, id) on delete restrict
 );
 
-create index debt_transactions_customer_idx
-  on public.debt_transactions(workspace_id, customer_id, occurred_at desc);
-create index debt_transactions_supplier_idx
-  on public.debt_transactions(workspace_id, supplier_id, occurred_at desc);
+create index retail_debt_transactions_customer_idx
+  on public.retail_debt_transactions(workspace_id, customer_id, occurred_at desc);
+create index retail_debt_transactions_supplier_idx
+  on public.retail_debt_transactions(workspace_id, supplier_id, occurred_at desc);
 
-create table public.inventory_movements (
+create table public.retail_inventory_movements (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   product_id uuid not null,
@@ -299,18 +299,18 @@ create table public.inventory_movements (
   reference_id uuid not null,
   notes text,
   occurred_at timestamptz not null default now(),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   operation_id uuid not null,
   created_at timestamptz not null default now(),
   unique (workspace_id, id),
   foreign key (workspace_id, product_id)
-    references public.products(workspace_id, id) on delete restrict
+    references public.retail_products(workspace_id, id) on delete restrict
 );
 
-create index inventory_movements_product_date_idx
-  on public.inventory_movements(workspace_id, product_id, occurred_at desc);
+create index retail_inventory_movements_product_date_idx
+  on public.retail_inventory_movements(workspace_id, product_id, occurred_at desc);
 
-create table public.cash_transactions (
+create table public.retail_cash_transactions (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   cash_account_id uuid not null,
@@ -323,18 +323,18 @@ create table public.cash_transactions (
   reference_id uuid not null,
   notes text,
   occurred_at timestamptz not null default now(),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   operation_id uuid not null,
   created_at timestamptz not null default now(),
   unique (workspace_id, id),
   foreign key (workspace_id, cash_account_id)
-    references public.cash_accounts(workspace_id, id) on delete restrict
+    references public.retail_cash_accounts(workspace_id, id) on delete restrict
 );
 
-create index cash_transactions_workspace_date_idx
-  on public.cash_transactions(workspace_id, occurred_at desc);
+create index retail_cash_transactions_workspace_date_idx
+  on public.retail_cash_transactions(workspace_id, occurred_at desc);
 
-create table public.sale_returns (
+create table public.retail_sale_returns (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   sale_id uuid not null,
@@ -345,7 +345,7 @@ create table public.sale_returns (
   refund_method text not null check (refund_method in ('CASH', 'BANK', 'WALLET', 'OTHER')),
   reason text,
   returned_at timestamptz not null default now(),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   operation_id uuid not null,
   created_at timestamptz not null default now(),
   unique (workspace_id, id),
@@ -353,10 +353,10 @@ create table public.sale_returns (
   unique (workspace_id, operation_id),
   check (receivable_credit + cash_refund = refund_total),
   foreign key (workspace_id, sale_id)
-    references public.sales(workspace_id, id) on delete restrict
+    references public.retail_sales(workspace_id, id) on delete restrict
 );
 
-create table public.sale_return_items (
+create table public.retail_sale_return_items (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   sale_return_id uuid not null,
@@ -370,24 +370,24 @@ create table public.sale_return_items (
   created_at timestamptz not null default now(),
   check (line_total = round(quantity * unit_price, 2)),
   foreign key (workspace_id, sale_return_id)
-    references public.sale_returns(workspace_id, id) on delete cascade,
+    references public.retail_sale_returns(workspace_id, id) on delete cascade,
   foreign key (workspace_id, sale_item_id)
-    references public.sale_items(workspace_id, id) on delete restrict,
+    references public.retail_sale_items(workspace_id, id) on delete restrict,
   foreign key (workspace_id, product_id)
-    references public.products(workspace_id, id) on delete restrict
+    references public.retail_products(workspace_id, id) on delete restrict
 );
 
-create index sale_returns_sale_idx on public.sale_returns(workspace_id, sale_id, returned_at desc);
+create index retail_sale_returns_sale_idx on public.retail_sale_returns(workspace_id, sale_id, returned_at desc);
 
-create trigger sync_devices_updated before update on public.sync_devices
-for each row execute function private.touch_updated_at();
-create trigger cash_accounts_updated before update on public.cash_accounts
-for each row execute function private.touch_versioned_updated_at();
-create trigger sales_updated before update on public.sales
-for each row execute function private.touch_versioned_updated_at();
-create trigger purchases_updated before update on public.purchases
-for each row execute function private.touch_versioned_updated_at();
-create trigger receivables_updated before update on public.receivables
-for each row execute function private.touch_versioned_updated_at();
-create trigger payables_updated before update on public.payables
-for each row execute function private.touch_versioned_updated_at();
+create trigger sync_devices_updated before update on public.retail_sync_devices
+for each row execute function private.retail_touch_updated_at();
+create trigger cash_accounts_updated before update on public.retail_cash_accounts
+for each row execute function private.retail_touch_versioned_updated_at();
+create trigger sales_updated before update on public.retail_sales
+for each row execute function private.retail_touch_versioned_updated_at();
+create trigger purchases_updated before update on public.retail_purchases
+for each row execute function private.retail_touch_versioned_updated_at();
+create trigger receivables_updated before update on public.retail_receivables
+for each row execute function private.retail_touch_versioned_updated_at();
+create trigger payables_updated before update on public.retail_payables
+for each row execute function private.retail_touch_versioned_updated_at();

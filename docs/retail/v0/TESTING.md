@@ -15,13 +15,13 @@ node --test tests/madar-retail-integration.test.mjs
 - توزيع الخصم، حالة الدفع، ومنع المخزون السالب.
 - رفض ORBY لأي طلب تعديل واعتماده على أدلة Analytics حتمية.
 - استخدام جلسة MADAR Platform وعدم إنشاء Auth ثانٍ داخل Retail.
-- بقاء مفتاح Retail service role على الخادم فقط.
+- استخدام إعداد Supabase الرئيسي على الخادم دون مفاتيح Retail ثانية.
 - حماية مسارات Retail عبر proxy.
 - تقييد PostgreSQL bridge بدور `service_role` وبقائمة عمليات صريحة.
 
-## تحقق قاعدة البيانات المنفصل
+## تحقق القاعدة الموحدة
 
-طُبقت migrations التكامل على مشروع Retail المستقل فقط. نُفذ سيناريو داخل `BEGIN/ROLLBACK` شمل:
+يُنفذ `supabase/tests/001_retail_core_and_rls.sql` داخل `BEGIN/ROLLBACK` على قاعدة مَدار القابلة للاختبار، ويشمل:
 
 1. ربط هوية ومؤسسة من منصة مَدار.
 2. onboarding وإنشاء workspace.
@@ -36,11 +36,11 @@ node --test tests/madar-retail-integration.test.mjs
 
 - الدور `authenticated` لا يستطيع تنفيذ bridge أو الدوال المالية القديمة مباشرة.
 - `service_role` لا يستطيع استدعاء عملية غير موجودة في allowlist.
-- Security Advisor لا يعرض findings بعد migration التقوية.
+- Security Advisor لا يعرض findings مرتبطة بـRetail بعد migration التقوية.
 
 ## E2E قبل الدمج
 
-بعد إضافة متغيري Retail إلى Preview يجب تنفيذ المسار التالي بحساب اختبار تابع لمؤسسة مَدار:
+بعد تطبيق migrations الموحدة يجب تنفيذ المسار التالي بحساب اختبار تابع لمؤسسة مَدار:
 
 1. تسجيل الدخول عبر Google من مَدار.
 2. فتح `/retail/onboarding` وإكمال مساحة التجارة.
@@ -51,7 +51,7 @@ node --test tests/madar-retail-integration.test.mjs
 7. تجربة مستخدم من مؤسسة أخرى وإثبات العزل.
 8. تجربة `/admin/retail` بحساب Admin وبحساب عادي.
 
-لا يُسجّل هذا المسار كناجح حتى يعمل على Preview المتصل بقاعدة Retail عبر متغيرات Vercel الفعلية.
+لا يُسجّل هذا المسار كناجح حتى يعمل على Preview المتصل بقاعدة مَدار الرئيسية.
 
 ## ملاحظة البناء المحلي
 

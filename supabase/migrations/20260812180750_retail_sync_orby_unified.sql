@@ -1,6 +1,6 @@
 -- MADAR Retail V0 — Android-ready change feed and read-only ORBY history.
 
-create table public.sync_changes (
+create table public.retail_sync_changes (
   cursor bigint generated always as identity primary key,
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   entity_type text not null,
@@ -11,10 +11,10 @@ create table public.sync_changes (
   changed_at timestamptz not null default now()
 );
 
-create index sync_changes_workspace_cursor_idx
-  on public.sync_changes(workspace_id, cursor);
+create index retail_sync_changes_workspace_cursor_idx
+  on public.retail_sync_changes(workspace_id, cursor);
 
-create or replace function private.capture_sync_change()
+create or replace function private.retail_capture_sync_change()
 returns trigger
 language plpgsql
 security definer
@@ -25,7 +25,7 @@ declare
   target_workspace uuid := (row_data->>'workspace_id')::uuid;
   target_id uuid := (row_data->>'id')::uuid;
 begin
-  insert into public.sync_changes(
+  insert into public.retail_sync_changes(
     workspace_id, entity_type, entity_id, operation, row_version, payload
   ) values (
     target_workspace,
@@ -39,58 +39,58 @@ begin
 end;
 $$;
 
-revoke all on function private.capture_sync_change() from public, anon, authenticated;
+revoke all on function private.retail_capture_sync_change() from public, anon, authenticated;
 
-create trigger sync_categories_change after insert or update or delete on public.categories
-for each row execute function private.capture_sync_change();
-create trigger sync_products_change after insert or update or delete on public.products
-for each row execute function private.capture_sync_change();
-create trigger sync_customers_change after insert or update or delete on public.customers
-for each row execute function private.capture_sync_change();
-create trigger sync_suppliers_change after insert or update or delete on public.suppliers
-for each row execute function private.capture_sync_change();
-create trigger sync_cash_accounts_change after insert or update or delete on public.cash_accounts
-for each row execute function private.capture_sync_change();
-create trigger sync_sales_change after insert or update or delete on public.sales
-for each row execute function private.capture_sync_change();
-create trigger sync_sale_items_change after insert or update or delete on public.sale_items
-for each row execute function private.capture_sync_change();
-create trigger sync_purchases_change after insert or update or delete on public.purchases
-for each row execute function private.capture_sync_change();
-create trigger sync_purchase_items_change after insert or update or delete on public.purchase_items
-for each row execute function private.capture_sync_change();
-create trigger sync_expenses_change after insert or update or delete on public.expenses
-for each row execute function private.capture_sync_change();
-create trigger sync_receivables_change after insert or update or delete on public.receivables
-for each row execute function private.capture_sync_change();
-create trigger sync_payables_change after insert or update or delete on public.payables
-for each row execute function private.capture_sync_change();
-create trigger sync_debt_transactions_change after insert or update or delete on public.debt_transactions
-for each row execute function private.capture_sync_change();
-create trigger sync_inventory_movements_change after insert or update or delete on public.inventory_movements
-for each row execute function private.capture_sync_change();
-create trigger sync_cash_transactions_change after insert or update or delete on public.cash_transactions
-for each row execute function private.capture_sync_change();
-create trigger sync_sale_returns_change after insert or update or delete on public.sale_returns
-for each row execute function private.capture_sync_change();
-create trigger sync_sale_return_items_change after insert or update or delete on public.sale_return_items
-for each row execute function private.capture_sync_change();
+create trigger sync_categories_change after insert or update or delete on public.retail_categories
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_products_change after insert or update or delete on public.retail_products
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_customers_change after insert or update or delete on public.retail_customers
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_suppliers_change after insert or update or delete on public.retail_suppliers
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_cash_accounts_change after insert or update or delete on public.retail_cash_accounts
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_sales_change after insert or update or delete on public.retail_sales
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_sale_items_change after insert or update or delete on public.retail_sale_items
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_purchases_change after insert or update or delete on public.retail_purchases
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_purchase_items_change after insert or update or delete on public.retail_purchase_items
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_expenses_change after insert or update or delete on public.retail_expenses
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_receivables_change after insert or update or delete on public.retail_receivables
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_payables_change after insert or update or delete on public.retail_payables
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_debt_transactions_change after insert or update or delete on public.retail_debt_transactions
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_inventory_movements_change after insert or update or delete on public.retail_inventory_movements
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_cash_transactions_change after insert or update or delete on public.retail_cash_transactions
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_sale_returns_change after insert or update or delete on public.retail_sale_returns
+for each row execute function private.retail_capture_sync_change();
+create trigger sync_sale_return_items_change after insert or update or delete on public.retail_sale_return_items
+for each row execute function private.retail_capture_sync_change();
 
-create table public.orby_conversations (
+create table public.retail_orby_conversations (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   title text not null default 'محادثة جديدة' check (char_length(title) between 1 and 120),
-  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_by uuid not null references public.retail_profiles(id) on delete restrict,
   archived_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (workspace_id, id)
 );
 
-create index orby_conversations_workspace_idx
-  on public.orby_conversations(workspace_id, updated_at desc);
+create index retail_orby_conversations_workspace_idx
+  on public.retail_orby_conversations(workspace_id, updated_at desc);
 
-create table public.orby_messages (
+create table public.retail_orby_messages (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   conversation_id uuid not null,
@@ -102,16 +102,16 @@ create table public.orby_messages (
   model text,
   prompt_tokens integer check (prompt_tokens is null or prompt_tokens >= 0),
   completion_tokens integer check (completion_tokens is null or completion_tokens >= 0),
-  created_by uuid references public.profiles(id) on delete set null,
+  created_by uuid references public.retail_profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   foreign key (workspace_id, conversation_id)
-    references public.orby_conversations(workspace_id, id) on delete cascade
+    references public.retail_orby_conversations(workspace_id, id) on delete cascade
 );
 
-create index orby_messages_conversation_idx
-  on public.orby_messages(workspace_id, conversation_id, created_at);
+create index retail_orby_messages_conversation_idx
+  on public.retail_orby_messages(workspace_id, conversation_id, created_at);
 
-create table public.orby_usage_daily (
+create table public.retail_orby_usage_daily (
   workspace_id uuid not null references public.retail_workspaces(id) on delete cascade,
   usage_date date not null,
   request_count integer not null default 0 check (request_count >= 0),
@@ -119,8 +119,8 @@ create table public.orby_usage_daily (
   primary key (workspace_id, usage_date)
 );
 
-create trigger orby_conversations_updated before update on public.orby_conversations
-for each row execute function private.touch_updated_at();
+create trigger orby_conversations_updated before update on public.retail_orby_conversations
+for each row execute function private.retail_touch_updated_at();
 
 create or replace function public.register_retail_sync_device(
   target_workspace uuid,
@@ -135,14 +135,14 @@ security definer
 set search_path = ''
 as $$
 declare
-  actor uuid := private.require_membership_actor(target_workspace);
+  actor uuid := private.retail_require_membership_actor(target_workspace);
   record_id uuid;
 begin
   if target_device is null then raise exception 'DEVICE_ID_REQUIRED'; end if;
   if char_length(btrim(coalesce(device_name, ''))) not between 1 and 80 then raise exception 'INVALID_DEVICE_NAME'; end if;
   if lower(coalesce(platform_name, '')) not in ('android', 'web') then raise exception 'INVALID_DEVICE_PLATFORM'; end if;
 
-  insert into public.sync_devices(
+  insert into public.retail_sync_devices(
     workspace_id, user_id, device_id, device_name, platform, app_version, status,
     last_seen_at, last_pulled_cursor
   ) values (
@@ -155,7 +155,7 @@ begin
       app_version = excluded.app_version,
       status = 'active',
       last_seen_at = now()
-  where sync_devices.user_id = actor
+  where retail_sync_devices.user_id = actor
   returning id into record_id;
 
   if record_id is null then raise exception 'DEVICE_ID_CONFLICT'; end if;
@@ -183,21 +183,21 @@ security definer
 set search_path = ''
 as $$
 declare
-  actor uuid := private.require_membership_actor(target_workspace, array['OWNER', 'MANAGER', 'STAFF', 'VIEWER']::text[]);
+  actor uuid := private.retail_require_membership_actor(target_workspace, array['OWNER', 'MANAGER', 'STAFF', 'VIEWER']::text[]);
   safe_limit integer := least(greatest(coalesce(page_size, 250), 1), 500);
   result jsonb;
   next_cursor bigint;
 begin
   if after_cursor < 0 then raise exception 'INVALID_SYNC_CURSOR'; end if;
   if not exists (
-    select 1 from public.sync_devices
+    select 1 from public.retail_sync_devices
     where device_id = target_device and workspace_id = target_workspace
       and user_id = actor and status = 'active'
   ) then raise exception 'DEVICE_NOT_REGISTERED'; end if;
 
   with page as (
     select cursor, entity_type, entity_id, operation, row_version, payload, changed_at
-    from public.sync_changes
+    from public.retail_sync_changes
     where workspace_id = target_workspace and cursor > after_cursor
     order by cursor
     limit safe_limit
@@ -207,7 +207,7 @@ begin
   into result, next_cursor
   from page;
 
-  update public.sync_devices
+  update public.retail_sync_devices
   set last_seen_at = now(), last_pulled_cursor = greatest(last_pulled_cursor, next_cursor)
   where device_id = target_device and workspace_id = target_workspace and user_id = actor;
 
@@ -215,7 +215,7 @@ begin
     'after_cursor', after_cursor,
     'next_cursor', next_cursor,
     'has_more', exists (
-      select 1 from public.sync_changes
+      select 1 from public.retail_sync_changes
       where workspace_id = target_workspace and cursor > next_cursor
     ),
     'changes', result,
