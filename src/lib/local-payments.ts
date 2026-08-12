@@ -2,6 +2,7 @@ import 'server-only';
 import {validateMagicBytes} from '@/src/lib/file-signatures.mjs';
 import {supabaseConfig} from '@/src/lib/env';
 import {serverToken} from '@/src/lib/supabase/server';
+import {supabaseServiceConfig} from '@/src/lib/supabase/service';
 
 const allowed=new Set(['image/jpeg','image/png','image/webp','application/pdf']);
 export type UploadedPaymentProof={storagePath:string;originalFilename:string;mimeType:string;fileSize:number};
@@ -25,8 +26,8 @@ export async function removeLocalPaymentProof(storagePath:string){
 }
 
 export async function signedLocalPaymentProof(storagePath:string,expiresIn=120){
- const{url,key}=supabaseConfig(),token=await serverToken();
- const response=await fetch(`${url}/storage/v1/object/sign/payment-proofs/${storagePath}`,{method:'POST',headers:{apikey:key,Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({expiresIn}),cache:'no-store'});
+ const{url,key}=supabaseServiceConfig();
+ const response=await fetch(`${url}/storage/v1/object/sign/payment-proofs/${storagePath}`,{method:'POST',headers:{apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({expiresIn}),cache:'no-store'});
  if(!response.ok)throw new Error('تعذر فتح إثبات الدفع.');
  const data=await response.json(),signedPath=data.signedURL||data.signedUrl;
  if(typeof signedPath!=='string'||!signedPath.startsWith('/object/sign/'))throw new Error('تعذر فتح إثبات الدفع.');
