@@ -53,7 +53,7 @@ export const services: readonly ServiceDefinition[] = [
     name: "MADAR Retail",
     shortName: "مَدار للتجزئة",
     description: "تشغيل خفيف وآمن للمبيعات والمخزون والصندوق والديون.",
-    detail: "قاعدة Retail مستقلة، ودخول موحّد، وتحليلات وORBY ضمن صلاحيات حساب مَدار.",
+    detail: "بيانات Retail معزولة حسب مساحة التجارة، مع دخول موحّد وتحليلات وORBY ضمن صلاحيات حساب مَدار.",
     icon: "store",
     openHref: "/retail/workspace",
     accent: "mixed",
