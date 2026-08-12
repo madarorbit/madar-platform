@@ -12,9 +12,9 @@ async function authorizedClient(workspaceId: string) {
 export const getProducts = cache(async (workspaceId: string) => {
   const supabase = await authorizedClient(workspaceId);
   const { data, error } = await supabase
-    .from("products")
+    .from("retail_products")
     .select(
-      "id,name,sku,barcode,sale_price,purchase_price,average_cost,stock_on_hand,minimum_stock,unit,status,category_id,categories(name)",
+      "id,name,sku,barcode,sale_price,purchase_price,average_cost,stock_on_hand,minimum_stock,unit,status,category_id,categories:retail_categories(name)",
     )
     .eq("workspace_id", workspaceId)
     .is("deleted_at", null)
@@ -29,7 +29,7 @@ export const getProducts = cache(async (workspaceId: string) => {
 export const getCategories = cache(async (workspaceId: string) => {
   const supabase = await authorizedClient(workspaceId);
   const { data, error } = await supabase
-    .from("categories")
+    .from("retail_categories")
     .select("id,name")
     .eq("workspace_id", workspaceId)
     .is("deleted_at", null)
@@ -73,8 +73,8 @@ export const getSuppliers = cache(async (workspaceId: string) => {
 export async function getRecentSales(workspaceId: string) {
   const supabase = await authorizedClient(workspaceId);
   const { data, error } = await supabase
-    .from("sales")
-    .select("id,invoice_number,total,amount_paid,payment_status,payment_method,sold_at,customers(name)")
+    .from("retail_sales")
+    .select("id,invoice_number,total,amount_paid,payment_status,payment_method,sold_at,customers:retail_customers(name)")
     .eq("workspace_id", workspaceId)
     .order("sold_at", { ascending: false })
     .limit(50);
@@ -85,8 +85,8 @@ export async function getRecentSales(workspaceId: string) {
 export async function getRecentPurchases(workspaceId: string) {
   const supabase = await authorizedClient(workspaceId);
   const { data, error } = await supabase
-    .from("purchases")
-    .select("id,purchase_number,total,amount_paid,payment_status,payment_method,purchased_at,suppliers(name)")
+    .from("retail_purchases")
+    .select("id,purchase_number,total,amount_paid,payment_status,payment_method,purchased_at,suppliers:retail_suppliers(name)")
     .eq("workspace_id", workspaceId)
     .order("purchased_at", { ascending: false })
     .limit(50);
@@ -97,7 +97,7 @@ export async function getRecentPurchases(workspaceId: string) {
 export async function getRecentExpenses(workspaceId: string) {
   const supabase = await authorizedClient(workspaceId);
   const { data, error } = await supabase
-    .from("expenses")
+    .from("retail_expenses")
     .select("id,category,amount,description,payment_method,expense_date,occurred_at")
     .eq("workspace_id", workspaceId)
     .order("occurred_at", { ascending: false })
@@ -109,8 +109,8 @@ export async function getRecentExpenses(workspaceId: string) {
 export async function getInventoryMovements(workspaceId: string) {
   const supabase = await authorizedClient(workspaceId);
   const { data, error } = await supabase
-    .from("inventory_movements")
-    .select("id,movement_type,quantity_delta,balance_after,unit_cost,notes,occurred_at,products(name,sku)")
+    .from("retail_inventory_movements")
+    .select("id,movement_type,quantity_delta,balance_after,unit_cost,notes,occurred_at,products:retail_products(name,sku)")
     .eq("workspace_id", workspaceId)
     .order("occurred_at", { ascending: false })
     .limit(100);
@@ -122,13 +122,13 @@ export async function getCashTransactions(workspaceId: string) {
   const supabase = await authorizedClient(workspaceId);
   const [accountResult, transactionResult] = await Promise.all([
     supabase
-      .from("cash_accounts")
+      .from("retail_cash_accounts")
       .select("id,name,current_balance,currency")
       .eq("workspace_id", workspaceId)
       .eq("is_primary", true)
       .maybeSingle(),
     supabase
-      .from("cash_transactions")
+      .from("retail_cash_transactions")
       .select("id,direction,transaction_type,amount,balance_after,notes,occurred_at")
       .eq("workspace_id", workspaceId)
       .order("occurred_at", { ascending: false })
@@ -143,14 +143,14 @@ export async function getOpenDebts(workspaceId: string) {
   const supabase = await authorizedClient(workspaceId);
   const [receivablesResult, payablesResult] = await Promise.all([
     supabase
-      .from("receivables")
-      .select("id,original_amount,balance_due,status,due_date,created_at,customers(name),sales(invoice_number)")
+      .from("retail_receivables")
+      .select("id,original_amount,balance_due,status,due_date,created_at,customers:retail_customers(name),sales:retail_sales(invoice_number)")
       .eq("workspace_id", workspaceId)
       .in("status", ["open", "partial"])
       .order("created_at", { ascending: false }),
     supabase
-      .from("payables")
-      .select("id,original_amount,balance_due,status,due_date,created_at,suppliers(name),purchases(purchase_number)")
+      .from("retail_payables")
+      .select("id,original_amount,balance_due,status,due_date,created_at,suppliers:retail_suppliers(name),purchases:retail_purchases(purchase_number)")
       .eq("workspace_id", workspaceId)
       .in("status", ["open", "partial"])
       .order("created_at", { ascending: false }),

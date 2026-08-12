@@ -4,9 +4,9 @@
 
 ## MADAR Retail
 
-`/retail` منتج فرعي متكامل داخل المنصة والمستودع والنشر نفسيهما. يستخدم جلسة Google/Email وصلاحيات المنظمة من مَدار، بينما تبقى بيانات التجزئة المالية في مشروع Supabase منفصل. لا يتصل المتصفح بقاعدة Retail؛ تمر القراءة والكتابة عبر BFF داخل تطبيق مَدار، والعمليات المالية تستمر عبر RPC ذرية وسجلات inventory/cash/debt.
+`/retail` منتج فرعي متكامل داخل المنصة والمستودع والنشر وقاعدة Supabase الرئيسية. تستخدم كل جداول الخدمة بادئة `retail_`، ويُفرض عزل كل تجارة عبر `workspace_id` وعضوية المتجر وRLS. تمر العمليات المالية عبر RPC ذرية وسجلات inventory/cash/debt.
 
-يلزم على الخادم فقط `RETAIL_SUPABASE_URL` و`RETAIL_SUPABASE_SERVICE_ROLE_KEY`. راجع [معمارية الدمج](docs/retail/v0/ARCHITECTURE.md) و[الأمان](docs/retail/v0/SECURITY.md).
+لا يحتاج Retail إلى مفاتيح Supabase إضافية؛ يستخدم إعدادات مَدار الخادمية الحالية. راجع [معمارية الدمج](docs/retail/v0/ARCHITECTURE.md) و[الأمان](docs/retail/v0/SECURITY.md).
 
 ## التشغيل المحلي
 

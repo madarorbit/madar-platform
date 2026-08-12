@@ -1,4 +1,4 @@
--- DEVELOPMENT ONLY. `supabase db reset` loads this file locally.
+-- DEVELOPMENT ONLY. Load explicitly into a disposable local MADAR database.
 -- It is never included in production migrations.
 
 insert into auth.users(
@@ -16,6 +16,19 @@ values (
   now(), now(), '', '', '', ''
 )
 on conflict (id) do nothing;
+
+insert into public.retail_profiles(id, email, full_name, identity_source)
+values (
+  '10000000-0000-0000-0000-000000000001',
+  'demo@retail.local',
+  'مالك متجر مدار التجريبي',
+  'MADAR_PLATFORM'
+)
+on conflict (id) do update
+set email = excluded.email,
+    full_name = excluded.full_name,
+    identity_source = excluded.identity_source,
+    updated_at = now();
 
 do $$
 declare
@@ -41,11 +54,11 @@ declare
   payable_id uuid;
 begin
   perform set_config('request.jwt.claim.sub', demo_user::text, true);
-  select id into plan_id from public.plans where code = 'RETAIL_V0_TRIAL';
+  select id into plan_id from public.retail_plans where code = 'RETAIL_V0_TRIAL';
 
-  select active_workspace_id into workspace_id from public.profiles where id = demo_user;
+  select active_workspace_id into workspace_id from public.retail_profiles where id = demo_user;
   if workspace_id is null then
-    insert into public.onboarding_drafts(
+    insert into public.retail_onboarding_drafts(
       user_id, current_step, trade_name, owner_name, phone, city, country,
       currency, subtype, allow_credit_sales, selected_plan_id
     ) values (
@@ -115,7 +128,7 @@ begin
       ), 'notes', 'شراء آجل تجريبي'
     ), null
   );
-  select id into payable_id from public.payables where purchase_id = (result->>'purchase_id')::uuid;
+  select id into payable_id from public.retail_payables where purchase_id = (result->>'purchase_id')::uuid;
   perform public.retail_pay_payable(workspace_id, gen_random_uuid(), jsonb_build_object('payable_id', payable_id, 'amount', 15000, 'payment_method', 'CASH', 'notes', 'دفعة جزئية للمورد'), null);
 
   for index_value in 1..9 loop
@@ -142,7 +155,7 @@ begin
       ), 'notes', 'بيع آجل تجريبي'
     ), null
   );
-  select id into receivable_id from public.receivables where sale_id = (result->>'sale_id')::uuid;
+  select id into receivable_id from public.retail_receivables where sale_id = (result->>'sale_id')::uuid;
   perform public.retail_collect_receivable(workspace_id, gen_random_uuid(), jsonb_build_object('receivable_id', receivable_id, 'amount', 3000, 'payment_method', 'CASH', 'notes', 'تحصيل جزئي'), null);
 
   perform public.retail_create_expense(workspace_id, gen_random_uuid(), '{"category":"نقل","amount":12000,"description":"نقل بضاعة تجريبي","payment_method":"CASH"}'::jsonb, null);

@@ -39,7 +39,7 @@ export async function saveTradeDetailsAction(formData: FormData) {
 
   const supabase = await createClient();
   const { data: draft, error } = await supabase
-    .from("onboarding_drafts")
+    .from("retail_onboarding_drafts")
     .upsert({
       user_id: user.id,
       platform_organization_id: user.platformOrganizationId,
@@ -60,7 +60,7 @@ export async function saveTradeDetailsAction(formData: FormData) {
         .upload(path, logo, { contentType: detected.mime, upsert: false });
       if (uploadError) throw uploadError;
       const { error: updateError } = await supabase
-        .from("onboarding_drafts")
+        .from("retail_onboarding_drafts")
         .update({ logo_path: path })
         .eq("user_id", user.id);
       if (updateError) {
@@ -81,7 +81,7 @@ export async function saveRetailTypeAction(formData: FormData) {
   const subtype = z.enum(["CLOTHING", "PERFUME", "GROCERY", "ELECTRONICS", "ACCESSORIES", "SPARE_PARTS", "GENERAL_RETAIL", "OTHER"]).safeParse(formData.get("subtype"));
   if (!subtype.success) go(2, "error", "اختر نوع نشاط التجزئة.");
   const supabase = await createClient();
-  const { error } = await supabase.from("onboarding_drafts").update({ subtype: subtype.data, current_step: 3 }).eq("user_id", user.id);
+  const { error } = await supabase.from("retail_onboarding_drafts").update({ subtype: subtype.data, current_step: 3 }).eq("user_id", user.id);
   if (error) go(2, "error", friendlyError(error));
   go(3);
 }
@@ -101,7 +101,7 @@ export async function saveTradeSettingsAction(formData: FormData) {
   });
   if (!parsed.success) go(3, "error", "راجع إعدادات الأسعار والفاتورة.");
   const supabase = await createClient();
-  const { error } = await supabase.from("onboarding_drafts").update({ ...parsed.data, inventory_policy: "prevent_negative", current_step: 4 }).eq("user_id", user.id);
+  const { error } = await supabase.from("retail_onboarding_drafts").update({ ...parsed.data, inventory_policy: "prevent_negative", current_step: 4 }).eq("user_id", user.id);
   if (error) go(3, "error", friendlyError(error));
   go(4);
 }
@@ -113,9 +113,9 @@ export async function savePlanAction(formData: FormData) {
   const planId = z.string().uuid().safeParse(formData.get("plan_id"));
   if (!planId.success) go(4, "error", "اختر خطة متاحة.");
   const supabase = await createClient();
-  const { data: plan } = await supabase.from("plans").select("id").eq("id", planId.data).eq("status", "active").eq("is_public", true).maybeSingle();
+  const { data: plan } = await supabase.from("retail_plans").select("id").eq("id", planId.data).eq("status", "active").eq("is_public", true).maybeSingle();
   if (!plan) go(4, "error", "الخطة لم تعد متاحة.");
-  const { error } = await supabase.from("onboarding_drafts").update({ selected_plan_id: planId.data, current_step: 5 }).eq("user_id", user.id);
+  const { error } = await supabase.from("retail_onboarding_drafts").update({ selected_plan_id: planId.data, current_step: 5 }).eq("user_id", user.id);
   if (error) go(4, "error", friendlyError(error));
   go(5);
 }

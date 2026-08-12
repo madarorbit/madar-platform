@@ -15,10 +15,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const { workspace, user, role, subscription } = context;
   const supabase = await createClient();
   const [profileResult, plansResult, methodsResult, requestsResult, workspaceResult] = await Promise.all([
-    supabase.from("profiles").select("full_name,phone,email").eq("id", user.id).single(),
-    supabase.from("plans").select("id,name_ar,description_ar,price_amount,currency,billing_months,trial_days").eq("status", "active").eq("is_public", true),
-    supabase.from("payment_methods").select("id,name_ar,kind,account_name,account_identifier,instructions_ar,currency").eq("status", "active").order("sort_order"),
-    supabase.from("payment_requests").select("id,amount,currency,status,payment_reference,created_at,review_note,plans(name_ar)").eq("workspace_id", workspace.id).order("created_at", { ascending: false }).limit(10),
+    supabase.from("retail_profiles").select("full_name,phone,email").eq("id", user.id).single(),
+    supabase.from("retail_plans").select("id,name_ar,description_ar,price_amount,currency,billing_months,trial_days").eq("status", "active").eq("is_public", true),
+    supabase.from("retail_payment_methods").select("id,name_ar,kind,account_name,account_identifier,instructions_ar,currency").eq("status", "active").order("sort_order"),
+    supabase.from("retail_payment_requests").select("id,amount,currency,status,payment_reference,created_at,review_note,plans:retail_plans(name_ar)").eq("workspace_id", workspace.id).order("created_at", { ascending: false }).limit(10),
     supabase.from("retail_workspaces").select("name,owner_name,phone,city,invoice_prefix,price_display,allow_credit_sales").eq("id", workspace.id).single(),
   ]);
   const profile = profileResult.data;

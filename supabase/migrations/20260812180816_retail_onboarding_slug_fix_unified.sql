@@ -8,8 +8,8 @@ set search_path = ''
 as $$
 declare
   actor uuid := (select auth.uid());
-  draft public.onboarding_drafts%rowtype;
-  selected_plan public.plans%rowtype;
+  draft public.retail_onboarding_drafts%rowtype;
+  selected_plan public.retail_plans%rowtype;
   existing_workspace uuid;
   workspace_id uuid;
   workspace_slug text;
@@ -17,19 +17,19 @@ declare
 begin
   if actor is null then raise exception 'AUTHENTICATION_REQUIRED'; end if;
   select active_workspace_id into existing_workspace
-  from public.profiles where id = actor and status = 'active';
+  from public.retail_profiles where id = actor and status = 'active';
   if existing_workspace is not null then
     return jsonb_build_object('workspace_id', existing_workspace, 'idempotent', true);
   end if;
 
-  select * into draft from public.onboarding_drafts where user_id = actor for update;
+  select * into draft from public.retail_onboarding_drafts where user_id = actor for update;
   if draft.user_id is null then raise exception 'ONBOARDING_DRAFT_REQUIRED'; end if;
   if draft.trade_name is null or char_length(btrim(draft.trade_name)) < 2 then raise exception 'TRADE_NAME_REQUIRED'; end if;
   if draft.subtype is null then raise exception 'RETAIL_SUBTYPE_REQUIRED'; end if;
   if draft.selected_plan_id is null then raise exception 'PLAN_REQUIRED'; end if;
 
   select * into selected_plan
-  from public.plans
+  from public.retail_plans
   where id = draft.selected_plan_id and status = 'active' and is_public
   for share;
   if selected_plan.id is null then raise exception 'PLAN_UNAVAILABLE'; end if;
@@ -49,13 +49,13 @@ begin
     draft.allow_credit_sales, upper(draft.invoice_prefix), actor
   );
 
-  insert into public.workspace_members(workspace_id, user_id, role, status)
+  insert into public.retail_workspace_members(workspace_id, user_id, role, status)
   values(workspace_id, actor, 'OWNER', 'active');
 
-  insert into public.cash_accounts(workspace_id, currency, is_primary)
+  insert into public.retail_cash_accounts(workspace_id, currency, is_primary)
   values(workspace_id, draft.currency, true);
 
-  insert into public.subscriptions(
+  insert into public.retail_subscriptions(
     workspace_id, plan_id, status, starts_at, trial_ends_at, ends_at
   ) values (
     workspace_id,
@@ -68,20 +68,20 @@ begin
     end
   );
 
-  update public.profiles set active_workspace_id = workspace_id where id = actor;
-  update public.onboarding_drafts
+  update public.retail_profiles set active_workspace_id = workspace_id where id = actor;
+  update public.retail_onboarding_drafts
   set current_step = 5, completed_at = now()
   where user_id = actor;
 
   result := jsonb_build_object('workspace_id', workspace_id, 'idempotent', false);
-  insert into public.sync_operations(
+  insert into public.retail_sync_operations(
     workspace_id, user_id, operation_id, operation_type, entity_type,
     entity_id, status, applied_at, result
   ) values (
     workspace_id, actor, target_operation, 'ONBOARDING_COMPLETE', 'workspace',
     workspace_id, 'applied', now(), result
   );
-  perform private.write_audit(
+  perform private.retail_write_audit(
     workspace_id, actor, 'workspace.created', 'workspace', workspace_id,
     target_operation, jsonb_build_object('domain_model', 'RETAIL', 'plan_id', selected_plan.id)
   );

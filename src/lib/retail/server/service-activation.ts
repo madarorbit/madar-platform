@@ -19,7 +19,7 @@ export async function activateApprovedRetailService(input: {
   graceEndsAt: string | null;
 }) {
   const client = createClient();
-  const { error: identityError } = await client.from("profiles").upsert(
+  const { error: identityError } = await client.from("retail_profiles").upsert(
     {
       id: input.identity.id,
       email: input.identity.email,

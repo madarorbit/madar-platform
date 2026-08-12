@@ -4,18 +4,14 @@
 
 | الملف | المحتوى |
 |---|---|
-| `...1904_retail_foundation.sql` | profiles/workspaces/onboarding/plans/payments/catalog/storage |
-| `...1905_retail_ledgers.sql` | sales/purchases/expenses/inventory/cash/debt/returns/sync receipts |
-| `...1906_retail_core_operations.sql` | auth helpers، onboarding، product/inventory/cash/expense RPCs |
-| `...1907_retail_financial_operations.sql` | sale/purchase/settlements/returns/payment approval |
-| `...1908_sync_orby.sql` | change feed، devices، ORBY history/usage |
-| `...1909_analytics.sql` | snapshot وparty summaries الحتمية |
-| `...1910_management_operations.sql` | profile/settings/catalog/admin/ORBY mutations |
-| `...1911_security.sql` | RLS، grants، policies، storage policies |
-| `...033000_onboarding_slug_collision_fix.sql` | يجعل slug الافتراضي فريدًا باستخدام UUID كاملًا بعد اكتشاف التصادم باختبار مستأجرين |
-| `...040000_performance_hardening.sql` | فهارس تغطية لجميع foreign keys وسياسة SELECT واحدة لكل role |
-| `...180000_platform_integration.sql` | ربط منظمة مَدار، هوية Platform، وجسر RPC service-only ثابت العمليات |
-| `...181500_platform_bridge_hardening.sql` | إغلاق التنفيذ المباشر القديم لدوال SECURITY DEFINER أمام `authenticated` |
+| `20260812180712_retail_foundation_unified.sql` | retail_profiles/workspaces/onboarding/plans/payments/catalog/storage |
+| `20260812180722_retail_ledgers_unified.sql` | sales/purchases/expenses/inventory/cash/debt/returns |
+| `20260812180730…20260812180757` | RPCs الذرية، sync، analytics، وإدارة Retail |
+| `20260812180807_retail_security_unified.sql` | RLS وgrants وسياسات Storage دون تعديل صلاحيات جداول مَدار |
+| `20260812180816…20260812180820` | slug وفهارس foreign keys |
+| `20260812180827…20260812180844` | ربط المنظمة والتفعيل وجسر الخدمة وتقويته |
+
+كل جدول Retail يحمل بادئة `retail_`، وكل سجل أعمال يحمل `workspace_id`. لا تشترك الخدمة مع جداول `products` أو `profiles` العامة في مَدار.
 
 ## أنواع الأرقام
 
@@ -35,4 +31,4 @@
 
 ## Demo
 
-`supabase-retail/seed.sql` محلي فقط: مستخدم، متجر، 25 منتجًا، عملاء، موردون، شراء نقدي وآجل، مبيعات، مصروفات، ديون وتسويات. Production migrations لا تستدعيه.
+`supabase/seeds/retail_demo.sql` محلي فقط: مستخدم، متجر، 25 منتجًا، عملاء، موردون، شراء نقدي وآجل، مبيعات، مصروفات، ديون وتسويات. Production migrations لا تستدعيه.

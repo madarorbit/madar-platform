@@ -1,9 +1,11 @@
 # Retail Security
 
-## هوية واحدة وقاعدتان
+## هوية وقاعدة واحدة مع عزل الخدمة
 
 - Supabase الرئيسي يصدر الجلسة وGoogle PKCE ويحدد profile وorganization membership.
-- لا توجد جلسة Retail في المتصفح، ولا publishable/service key لقاعدة Retail في bundle العميل.
+- لا توجد جلسة أو مفاتيح Retail ثانية في المتصفح.
+- جداول `retail_*` منفصلة اسميًا عن جداول المنصة، وكل صف أعمال مرتبط بـ`workspace_id`.
+- RLS يتحقق من `retail_workspace_members`، واختبار مستأجرين يثبت أن مستخدم المتجر A لا يرى المتجر B.
 - BFF يتحقق server-side من المستخدم، حالة profile، منظمة الأعمال، عضويته، وقرار `authorizeOrganizationAction`/OpenFGA، ثم يطابق `platform_organization_id` قبل الوصول إلى البيانات.
 - قدرة ORBY تمر كذلك عبر `can_use_orby`، وطلب الدفع عبر `can_manage_billing`؛ OpenFGA يستطيع تضييق صلاحية مَدار ولا يستطيع منح ما رفضته مَدار.
 - كل استعلام Retail يحمل workspace filter مأخوذًا من الربط الموثق لا من form.
@@ -19,7 +21,7 @@
 5. يستدعي RPC الأصلية التي تتحقق من الدور والاشتراك والمخزون والصندوق وUUID idempotency.
 6. أي خطأ يسبب rollback كاملًا.
 
-بعد migration التقوية، لا يستطيع `authenticated` استدعاء أي SECURITY DEFINER RPC في مشروع Retail مباشرة. RLS وسياسات workspace باقية كطبقة دفاع إضافية. Security Advisor أعاد صفر lints بعد التطبيق.
+بعد migration التقوية، لا يستطيع `authenticated` استدعاء أي SECURITY DEFINER RPC مالي لـRetail مباشرة. RLS وسياسات workspace باقية كطبقة دفاع إضافية. Security Advisor لا يعرض ملاحظات مرتبطة بجداول أو دوال Retail بعد التطبيق.
 
 ## الملفات وORBY
 
