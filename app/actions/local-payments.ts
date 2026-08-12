@@ -1,36 +1,3 @@
-'use server';
-
-import {revalidatePath} from 'next/cache';
-import {redirect} from 'next/navigation';
-import {requireAdmin,requireUser} from '@/src/lib/auth';
-import {removeLocalPaymentProof,uploadLocalPaymentProof} from '@/src/lib/local-payments';
-import {supabaseFetch} from '@/src/lib/supabase/server';
-import {required} from '@/src/lib/validation';
-
-const finish=(path:string,error?:string,success?:string)=>redirect(`${path}?${error?'error':'success'}=${encodeURIComponent(error||success||'تمت العملية.')}`);
-
-export async function submitWorkspaceLocalPayment(form:FormData){
- const requestId=required(form.get('request_id'),'طلب المساحة');let proof,errorMessage:string|undefined;
- try{
-  const user=await requireUser(),file=form.get('proof');if(!(file instanceof File))throw new Error('اختر إثبات التحويل.');
-  proof=await uploadLocalPaymentProof(file,user.id,`workspace/${requestId}`);
-  await supabaseFetch('/rest/v1/rpc/submit_workspace_payment_v2',{method:'POST',body:JSON.stringify({target_request:requestId,target_method:required(form.get('payment_method_id'),'طريقة الدفع'),reference:required(form.get('payment_reference'),'رقم العملية'),proof_path:proof.storagePath,proof_name:proof.originalFilename,proof_mime:proof.mimeType,proof_size:proof.fileSize})});
-  revalidatePath(`/workspace-payment/${requestId}`);revalidatePath('/account');
- }catch(error){if(proof)await removeLocalPaymentProof(proof.storagePath);errorMessage=error instanceof Error?error.message:'تعذر إرسال إثبات الدفع.'}
- finish(`/workspace-payment/${requestId}`,errorMessage,'تم إرسال الإثبات. ستراجع الإدارة الدفع وتفعّل الخدمة بعد اعتماده.');
-}
-
-export async function savePaymentMethod(form:FormData){
- let errorMessage:string|undefined,id='';
- try{
-  await requireAdmin();id=String(form.get('id')||'').trim();const code=String(form.get('code')||'').trim().toUpperCase(),name=String(form.get('name')||'').trim(),methodType=String(form.get('method_type')||'wallet'),accountName=String(form.get('account_name')||'').trim()||null,identifier=String(form.get('account_identifier')||'').trim()||null,isActive=String(form.get('is_active'))==='true';
-  if(!/^[A-Z0-9_-]{3,40}$/.test(code)||name.length<2||name.length>120||!['wallet','bank'].includes(methodType))throw new Error('راجع رمز طريقة الدفع واسمها ونوعها.');
-  if(isActive&&(!accountName||!identifier))throw new Error('أضف اسم الحساب ورقمه قبل تفعيل الطريقة.');
-  const currency=String(form.get('currency'));if(!['YER','SAR','USD'].includes(currency))throw new Error('العملة غير صالحة.');
-  const sortOrder=Number(form.get('sort_order')||100);if(!Number.isInteger(sortOrder)||sortOrder<0||sortOrder>10000)throw new Error('ترتيب طريقة الدفع غير صالح.');
-  const values={code,name,method_type:methodType,account_name:accountName,account_identifier:identifier,instructions:String(form.get('instructions')||'').trim()||null,currency,is_active:isActive,sort_order:sortOrder};
-  await supabaseFetch(id?`/rest/v1/payment_methods?id=eq.${encodeURIComponent(id)}`:'/rest/v1/payment_methods',{method:id?'PATCH':'POST',body:JSON.stringify(values)});
-  revalidatePath('/admin/local-payments');revalidatePath('/account');
- }catch(error){errorMessage=error instanceof Error?error.message:'تعذر حفظ طريقة الدفع.'}
- finish('/admin/local-payments',errorMessage,id?'تم تحديث طريقة الدفع.':'تمت إضافة طريقة الدفع.');
-}
+'use server';import{revalidatePath}from'next/cache';import{redirect}from'next/navigation';import{requireAdmin,requireUser}from'@/src/lib/auth';import{removeLocalPaymentProof,uploadLocalPaymentProof}from'@/src/lib/local-payments';import{supabaseFetch}from'@/src/lib/supabase/server';import{required}from'@/src/lib/validation';const finish=(path:string,error?:string,success?:string)=>redirect(`${path}?${error?'error':'success'}=${encodeURIComponent(error||success||'تمت العملية.')}`);
+export async function submitWorkspaceLocalPayment(form:FormData){const requestId=required(form.get('request_id'),'طلب المساحة');let proof,errorMessage:string|undefined;try{const user=await requireUser(),file=form.get('proof');if(!(file instanceof File))throw new Error('اختر إثبات التحويل.');proof=await uploadLocalPaymentProof(file,user.id,`workspace/${requestId}`);await supabaseFetch('/rest/v1/rpc/submit_workspace_payment_v2',{method:'POST',body:JSON.stringify({target_request:requestId,target_method:required(form.get('payment_method_id'),'طريقة الدفع'),reference:required(form.get('payment_reference'),'رقم العملية'),proof_path:proof.storagePath,proof_name:proof.originalFilename,proof_mime:proof.mimeType,proof_size:proof.fileSize})});revalidatePath(`/workspace-payment/${requestId}`);revalidatePath('/account')}catch(error){if(proof)await removeLocalPaymentProof(proof.storagePath);errorMessage=error instanceof Error?error.message:'تعذر إرسال إثبات الدفع.'}finish(`/workspace-payment/${requestId}`,errorMessage,'تم إرسال الإثبات.')}
+export async function savePaymentMethod(form:FormData){let errorMessage:string|undefined,id='';try{await requireAdmin();id=String(form.get('id')||'').trim();const code=String(form.get('code')||'').trim().toUpperCase(),name=String(form.get('name')||'').trim(),methodType=String(form.get('method_type')||'wallet'),accountName=String(form.get('account_name')||'').trim()||null,identifier=String(form.get('account_identifier')||'').trim()||null,isActive=String(form.get('is_active'))==='true',currency=String(form.get('currency')||'').trim().toUpperCase();if(!/^[A-Z0-9_-]{3,40}$/.test(code)||name.length<2||name.length>120||!['wallet','bank'].includes(methodType))throw new Error('راجع رمز طريقة الدفع واسمها ونوعها.');if(isActive&&(!accountName||!identifier))throw new Error('أضف اسم الحساب ورقمه قبل تفعيل الطريقة.');const currencyRows=await supabaseFetch(`/rest/v1/currencies?code=eq.${encodeURIComponent(currency)}&is_active=eq.true&select=code&limit=1`);if(!currencyRows?.length)throw new Error('العملة غير مفعلة في محرك العملات.');const sortOrder=Number(form.get('sort_order')||100);if(!Number.isInteger(sortOrder)||sortOrder<0||sortOrder>10000)throw new Error('ترتيب طريقة الدفع غير صالح.');const values={code,name,method_type:methodType,account_name:accountName,account_identifier:identifier,instructions:String(form.get('instructions')||'').trim()||null,currency,currency_agnostic:true,is_active:isActive,sort_order:sortOrder};await supabaseFetch(id?`/rest/v1/payment_methods?id=eq.${encodeURIComponent(id)}`:'/rest/v1/payment_methods',{method:id?'PATCH':'POST',body:JSON.stringify(values)});revalidatePath('/admin/local-payments');revalidatePath('/admin/store/finance');revalidatePath('/account')}catch(error){errorMessage=error instanceof Error?error.message:'تعذر حفظ طريقة الدفع.'}finish('/admin/local-payments',errorMessage,id?'تم تحديث طريقة الدفع.':'تمت إضافة طريقة الدفع.')}

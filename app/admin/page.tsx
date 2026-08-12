@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/src/lib/auth";
 import { supabaseFetch } from "@/src/lib/supabase/server";
-import { money } from "@/src/lib/order-status";
+import { formatStoreMoney, groupRevenue } from "@/src/lib/store/currency";
 import {
   Badge,
   ButtonLink,
@@ -29,16 +29,18 @@ export default async function AdminPage() {
       feedback,
       renewals,
       privacy,
+      currencies,
     ] = await Promise.all([
       supabaseFetch("/rest/v1/products?select=status"),
       supabaseFetch("/rest/v1/services?select=status"),
       supabaseFetch("/rest/v1/profiles?select=id"),
       supabaseFetch("/rest/v1/job_applications?select=id,status"),
       supabaseFetch("/rest/v1/workspace_requests?select=id,status"),
-      supabaseFetch("/rest/v1/orders?select=id,status,payment_status,total"),
+      supabaseFetch("/rest/v1/orders?select=id,status,payment_status,total,currency,original_amount,original_currency,payment_amount,payment_currency"),
       supabaseFetch("/rest/v1/platform_feedback?select=id,status"),
       supabaseFetch("/rest/v1/subscription_renewal_requests?select=id,status"),
       supabaseFetch("/rest/v1/data_privacy_requests?select=id,status"),
+      supabaseFetch("/rest/v1/currencies?select=code,name,symbol,decimal_places,is_active"),
     ]);
     stats = {
       products,
@@ -50,6 +52,7 @@ export default async function AdminPage() {
       feedback,
       renewals,
       privacy,
+      currencies,
     };
   } catch {}
   const count = (rows: any[], status?: string) =>
@@ -58,11 +61,16 @@ export default async function AdminPage() {
       stats.orders?.filter(
         (item: any) => item.payment_status === "under_review",
       ).length || 0,
-    revenue =
-      stats.orders
-        ?.filter((item: any) => item.payment_status === "approved")
-        .reduce((total: number, item: any) => total + Number(item.total), 0) ||
-      0;
+    revenueGroups = groupRevenue(
+      (stats.orders || []).filter((item: any) => item.payment_status === "approved"),
+    ),
+    revenue = revenueGroups.length
+      ? revenueGroups
+          .map((group) =>
+            formatStoreMoney(group.amount, group.currency, stats.currencies || []),
+          )
+          .join(" · ")
+      : "0";
   const tools = [
     ["orders", "طلبات ومدفوعات المتجر", "store"],
     ["reports", "تقارير المتجر", "chart"],
@@ -109,7 +117,7 @@ export default async function AdminPage() {
         <Grid className="sm:grid-cols-2 xl:grid-cols-4" auto={false}>
           <Stat label="كل طلبات المتجر" value={stats.orders?.length || 0} />
           <Stat label="دفعات تنتظر المراجعة" value={review} />
-          <Stat label="الإيراد المعتمد" value={money(revenue)} />
+          <Stat label="الإيراد المعتمد حسب العملة" value={revenue} />
           <Stat
             label="المنتجات المنشورة"
             value={count(stats.products, "published")}
