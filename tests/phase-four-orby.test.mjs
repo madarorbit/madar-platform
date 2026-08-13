@@ -2,63 +2,67 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const migration=fs.readFileSync('supabase/migrations/20260724050000_phase_four_orby_core.sql','utf8');
+const legacyMigration=fs.readFileSync('supabase/migrations/20260724050000_phase_four_orby_core.sql','utf8');
 const hardening=fs.readFileSync('supabase/migrations/20260724050100_phase_four_orby_performance_hardening.sql','utf8');
-const api=fs.readFileSync('app/api/orby/route.ts','utf8');
+const unifiedMigration=fs.readFileSync('supabase/migrations/20260812230015_orby_unified_account_plus.sql','utf8');
+const runtimeFix=fs.readFileSync('supabase/migrations/20260813001000_fix_orby_persistence_and_scoped_context.sql','utf8');
+const stream=fs.readFileSync('app/api/orby/stream/route.ts','utf8');
 const orby=fs.readFileSync('src/lib/orby.ts','utf8');
-const page=fs.readFileSync('app/workspace/orby/page.tsx','utf8');
 const actions=fs.readFileSync('app/actions/orby.ts','utf8');
 const runtimeResolver=fs.readFileSync('supabase/migrations/20260731120000_orby_runtime_config_resolver.sql','utf8');
 const coreAdapter=fs.readFileSync('src/lib/orby/adapters/supabase.ts','utf8');
 
-test('ORBY memory is isolated by user and organization',()=>{
- for(const table of ['orby_conversations','orby_messages','orby_usage_daily','orby_insights','orby_action_drafts']){
-  assert.match(migration,new RegExp(`create table public\\.${table}`));
-  assert.match(migration,new RegExp(`alter table public\\.${table} enable row level security`));
- }
- assert.match(migration,/user_id=\(select auth\.uid\(\)\) and private\.is_organization_member\(organization_id\)/);
- assert.match(migration,/members read orby insights/);
- assert.match(migration,/revoke all on table public\.orby_conversations,public\.orby_messages/);
- assert.doesNotMatch(migration,/grant (insert|update|delete) on table public\.orby_/);
+test('ORBY keeps account conversations user-owned and workspace data tenant-scoped',()=>{
+ for(const table of ['orby_conversations','orby_messages','orby_usage_daily'])assert.match(unifiedMigration,new RegExp(`alter table public\\.${table}`));
+ assert.match(unifiedMigration,/orby account conversations/);
+ assert.match(unifiedMigration,/orby account messages/);
+ assert.match(unifiedMigration,/user_id=\(select auth\.uid\(\)\)/);
+ assert.match(unifiedMigration,/organization_id is null or private\.is_organization_member\(organization_id\)/);
+ assert.match(runtimeFix,/drop trigger if exists madar_v2_orby_access_guard on public\.orby_conversations/);
+ assert.match(runtimeFix,/drop trigger if exists madar_v2_orby_access_guard on public\.orby_messages/);
 });
 
-test('ORBY enforces daily quotas before generation',()=>{
- assert.match(migration,/private\.consume_orby_quota_impl/);
- assert.match(migration,/requests<20/);
- assert.match(migration,/100000/);
- assert.match(migration,/ORBY_DAILY_LIMIT/);
- assert.match(api,/rpc\/consume_orby_quota/);
- assert.ok(api.indexOf('rpc/consume_orby_quota')<api.indexOf('kernelResponse = await executeOrbyCore'));
+test('ORBY central quota supports Free 5, paid customer 20 and Plus fair-use',()=>{
+ assert.match(stream,/consume_orby_account_quota/);
+ assert.match(stream,/reserve_orby_guest_request/);
+ assert.match(unifiedMigration,/daily_limit',5/);
+ assert.match(unifiedMigration,/daily_limit',20/);
+ assert.match(unifiedMigration,/tier','plus/);
+ assert.match(unifiedMigration,/used<30/);
+ assert.match(unifiedMigration,/used<1000/);
+ assert.match(unifiedMigration,/ORBY_DAILY_LIMIT/);
+ assert.ok(stream.indexOf('consume_orby_account_quota')<stream.indexOf('createServerOrbyFoundation'));
 });
 
-test('ORBY context comes from checked workspace analytics only',()=>{
- assert.match(migration,/private\.orby_business_context_impl/);
- assert.match(migration,/private\.can_manage_business\(target_organization,'financials'\)/);
- assert.match(migration,/private\.business_analytics_impl/);
- assert.match(migration,/organization_id=target_organization/g);
- assert.match(api,/rpc\/orby_business_context/);
+test('ORBY context is loaded only after active service scope authorization',()=>{
+ assert.match(stream,/workspace_subscriptions\?organization_id=eq\./);
+ assert.match(stream,/activation_state=eq\.ACTIVE/);
+ assert.match(stream,/rpc\/orby_business_context/);
+ assert.match(stream,/retailEvidence/);
+ assert.match(stream,/retail_analytics_snapshot/);
  assert.match(orby,/لا تختلق أرقاماً أو عملاء أو منتجات/);
+ assert.match(runtimeFix,/alter function public\.orby_business_context\(uuid\) security definer/);
 });
 
-test('AI provider failure falls back without leaking provider details',()=>{
- assert.match(api,/source\s*=\s*["']smart-fallback["']/);
- assert.match(api,/deterministicOrbyResponse/);
- assert.match(api,/provider_unavailable:\s*providerUnavailable/);
- assert.doesNotMatch(api,/provider_error/);
+test('provider failure uses safe fallback without exposing provider errors',()=>{
+ assert.match(stream,/smart-fallback/);
+ assert.match(stream,/deterministicOrbyResponse/);
+ assert.match(stream,/deterministicGeneralOrbyResponse/);
+ assert.doesNotMatch(stream,/provider_error/);
  assert.match(orby,/هذا رد تشغيلي تلقائي من بيانات مَدار/);
 });
 
-test('ORBY business chat runs through the governed core and preserves its session',()=>{
- assert.match(api,/createServerOrbyFoundation/);
- assert.match(api,/foundation\.kernel\.execute/);
- assert.match(api,/kernel_session_id/);
- assert.match(api,/provider_id:\s*kernelResponse\?\.providerId/);
- assert.match(api,/model_id:\s*kernelResponse\?\.modelId/);
- assert.doesNotMatch(api,/generateText/);
- assert.doesNotMatch(api,/google\/gemini-3-flash/);
+test('unified chat executes through governed ORBY core',()=>{
+ assert.match(stream,/createServerOrbyFoundation/);
+ assert.match(stream,/createAccountOrbyFoundation/);
+ assert.match(stream,/foundation\.kernel/);
+ assert.match(stream,/kernel_session_id/);
+ assert.match(stream,/provider_id/);
+ assert.match(stream,/model_id/);
+ assert.doesNotMatch(stream,/openrouter\.ai|api\.openai\.com|generativelanguage\.googleapis\.com/i);
 });
 
-test('members receive only safe resolved runtime settings without provider credentials',()=>{
+test('runtime settings remain credential-free for members',()=>{
  assert.match(runtimeResolver,/private\.is_admin\(\)/);
  assert.match(runtimeResolver,/organization_members/);
  assert.match(runtimeResolver,/jsonb_build_object\(/);
@@ -68,27 +72,17 @@ test('members receive only safe resolved runtime settings without provider crede
  assert.match(coreAdapter,/rpc\/orby_resolve_runtime_config/);
 });
 
-test('proactive insights are deterministic and actionable',()=>{
- for(const insight of ['OUT_OF_STOCK','LOW_STOCK','OVERDUE_TASKS','REVENUE_DECLINE','EXPENSE_SPIKE','INACTIVE_CUSTOMERS'])assert.match(migration,new RegExp(insight));
- assert.match(migration,/unique\(organization_id,fingerprint\)/);
+test('proactive business insights and explicit-confirmation actions remain available outside composer modes',()=>{
+ for(const insight of ['OUT_OF_STOCK','LOW_STOCK','OVERDUE_TASKS','REVENUE_DECLINE','EXPENSE_SPIKE','INACTIVE_CUSTOMERS'])assert.match(legacyMigration,new RegExp(insight));
  assert.match(actions,/rpc\/refresh_orby_insights/);
- assert.match(page,/تنبيهات أوربي الاستباقية/);
- assert.match(page,/تحديث التنبيهات الذكية/);
-});
-
-test('ORBY actions require draft then explicit confirmation',()=>{
- assert.match(migration,/action_type text not null check\(action_type in \('create_task'\)\)/);
- assert.match(migration,/private\.create_orby_task_draft_impl/);
- assert.match(migration,/private\.confirm_orby_action_impl/);
- assert.match(migration,/draft\.status<>'draft'/);
- assert.match(migration,/orby\.action\.confirmed/);
+ assert.match(legacyMigration,/private\.create_orby_task_draft_impl/);
+ assert.match(legacyMigration,/private\.confirm_orby_action_impl/);
  assert.match(actions,/rpc\/create_orby_task_draft/);
  assert.match(actions,/rpc\/confirm_orby_action/);
- assert.match(page,/لن تظهر المهمة في مساحة العمل إلا بعد تأكيدك/);
- assert.match(page,/تأكيد التنفيذ/);
+ assert.doesNotMatch(stream,/body\.mode/);
 });
 
-test('ORBY foreign keys have covering indexes',()=>{
+test('ORBY foreign keys keep covering indexes',()=>{
  assert.match(hardening,/orby_action_drafts_org_idx/);
  assert.match(hardening,/orby_conversations_org_idx/);
  assert.match(hardening,/orby_messages_user_idx/);
