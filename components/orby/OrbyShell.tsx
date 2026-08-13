@@ -76,7 +76,7 @@ export default function OrbyShell({
             </div>
           </div>
           <div className="md-orby-header-actions">
-            <ButtonLink href={newChatHref} variant="secondary" size="sm"><Icon name="plus" /><span>محادثة جديدة</span></ButtonLink>
+            <ButtonLink href={newChatHref} variant="secondary" size="sm" onClick={authenticated?undefined:(event)=>{event.preventDefault();window.location.assign(`/orby?conversation=new&session=${crypto.randomUUID()}`);}}><Icon name="plus" /><span>محادثة جديدة</span></ButtonLink>
             {authenticated && identity ? (
               <GlobalUserActions
                 displayName={identity.displayName}

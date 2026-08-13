@@ -68,6 +68,7 @@
 ## المحادثات والخصوصية
 
 - Guest: حالة مؤقتة وCookie HttpOnly للحصة؛ لا Conversation rows دائمة.
+- «محادثة جديدة» للزائر تنشئ session مرئية مؤقتة جديدة، لكنها لا تعيد ضبط Cookie أو الحصة اليومية Server-side.
 - Registered: المحادثات والرسائل تحفظ عبر `save_orby_exchange` وتبقى بعد refresh.
 - Rename/Archive/Delete تتحقق من `user_id` في API، وRLS تتحقق من صاحب الحساب وعضوية المساحة.
 - Production audit أكد سياسات RLS للمحادثات والرسائل، وعدم إتاحة حصة الزائر مباشرة لـ`anon` أو `authenticated`؛ استدعاؤها للخادم فقط عبر `service_role`.

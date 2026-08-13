@@ -37,6 +37,14 @@ test('history is owned, bounded and grouped for responsive use',async()=>{
  assert.match(api,/user_id=eq/);
 });
 
+test('guest new chat resets ephemeral UI without resetting the server quota',async()=>{
+ const[shell,page]=await Promise.all([read('components/orby/OrbyShell.tsx'),read('app/orby/page.tsx')]);
+ assert.match(shell,/conversation=new&session=/);
+ assert.match(shell,/crypto\.randomUUID/);
+ assert.match(page,/params\.session/);
+ assert.match(page,/initialRemaining=\{5\}/);
+});
+
 test('service context is checked before account quota is consumed',async()=>{
  const stream=await read('app/api/orby/stream/route.ts');
  const contextFailure=stream.indexOf("ORBY_CONTEXT_UNAVAILABLE");

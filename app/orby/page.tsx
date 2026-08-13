@@ -30,12 +30,12 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export default async function OrbyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ conversation?: string; organization?: string; service?: string; starter?: string }>;
+  searchParams: Promise<{ conversation?: string; organization?: string; service?: string; starter?: string; session?: string }>;
 }) {
   const params = await searchParams;
   const identity = await getOptionalShellIdentity();
   if (!identity) {
-    const guestKey = `guest:${params.starter || "chat"}`;
+    const guestKey = `guest:${String(params.session || "chat").slice(0, 80)}:${params.starter || "chat"}`;
     return (
       <OrbyShell
         authenticated={false}
