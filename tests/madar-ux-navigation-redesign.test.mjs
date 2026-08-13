@@ -29,12 +29,12 @@ test("entity lists use route-addressable drawers", async () => {
   }
 });
 
-test("ORBY remains inside the business context", async () => {
+test("ORBY preserves business context while converging on the single account assistant", async () => {
   const source = await read("app/workspace/orby/page.tsx");
-  assert.match(source, /xl:grid-cols-\[15rem_minmax\(0,1fr\)_20rem\]/);
-  assert.match(source, /سياق العمل/);
-  assert.match(source, /التنبيهات والفرص/);
-  assert.match(source, /إجراء بموافقتك/);
+  assert.match(source, /requireBusinessWorkspace/);
+  assert.match(source, /workspace\.id/);
+  assert.match(source, /redirect\(`\/orby\?conversation=new&organization=/);
+  assert.doesNotMatch(source, /<OrbyChat/);
 });
 
 test("workspace has loading and recoverable error boundaries", async () => {

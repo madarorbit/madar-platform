@@ -25,13 +25,13 @@ test('ORBY keeps account conversations user-owned and workspace data tenant-scop
 test('ORBY central quota supports Free 5, paid customer 20 and Plus fair-use',()=>{
  assert.match(stream,/consume_orby_account_quota/);
  assert.match(stream,/reserve_orby_guest_request/);
- assert.match(unifiedMigration,/daily_limit',5/);
  assert.match(unifiedMigration,/daily_limit',20/);
+ assert.match(unifiedMigration,/daily_limit',5/);
  assert.match(unifiedMigration,/tier','plus/);
  assert.match(unifiedMigration,/used<30/);
  assert.match(unifiedMigration,/used<1000/);
  assert.match(unifiedMigration,/ORBY_DAILY_LIMIT/);
- assert.ok(stream.indexOf('consume_orby_account_quota')<stream.indexOf('createServerOrbyFoundation'));
+ assert.ok(stream.indexOf("usage=scalar<Usage>")<stream.indexOf("const foundation=scope"));
 });
 
 test('ORBY context is loaded only after active service scope authorization',()=>{
@@ -40,7 +40,8 @@ test('ORBY context is loaded only after active service scope authorization',()=>
  assert.match(stream,/rpc\/orby_business_context/);
  assert.match(stream,/retailEvidence/);
  assert.match(stream,/retail_analytics_snapshot/);
- assert.match(orby,/لا تختلق أرقاماً أو عملاء أو منتجات/);
+ assert.match(orby,/لا تخلط بين مساحات أو خدمات/);
+ assert.match(orby,/لا تختلق أرقام/);
  assert.match(runtimeFix,/alter function public\.orby_business_context\(uuid\) security definer/);
 });
 
@@ -49,7 +50,8 @@ test('provider failure uses safe fallback without exposing provider errors',()=>
  assert.match(stream,/deterministicOrbyResponse/);
  assert.match(stream,/deterministicGeneralOrbyResponse/);
  assert.doesNotMatch(stream,/provider_error/);
- assert.match(orby,/هذا رد تشغيلي تلقائي من بيانات مَدار/);
+ assert.match(orby,/تعذر الوصول إلى محرك الذكاء الآن/);
+ assert.match(orby,/تحليل أوربي المبني على بيانات المساحة/);
 });
 
 test('unified chat executes through governed ORBY core',()=>{

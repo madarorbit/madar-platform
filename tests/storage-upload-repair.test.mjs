@@ -15,7 +15,7 @@ test("local payment proofs are stored below the authenticated account folder", a
   assert.match(upload, /\/storage\/v1\$\{signedPath\}/);
   assert.doesNotMatch(upload, /new URL\(data\.signedURL\|\|data\.signedUrl,url\)/);
   assert.match(upload, /signedLocalPaymentProof[\s\S]*const\{url,key\}=supabaseServiceConfig\(\)/);
-  assert.match(upload, /signedLocalPaymentProof[\s\S]*Authorization:`Bearer \$\{key\}`/);
+  assert.match(upload, /signedLocalPaymentProof[\s\S]*if\(!key\.startsWith\('sb_secret_'\)\)headers\.set\('Authorization',`Bearer \$\{key\}`\)/);
   assert.doesNotMatch(upload, /signedLocalPaymentProof[\s\S]*serverToken\(\)/);
   assert.match(action, /uploadLocalPaymentProof\(file,user\.id,`workspace\/\$\{requestId\}`\)/);
 });
