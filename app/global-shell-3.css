@@ -128,6 +128,11 @@
 .md-notification-menu-empty { padding: var(--md-space-5) var(--md-space-3); text-align: center; }
 
 .md-shell-status-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-space-3);
+  flex-wrap: wrap;
   border-bottom: 1px solid color-mix(in srgb, var(--md-warning) 32%, var(--md-border-subtle));
   background: var(--md-warning-subtle);
   color: var(--md-warning-text);

@@ -45,17 +45,20 @@ export function WorkspaceToolbar({
   query,
   placeholder = "بحث…",
   count,
+  hidden,
   children,
 }: {
   action: string;
   query?: string;
   placeholder?: string;
   count?: number;
+  hidden?: ReactNode;
   children?: ReactNode;
 }) {
   return <div className="md-list-toolbar">
     <form action={action} className="md-list-search" role="search">
       <Icon name="search" className="h-4 w-4" />
+      {hidden}
       <input name="q" type="search" defaultValue={query} placeholder={placeholder} aria-label={placeholder} />
     </form>
     <div className="md-list-toolbar-end">

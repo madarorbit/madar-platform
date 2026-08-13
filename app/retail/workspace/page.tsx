@@ -4,49 +4,47 @@ import { FlashMessage } from "@/components/retail-v0/ui/flash-message";
 import { formatDateTime, formatMoney, formatQuantity } from "@/src/lib/retail/format";
 import { getAnalyticsSnapshot, localDate } from "@/src/lib/retail/server/analytics/queries";
 import { requireWorkspace } from "@/src/lib/retail/server/auth/context";
+import { getProducts } from "@/src/lib/retail/server/retail/queries";
 import { Icon, type IconName } from "@/components/ui/Icons";
-import { Badge, Card, EmptyState, Panel, StatusBadge } from "@/components/ui/Enterprise";
+import { Badge, ButtonLink, Card, EmptyState, Notice, Panel, StatusBadge } from "@/components/ui/Enterprise";
+import { WorkspaceModule, WorkspaceModuleHeader } from "@/components/workspace/WorkspaceModule";
 
 export const metadata: Metadata = { title: "MADAR Retail | لوحة التجارة" };
 
-const metricIcons: IconName[] = ["store", "chart", "note", "store", "user", "briefcase", "layers", "chart"];
+const metricIcons: IconName[] = ["store", "chart", "store", "note"];
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
-  const [{ workspace, user }, params] = await Promise.all([requireWorkspace(), searchParams]);
+  const [{ workspace, user, role }, params] = await Promise.all([requireWorkspace(), searchParams]);
   const today = localDate(workspace.timezone);
-  const snapshot = await getAnalyticsSnapshot(workspace.id, today, today);
+  const [snapshot, products] = await Promise.all([
+    getAnalyticsSnapshot(workspace.id, today, today),
+    getProducts(workspace.id),
+  ]);
   const m = snapshot.metrics;
-  const metrics = [
+  const primaryMetrics = [
     ["مبيعات اليوم", formatMoney(m.revenue, workspace.currency), "صافي المبيعات بعد المرتجعات"],
     ["الربح التقديري", formatMoney(m.estimated_gross_profit, workspace.currency), "بعد تكلفة البضاعة التقديرية"],
-    ["المصروفات", formatMoney(m.expenses, workspace.currency), "مصروفات اليوم"],
     ["الصندوق", formatMoney(m.cash_position, workspace.currency), "الرصيد النقدي الحالي"],
-    ["ديون العملاء", formatMoney(m.receivables, workspace.currency), "مبالغ لم تُحصّل بعد"],
-    ["مستحقات الموردين", formatMoney(m.payables, workspace.currency), "المبلغ المتبقي للموردين"],
-    ["قيمة المخزون", formatMoney(m.inventory_value, workspace.currency), "وفق متوسط التكلفة"],
-    ["متوسط الفاتورة", formatMoney(m.average_order_value, workspace.currency), `${m.orders} فاتورة اليوم`],
+    ["المصروفات", formatMoney(m.expenses, workspace.currency), "مصروفات اليوم"],
   ] as const;
+  const canWrite = role !== "VIEWER";
+  const firstUse = products.length === 0 && m.orders === 0;
 
   return (
-    <main className="mx-auto max-w-7xl p-4 py-6 sm:p-6">
+    <WorkspaceModule className="mx-auto max-w-7xl">
       <FlashMessage success={params.success} error={params.error} />
-      <header className="md-retail-dashboard-header">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge status="active">MADAR Retail</StatusBadge>
-            <Badge>{workspace.currency}</Badge>
-          </div>
-          <h1 className="md-type-h1 mt-4">{workspace.name}</h1>
-          <p className="md-type-body-sm md-muted mt-2 max-w-2xl">لوحة تشغيل يومية مختصرة للمبيعات والمخزون والصندوق والديون. افتح التفاصيل عند الحاجة بدل ازدحام الشاشة بكل شيء.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/orby?conversation=new&organization=${encodeURIComponent(user.platformOrganizationId)}&service=MADAR_RETAIL`} className="md-button md-button-secondary"><Icon name="sparkles" />اسأل ORBY</Link>
-          <Link href="/retail/workspace/sales" className="md-button md-button-primary"><Icon name="store" />بيع جديد</Link>
-        </div>
-      </header>
+      <WorkspaceModuleHeader
+        eyebrow="تشغيل التجارة اليومي"
+        title={workspace.name}
+        description="ابدأ بالبيع وما يحتاج انتباهك، ثم افتح تفاصيل المخزون والصندوق والديون عند الحاجة."
+        icon="store"
+        actions={<><ButtonLink href={`/orby?conversation=new&organization=${encodeURIComponent(user.platformOrganizationId)}&service=MADAR_RETAIL`} variant="secondary"><Icon name="sparkles" />اسأل ORBY</ButtonLink>{canWrite ? <ButtonLink href="/retail/workspace/sales"><Icon name="store" />بيع جديد</ButtonLink> : null}</>}
+      />
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map(([label, value, hint], index) => (
+      {firstUse ? <Notice title="ابدأ تجهيز تجارتك" variant="info">أضف أول منتج، ثم ستكون عملية البيع متاحة من الإجراء الرئيسي دون خطوات زائدة.</Notice> : null}
+
+      <section className="md-service-primary-grid" aria-label="أهم مؤشرات اليوم">
+        {primaryMetrics.map(([label, value, hint], index) => (
           <Card as="article" key={label} className="md-retail-metric">
             <div className="flex items-start justify-between gap-3">
               <span className="md-type-label md-muted">{label}</span>
@@ -56,6 +54,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </Card>
         ))}
       </section>
+
+      <section className="md-service-summary-strip" aria-label="ملخص مالي وتشغيلي">
+        <div><span>ديون العملاء</span><strong>{formatMoney(m.receivables, workspace.currency)}</strong></div>
+        <div><span>مستحقات الموردين</span><strong>{formatMoney(m.payables, workspace.currency)}</strong></div>
+        <div><span>قيمة المخزون</span><strong>{formatMoney(m.inventory_value, workspace.currency)}</strong></div>
+        <div><span>متوسط الفاتورة</span><strong>{formatMoney(m.average_order_value, workspace.currency)} · {m.orders.toLocaleString("ar-YE")} فاتورة</strong></div>
+      </section>
+
+      {canWrite ? <section className="md-service-quick-actions" aria-labelledby="retail-quick-actions"><div><span className="md-eyebrow">إجراءات سريعة</span><h2 id="retail-quick-actions">شغّل تجارتك الآن</h2></div><div>
+        <Link href="/retail/workspace/sales"><span><Icon name="store" /></span><strong>بيع جديد</strong><Icon name="arrow" className="md-icon-directional" /></Link>
+        <Link href="/retail/workspace/products"><span><Icon name="layers" /></span><strong>إضافة منتج</strong><Icon name="arrow" className="md-icon-directional" /></Link>
+        <Link href="/retail/workspace/expenses"><span><Icon name="note" /></span><strong>تسجيل مصروف</strong><Icon name="arrow" className="md-icon-directional" /></Link>
+        <Link href="/retail/workspace/inventory"><span><Icon name="chart" /></span><strong>تسوية المخزون</strong><Icon name="arrow" className="md-icon-directional" /></Link>
+      </div></section> : null}
 
       <section className="mt-5 grid gap-4 xl:grid-cols-2">
         <Panel className="p-5 sm:p-6">
@@ -96,6 +108,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {!snapshot.recent_activity.length ? <EmptyState compact title="لا توجد عمليات بعد" description="ابدأ بإضافة منتج ثم نفّذ أول عملية لتظهر هنا." icon="note" /> : null}
         </div>
       </Panel>
-    </main>
+    </WorkspaceModule>
   );
 }

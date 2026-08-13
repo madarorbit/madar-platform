@@ -1,6 +1,6 @@
 import ActionFeedback from "@/components/business/ActionFeedback";
 import { createBusinessSupplier } from "@/app/actions/business";
-import { businessMoney, requireBusinessWorkspace } from "@/src/lib/business";
+import { businessMoney, requireNativeBusinessWorkspace } from "@/src/lib/business";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 import { Badge, ButtonLink } from "@/components/ui/Enterprise";
 import { WorkspaceDrawer, WorkspaceModule, WorkspaceModuleHeader, WorkspaceRecordLink, WorkspaceToolbar } from "@/components/workspace/WorkspaceModule";
@@ -10,7 +10,7 @@ export const metadata = { title: "الموردون | مَدار" };
 type Supplier = { id: string; name: string; contact_name: string | null; phone: string | null; email: string | null; address: string | null; balance_due: number; is_active: boolean; notes: string | null };
 
 export default async function SuppliersPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string; q?: string; panel?: string }> }) {
-  const { workspace } = await requireBusinessWorkspace();
+  const { workspace } = await requireNativeBusinessWorkspace("suppliers");
   const params = await searchParams;
   const suppliers = (await supabaseFetch(`/rest/v1/business_suppliers?organization_id=eq.${encodeURIComponent(workspace.id)}&select=*&order=created_at.desc`)) as Supplier[];
   const query = (params.q || "").trim().toLocaleLowerCase("ar");

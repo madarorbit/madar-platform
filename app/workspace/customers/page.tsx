@@ -1,6 +1,6 @@
 import ActionFeedback from "@/components/business/ActionFeedback";
 import { createBusinessCustomer } from "@/app/actions/business";
-import { businessMoney, requireBusinessWorkspace } from "@/src/lib/business";
+import { businessMoney, requireNativeBusinessWorkspace } from "@/src/lib/business";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 import { Badge, ButtonLink } from "@/components/ui/Enterprise";
 import { WorkspaceDrawer, WorkspaceModule, WorkspaceModuleHeader, WorkspaceRecordLink, WorkspaceToolbar } from "@/components/workspace/WorkspaceModule";
@@ -11,7 +11,7 @@ const labels: Record<string, string> = { new: "جديد", active: "نشط", vip:
 type Customer = { id: string; name: string; phone: string | null; email: string | null; address: string | null; status: string; total_spent: number; last_order_at: string | null; notes: string | null };
 
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string; q?: string; panel?: string }> }) {
-  const { workspace } = await requireBusinessWorkspace();
+  const { workspace } = await requireNativeBusinessWorkspace("customers");
   const params = await searchParams;
   const customers = (await supabaseFetch(`/rest/v1/business_customers?organization_id=eq.${encodeURIComponent(workspace.id)}&select=*&order=created_at.desc`)) as Customer[];
   const query = (params.q || "").trim().toLocaleLowerCase("ar");

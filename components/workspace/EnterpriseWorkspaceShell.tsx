@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import MadarGlobalShell from "@/components/shell/MadarGlobalShell";
 import {
   workspaceMobileNavigation,
@@ -29,6 +30,8 @@ const routesWithNativeHeaders = [
   "/workspace/products",
   "/workspace/customers",
   "/workspace/suppliers",
+  "/workspace/connect",
+  "/workspace/data",
   "/workspace/orby",
 ];
 
@@ -43,6 +46,7 @@ export default function EnterpriseWorkspaceShell({
   specializationName,
   enabledModules,
   operatingMode,
+  setupStatus,
   initialCompact,
   identity,
   serviceOptions,
@@ -57,6 +61,7 @@ export default function EnterpriseWorkspaceShell({
   specializationName: string;
   enabledModules: string[];
   operatingMode: OperatingMode;
+  setupStatus: "not_started" | "in_progress" | "ready" | "blocked";
   initialCompact: boolean;
   identity: ShellIdentity;
   serviceOptions: ShellServiceOption[];
@@ -89,8 +94,22 @@ export default function EnterpriseWorkspaceShell({
       nativeHeaderRoutes={routesWithNativeHeaders}
       moduleContext
       footerNote={`${currency} · بيانات المساحة معزولة`}
+      alert={setupStatus !== "ready" ? (
+        <div className={`md-shell-status-alert ${setupStatus === "blocked" ? "is-danger" : ""}`} role="status">
+          <span>{setupStatus === "blocked"
+            ? "إعداد مساحة العمل متوقف ويحتاج مراجعة. افتح إعدادات النشاط لمعرفة الخطوة التالية."
+            : operatingMode === "CONNECTED_EXTERNAL"
+              ? "ربط النظام لم يكتمل بعد. ابدأ من مركز الربط ثم نفّذ أول مزامنة."
+              : "إعداد النشاط غير مكتمل. أكمل البيانات الأساسية قبل الاعتماد على التقارير."}</span>
+          <Link href={operatingMode === "CONNECTED_EXTERNAL" ? "/workspace/connect" : "/workspace/setup"} className="md-button md-button-ghost md-button-sm">
+            {operatingMode === "CONNECTED_EXTERNAL" ? "فتح مركز الربط" : "استكمال الإعداد"}
+          </Link>
+        </div>
+      ) : null}
     >
-      {children}
+      <div className={`md-service-experience ${operatingMode === "CONNECTED_EXTERNAL" ? "md-service-connected" : "md-service-native"}`}>
+        {children}
+      </div>
     </MadarGlobalShell>
   );
 }

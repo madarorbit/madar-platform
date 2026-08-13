@@ -11,6 +11,10 @@ import {
   requestConnector,
   setConnectionPaused,
 } from "@/app/actions/v2-operations";
+import { Badge, ButtonLink, EmptyState, StatusBadge } from "@/components/ui/Enterprise";
+import { WorkspaceModule, WorkspaceModuleHeader } from "@/components/workspace/WorkspaceModule";
+import { formatDateTime } from "@/src/lib/format";
+import { connectionStatusLabel, connectionStatusTone } from "@/src/lib/services/experience";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "مركز الربط | مَدار Connect" };
@@ -50,18 +54,24 @@ export default async function ConnectPage() {
       `/rest/v1/integration_inbound_endpoints?organization_id=eq.${id}&is_active=eq.true&select=id,endpoint_key,connection_id,channel,auth_mode,last_received_at,created_at&order=created_at.desc`,
     ).catch(() => []),
   ]);
+  const connectedMode = workspace.operating_mode === "CONNECTED_EXTERNAL";
+  const latestSuccess = connections.map((item: { last_success_at: string | null }) => item.last_success_at).filter((value: string | null): value is string => Boolean(value)).sort().at(-1) || null;
+  const openIssues = health.reduce((total: number, item: { open_issues?: number }) => total + Number(item.open_issues || 0), 0);
   return (
-    <main className="mx-auto max-w-7xl p-5 py-8">
-      <header>
-        <p className="font-bold text-emerald-300">MADAR Connect</p>
-        <h1 className="mt-2 text-4xl font-black">
-          اربط نظامك خلال خطوات واضحة
-        </h1>
-        <p className="mt-3 max-w-3xl leading-8 text-slate-300">
-          اختيار الموصل ← إدخال بياناته المشفرة ← اختبار الاتصال ← اكتشاف المخطط
-          ← معاينة المطابقة ← الموافقة ← المزامنة الأولى ← مراقبة الصحة.
-        </p>
-      </header>
+    <WorkspaceModule>
+      <WorkspaceModuleHeader
+        eyebrow={connectedMode ? "ربط تجارة قائمة" : "الربط والأتمتة"}
+        title="مركز الربط والمزامنة"
+        description="اختيار الموصل، إدخال بياناته المشفرة، اختبار الاتصال، اعتماد المطابقة، ثم مزامنة ومراقبة الصحة دون عرض سجلات تقنية خام."
+        icon="layers"
+        actions={<>{connectedMode ? <ButtonLink href="/workspace/data" variant="secondary">البيانات الواصلة</ButtonLink> : null}<ButtonLink href="/workspace/orby">اسأل ORBY عن الربط</ButtonLink></>}
+      />
+      <section className="md-service-summary-strip" aria-label="ملخص الربط">
+        <div><span>الاتصالات</span><strong>{connections.length.toLocaleString("ar-YE")}</strong></div>
+        <div><span>آخر نجاح</span><strong>{latestSuccess ? formatDateTime(latestSuccess) : "لم تتم مزامنة"}</strong></div>
+        <div><span>المشكلات المفتوحة</span><strong>{openIssues.toLocaleString("ar-YE")}</strong></div>
+        <div><span>نمط الخدمة</span><strong>{connectedMode ? "قراءة وربط خارجي" : "تكامل اختياري"}</strong></div>
+      </section>
       <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {catalog.map(
           (item: {
@@ -72,14 +82,12 @@ export default async function ConnectPage() {
             capabilities: Record<string, boolean>;
           }) => (
             <article key={item.connector_key} className="md-card p-5">
-              <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-200">
-                معتمد
-              </span>
+              <Badge variant="success">موصل معتمد</Badge>
               <h2 className="mt-4 text-xl font-black">{item.display_name}</h2>
-              <p className="mt-2 text-sm leading-7 text-slate-400">
+              <p className="md-muted mt-2 text-sm leading-7">
                 {item.description}
               </p>
-              <p className="mt-3 text-xs text-violet-200">
+              <p className="mt-3 text-xs text-[var(--md-accent-text)]">
                 {(item.channels || []).join(" · ")}
               </p>
             </article>
@@ -208,27 +216,24 @@ export default async function ConnectPage() {
                   >
                     <div>
                       <h3 className="font-black">{connection.name}</h3>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="md-muted mt-1 text-xs md-ltr-data">
                         {connection.connector_key}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs text-slate-500">الحالة</span>
-                      <strong className="block">
-                        {connection.status} · {connection.connection_mode}
-                      </strong>
+                      <span className="md-muted text-xs">الحالة</span>
+                      <StatusBadge status={connectionStatusTone(connection.status)}>{connectionStatusLabel(connection.status)}</StatusBadge>
+                      <strong className="mt-1 block text-xs">{connection.connection_mode === "READ_ONLY" ? "قراءة فقط" : "كتابة محددة"}</strong>
                     </div>
                     <div>
-                      <span className="text-xs text-slate-500">
+                      <span className="md-muted text-xs">
                         الصحة والجودة
                       </span>
-                      <strong className="block">
-                        {snapshot?.status || "unknown"} ·{" "}
-                        {snapshot?.quality_score || 0}%
-                      </strong>
+                      <StatusBadge status={connectionStatusTone(snapshot?.status || "unknown")}>{connectionStatusLabel(snapshot?.status || "unknown")}</StatusBadge>
+                      <strong className="mt-1 block text-xs">جودة {snapshot?.quality_score || 0}%</strong>
                     </div>
                     <div>
-                      <span className="text-xs text-slate-500">
+                      <span className="md-muted text-xs">
                         الطابور والمشكلات
                       </span>
                       <strong className="block">
@@ -237,7 +242,7 @@ export default async function ConnectPage() {
                       </strong>
                     </div>
                     {connection.last_error_message && (
-                      <p className="md:col-span-4 text-sm text-red-200">
+                      <p className="md:col-span-4 text-sm text-[var(--md-danger-text)]">
                         {connection.last_error_message}
                       </p>
                     )}
@@ -246,9 +251,7 @@ export default async function ConnectPage() {
               },
             )
           ) : (
-            <p className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500">
-              لم يُنشأ اتصال بعد.
-            </p>
+            <EmptyState compact title="لم يُنشأ اتصال بعد" description="اختر موصلًا معتمدًا أو اطلب موصلًا للنظام الذي تستخدمه." icon="layers" />
           )}
         </div>
       </section>
@@ -270,12 +273,10 @@ export default async function ConnectPage() {
                   submitLabel="اعتماد المطابقة"
                 >
                   <input type="hidden" name="preview_id" value={mapping.id} />
-                  <pre
-                    className="max-h-48 overflow-auto rounded-xl bg-black/30 p-3 text-xs"
-                    dir="ltr"
-                  >
-                    {JSON.stringify(mapping.proposed_mapping, null, 2)}
-                  </pre>
+                  <details className="rounded-xl border border-[var(--md-border-subtle)] p-3">
+                    <summary className="cursor-pointer text-sm font-bold">عرض تفاصيل المطابقة التقنية</summary>
+                    <pre className="mt-3 max-h-48 overflow-auto rounded-xl bg-[var(--md-surface-sunken)] p-3 text-xs" dir="ltr">{JSON.stringify(mapping.proposed_mapping, null, 2)}</pre>
+                  </details>
                 </V2ActionForm>
               ),
             )}
@@ -328,7 +329,7 @@ export default async function ConnectPage() {
                   <p className="mt-2 break-all font-mono text-xs" dir="ltr">
                     /api/integrations/inbound/{endpoint.endpoint_key}
                   </p>
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="md-muted mt-2 text-xs">
                     آخر استقبال:{" "}
                     {endpoint.last_received_at
                       ? new Date(endpoint.last_received_at).toLocaleString(
@@ -354,10 +355,12 @@ export default async function ConnectPage() {
                 expires_at: string;
               }) => (
                 <article key={preview.id} className="md-card p-5">
-                  <pre className="overflow-auto text-xs" dir="ltr">
-                    {JSON.stringify(preview.entity_counts, null, 2)}
-                  </pre>
-                  <p className="mt-3 text-xs text-slate-500">
+                  <strong>معاينة جاهزة للمراجعة قبل الاعتماد</strong>
+                  <details className="mt-3 rounded-xl border border-[var(--md-border-subtle)] p-3">
+                    <summary className="cursor-pointer text-sm font-bold">أعداد السجلات حسب النوع</summary>
+                    <pre className="mt-3 overflow-auto text-xs" dir="ltr">{JSON.stringify(preview.entity_counts, null, 2)}</pre>
+                  </details>
+                  <p className="md-muted mt-3 text-xs">
                     صالح حتى{" "}
                     {new Date(preview.expires_at).toLocaleString("ar-YE")}
                   </p>
@@ -385,13 +388,13 @@ export default async function ConnectPage() {
                   <strong>
                     {request.vendor_name} · {request.system_name}
                   </strong>
-                  <span>{request.status}</span>
+                  <StatusBadge status={connectionStatusTone(request.status)}>{connectionStatusLabel(request.status)}</StatusBadge>
                 </article>
               ),
             )}
           </div>
         </section>
       )}
-    </main>
+    </WorkspaceModule>
   );
 }

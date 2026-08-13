@@ -1,6 +1,6 @@
 import V2ActionForm from '@/components/v2/V2ActionForm';
 import {createCommercePurchaseOrder,receiveCommercePurchase,recordCommerceSalesReturn} from '@/app/actions/v2-operations';
-import {businessMoney,requireBusinessWorkspace} from '@/src/lib/business';
+import {businessMoney,requireNativeBusinessWorkspace} from '@/src/lib/business';
 import {supabaseFetch} from '@/src/lib/supabase/server';
 
 export const dynamic='force-dynamic';
@@ -8,7 +8,7 @@ export const metadata={title:'المشتريات والاستلام | مَدار
 const field='field w-full rounded-xl p-3';
 
 export default async function ProcurementPage(){
- const{workspace,sector}=await requireBusinessWorkspace();if(sector.extension!=='commerce')return <main className="mx-auto max-w-3xl p-8"><h1 className="text-3xl font-black">هذه الوحدة مخصصة للأنشطة التجارية</h1></main>;
+ const{workspace,sector}=await requireNativeBusinessWorkspace('procurement');if(sector.extension!=='commerce')return <main className="mx-auto max-w-3xl p-8"><h1 className="text-3xl font-black">هذه الوحدة مخصصة للأنشطة التجارية</h1></main>;
  const id=encodeURIComponent(workspace.id),[products,suppliers,orders,orderItems,receipts,sales,saleItems,returns]=await Promise.all([
   supabaseFetch(`/rest/v1/business_products?organization_id=eq.${id}&is_active=eq.true&select=id,name,sku,cost,stock_quantity&order=name`),
   supabaseFetch(`/rest/v1/business_suppliers?organization_id=eq.${id}&is_active=eq.true&select=id,name&order=name`),

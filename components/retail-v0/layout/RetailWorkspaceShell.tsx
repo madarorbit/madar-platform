@@ -66,7 +66,7 @@ export default function RetailWorkspaceShell({
         </div>
       ) : null}
     >
-      {children}
+      <div className="md-service-experience md-service-retail">{children}</div>
     </MadarGlobalShell>
   );
 }

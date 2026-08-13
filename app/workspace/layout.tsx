@@ -22,6 +22,7 @@ export default async function WorkspaceLayout({ children }: { children: ReactNod
       specializationName={sector.specializationName}
       enabledModules={sector.enabledModules}
       operatingMode={workspace.operating_mode}
+      setupStatus={workspace.setup_status}
       initialCompact={Boolean(workspace.navigation_state.compact)}
       identity={shellIdentity}
       serviceOptions={serviceOptions}

@@ -52,6 +52,15 @@ const automation: WorkspaceNavigationItem[] = [
   { key: "tasks", href: "/workspace/tasks", label: "المهام وسير العمل", icon: "check", description: "المهام والمتابعة والتنفيذ", keywords: ["مهمة", "Workflow"] },
 ];
 
+const connectedData: WorkspaceNavigationItem = {
+  key: "connected-data",
+  href: "/workspace/data",
+  label: "البيانات الواصلة",
+  icon: "layers",
+  description: "سجلات النظام الخارجي بعد التوحيد داخل مَدار",
+  keywords: ["بيانات", "سجلات", "UDM", "مزامنة"],
+};
+
 const management: WorkspaceNavigationItem[] = [
   { key: "permissions", href: "/workspace/permissions", label: "الفريق والصلاحيات", icon: "shield", description: "الأعضاء وحدود الوصول", keywords: ["فريق", "أدوار"] },
   { key: "settings", href: "/workspace/setup", label: "إعدادات النشاط", icon: "settings", description: "التخصص والمصدر والإعداد", keywords: ["إعدادات", "نشاط"] },
@@ -67,7 +76,7 @@ const account: WorkspaceNavigationItem[] = [
 ];
 
 const alwaysEnabled = new Set([
-  "dashboard", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "account", "support",
+  "dashboard", "orby", "settings", "activity", "account", "support", "connected-data",
 ]);
 
 export function workspaceNavigationGroups(
@@ -75,14 +84,14 @@ export function workspaceNavigationGroups(
   enabledKeys?: readonly string[],
   operatingMode: OperatingMode = "MADAR_NATIVE",
 ): WorkspaceNavigationGroup[] {
-  const enabled = enabledKeys?.length ? new Set(enabledKeys) : null;
-  const filter = (items: WorkspaceNavigationItem[]) =>
-    enabled ? items.filter((item) => alwaysEnabled.has(item.key) || enabled.has(item.key)) : items;
+  const enabled = enabledKeys ? new Set(enabledKeys) : null;
   const connected = operatingMode === "CONNECTED_EXTERNAL";
+  const filter = (items: WorkspaceNavigationItem[]) =>
+    enabled ? items.filter((item) => alwaysEnabled.has(item.key) || enabled.has(item.key) || (connected && item.key === "connect")) : items;
   const managementItems = connected ? management.filter((item) => item.key !== "activity") : management;
   return [
     { key: "overview", label: "نظرة عامة", items: filter(connected ? connectedOverview : overview) },
-    { key: "operations", label: connected ? "البيانات الواصلة" : "التشغيل", items: filter(operations[extension]) },
+    { key: "operations", label: connected ? "البيانات" : "التشغيل", items: connected ? [connectedData] : filter(operations[extension]) },
     ...(connected
       ? [{ key: "monitoring" as const, label: "المراقبة والتقارير", items: filter(connectedMonitoring) }, { key: "automation" as const, label: "المهام", items: filter(automation.filter((item) => item.key === "tasks")) }]
       : [{ key: "automation" as const, label: "الربط والأتمتة", items: filter(automation) }]),
@@ -106,7 +115,7 @@ export function workspaceMobileNavigation(
 ) {
   const items = workspaceNavigation(extension, enabledKeys, operatingMode);
   const operationKey = extension === "food_service" ? "restaurant" : extension === "hospitality" ? "hotel" : "sales";
-  return ["dashboard", operatingMode === "CONNECTED_EXTERNAL" ? "connect" : operationKey, "orby", "analytics"]
+  return ["dashboard", operatingMode === "CONNECTED_EXTERNAL" ? "connect" : operationKey, "orby", operatingMode === "CONNECTED_EXTERNAL" ? "connected-data" : "analytics"]
     .map((key) => items.find((item) => item.key === key))
     .filter(Boolean) as WorkspaceNavigationItem[];
 }

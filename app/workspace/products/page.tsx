@@ -1,6 +1,6 @@
 import ActionFeedback from "@/components/business/ActionFeedback";
 import { createBusinessProduct } from "@/app/actions/business";
-import { businessMoney, requireBusinessWorkspace } from "@/src/lib/business";
+import { businessMoney, requireNativeBusinessWorkspace } from "@/src/lib/business";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 import { Badge, ButtonLink } from "@/components/ui/Enterprise";
 import { WorkspaceDrawer, WorkspaceModule, WorkspaceModuleHeader, WorkspaceRecordLink, WorkspaceToolbar } from "@/components/workspace/WorkspaceModule";
@@ -14,7 +14,7 @@ type Product = {
 };
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string; q?: string; panel?: string }> }) {
-  const { workspace } = await requireBusinessWorkspace();
+  const { workspace } = await requireNativeBusinessWorkspace("products");
   const params = await searchParams;
   const products = (await supabaseFetch(`/rest/v1/business_products?organization_id=eq.${encodeURIComponent(workspace.id)}&select=*&order=created_at.desc`)) as Product[];
   const query = (params.q || "").trim().toLocaleLowerCase("ar");

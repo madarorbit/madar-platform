@@ -8,7 +8,7 @@ import {
   postHotelFolioCharge,
   updateHousekeepingTask,
 } from "@/app/actions/v2-operations";
-import { businessMoney, requireBusinessWorkspace } from "@/src/lib/business";
+import { businessMoney, requireNativeBusinessWorkspace } from "@/src/lib/business";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export const metadata = { title: "تشغيل الفندق | مَدار" };
 const field = "field w-full rounded-xl p-3";
 
 export default async function HotelPage() {
-  const { workspace, sector } = await requireBusinessWorkspace();
+  const { workspace, sector } = await requireNativeBusinessWorkspace("hotel");
   if (sector.extension !== "hospitality")
     return (
       <main className="mx-auto max-w-3xl p-8">

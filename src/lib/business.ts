@@ -227,6 +227,13 @@ export function requireBusinessWorkspace(
     : getDefaultBusinessWorkspace();
 }
 
+export async function requireNativeBusinessWorkspace(requiredModule?: string) {
+  const context = await requireBusinessWorkspace();
+  if (context.workspace.operating_mode === "CONNECTED_EXTERNAL") redirect("/workspace/data");
+  if (requiredModule && !context.sector.enabledModules.includes(requiredModule)) redirect("/workspace?module=unavailable");
+  return context;
+}
+
 export async function requirePersonalAccount() {
   const shellIdentity = await getOptionalShellIdentity();
   if (!shellIdentity) redirect("/login?next=/account");
