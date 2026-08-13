@@ -44,13 +44,15 @@
 | `/account` | حالة الحساب والإجراءات والتحديثات | Avatar/Login → خدمة/ORBY/قسم | Account layer | أُعيد ترتيب أولوياته |
 | `/account/services` | ملكية الخدمة وحالتها والإجراء | Home/Nav → open/setup/store | Account | Canonical جديد |
 | `/account/subscriptions` | الخطط والحالات والتواريخ | Nav/Services → إجراء الحالة | Account | Canonical جديد |
+| `/account/payments` | سجل دفعات الخدمات والاشتراكات والمتجر | Nav/Account → مصدر الدفعة | Account | Canonical في المرحلة الرابعة |
+| `/account/orby` | خطة ORBY والاستخدام وPlus | Account/Nav → ORBY/Upgrade | Account | Canonical في المرحلة الرابعة |
 | `/account/profile` | بيانات المستخدم | Account menu → Account | Account | يبقى كقسم |
 | `/account/security` | البريد وكلمة المرور والجلسة | Settings nav → Login عند الخروج | Account | قسم جديد؛ لا يغيّر Auth core |
 | `/account/appearance` | Light/Dark/System | Account menu/nav → Account | Account | قسم جديد |
 | `/account/notifications` | تاريخ الأحداث المهمة | Top bar/Nav → الوجهة المرتبطة | Account | يبقى، بلا Shell عام مكرر |
 | `/account/orders`, `/account/orders/[id]` | طلبات الدفع والمراجعة | Commerce/Account → Order/Library | Account | تبقى تحت Account shell |
 | `/account/purchases` | المكتبة والتنزيل | Commerce/Account → Download | Account | تبقى؛ الاسم المرئي «مكتبتي» |
-| `/account/privacy`, `/account/support`, `/account/business/*` | إعدادات أقل تكرارًا | Settings nav → Account | Account | تبقى؛ تحتاج ترحيل بصري لاحق |
+| `/account/privacy`, `/account/support`, `/account/business/*` | إعدادات أقل تكرارًا | Settings nav → Account | Account | Privacy/Support رُحّلا في المرحلة الرابعة؛ Business ضمن الخدمات لاحقًا |
 | `/account/setup`, `/account/subscription`, `/onboarding` | مداخل Legacy متداخلة | روابط محفوظة → Canonical | Legacy | Redirect ولا تُحذف |
 
 ### SERVICE
@@ -231,8 +233,8 @@ Native لا يعيد إحياء أنظمة Legacy ولا يعرض modules غير
 ## 12. Account IA
 
 - مَدار: الرئيسية، خدماتي، ORBY.
-- المتجر والمشتريات: المتجر، طلباتي، مكتبتي.
-- الحساب والإعدادات: الملف الشخصي، الحساب والأمان، الاشتراكات، الإشعارات، المظهر واللغة، الخصوصية، الدعم.
+- المتجر والمشتريات: المتجر، طلباتي، مدفوعاتي، مكتبتي.
+- الحساب والإعدادات: الملف الشخصي، الحساب والأمان، الاشتراكات، ORBY والخطة، الإشعارات، المظهر واللغة، الخصوصية، الدعم.
 - Desktop = section sidebar. Mobile = primary bottom nav + قائمة الأقسام؛ لا scrolling في صفحة إعداد واحدة.
 
 ## 13. Commerce وSubscriptions

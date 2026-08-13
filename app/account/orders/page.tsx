@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { AccountPage, AccountPageHeader } from "@/components/account/AccountPage";
+import { ButtonLink, EmptyState } from "@/components/ui/Enterprise";
 import { requireUser } from "@/src/lib/auth";
-import { money, orderStatus, paymentStatus } from "@/src/lib/order-status";
+import { formatCurrency, formatDate } from "@/src/lib/format";
+import { orderStatus, paymentStatus } from "@/src/lib/order-status";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -15,9 +17,9 @@ export default async function OrdersPage() {
   return (
     <AccountPage>
       <AccountPageHeader title="طلباتي" description="من إنشاء الطلب إلى إثبات الدفع والمراجعة والتسليم في مسار واحد." />
-      {!orders?.length ? <div className="md-empty"><div><h2 className="text-xl font-black">لا توجد طلبات بعد</h2><p className="mt-2 text-slate-400">ابدأ من المتجر، ثم ستظهر هنا حالة الدفع والتنفيذ.</p><Link href="/store" className="md-button md-button-primary mt-5">استعراض المتجر</Link></div></div> : (
+      {!orders?.length ? <EmptyState title="لا توجد طلبات بعد" description="ابدأ من المتجر، ثم ستظهر هنا حالة الدفع والتنفيذ." icon="document" action={<ButtonLink href="/store">استعراض المتجر</ButtonLink>} /> : (
         <div className="grid gap-3">
-          {orders.map((order) => <Link href={`/account/orders/${order.id}`} key={order.id} className="md-order-row"><div><span>رقم الطلب</span><strong dir="ltr">{order.order_number}</strong></div><div><span>الحالة</span><strong>{orderStatus[order.status] || order.status}</strong></div><div><span>الدفع</span><strong>{paymentStatus[order.payment_status] || order.payment_status}</strong></div><div><span>التاريخ</span><strong>{new Date(order.created_at).toLocaleDateString("ar-YE")}</strong></div><b>{money(order.total, order.currency)}</b></Link>)}
+          {orders.map((order) => <Link href={`/account/orders/${order.id}`} key={order.id} className="md-order-row"><div><span>رقم الطلب</span><strong dir="ltr">{order.order_number}</strong></div><div><span>الحالة</span><strong>{orderStatus[order.status] || order.status}</strong></div><div><span>الدفع</span><strong>{paymentStatus[order.payment_status] || order.payment_status}</strong></div><div><span>التاريخ</span><strong>{formatDate(order.created_at)}</strong></div><b>{formatCurrency(order.total, order.currency)}</b></Link>)}
         </div>
       )}
     </AccountPage>

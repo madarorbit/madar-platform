@@ -1,90 +1,42 @@
 "use client";
-import { useActionState } from "react";
-import Image from "next/image";
-import { updateProfile } from "@/app/actions/auth";
-import { Icon } from "@/components/ui/Icons";
 
-export default function ProfileForm({
-  fullName,
-  phone,
-  hasAvatar,
-}: {
-  fullName: string;
-  phone: string;
-  hasAvatar: boolean;
-}) {
-  const [state, action, pending] = useActionState<
-    { success?: string; error?: string },
-    FormData
-  >(updateProfile, {});
-  return (
-    <form
-      action={action}
-      encType="multipart/form-data"
-      className="space-y-5 rounded-3xl border border-white/10 bg-white/[.04] p-6"
-    >
-      <h1 className="text-3xl font-bold">الملف الشخصي</h1>
-      <div className="flex items-center gap-4">
-        {hasAvatar ? (
-          <Image
-            src="/account/avatar"
-            alt="صورة حسابك"
-            width={80}
-            height={80}
-            unoptimized
-            className="h-20 w-20 rounded-full border-2 border-[#70E4D4] object-cover"
-          />
-        ) : (
-          <div className="grid h-20 w-20 place-items-center rounded-full bg-white/10 text-violet-100">
-            <Icon name="user" className="h-8 w-8" />
-          </div>
-        )}
-        <div>
-          <strong>صورة الحساب</strong>
-          <p className="text-sm text-slate-400">
-            JPEG أو PNG أو WebP — حتى 5MB
-          </p>
-        </div>
+import Image from "next/image";
+import { useActionState, useEffect, useState } from "react";
+import { removeProfileAvatar, updateProfile } from "@/app/actions/auth";
+import { Avatar, Button, Field, Input, Notice } from "@/components/ui/Enterprise";
+
+type ActionState = { success?: string; error?: string };
+
+export default function ProfileForm({ fullName, phone, hasAvatar }: { fullName: string; phone: string; hasAvatar: boolean }) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(updateProfile, {});
+  const [removeState, removeAction, removing] = useActionState<ActionState, FormData>(removeProfileAvatar, {});
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+
+  return <section className="md-account-section md-profile-editor">
+    <div className="md-profile-avatar-row">
+      <div className="md-profile-avatar-preview">
+        {preview ? <span className="md-avatar md-avatar-lg"><Image src={preview} alt="معاينة صورة الحساب الجديدة" fill sizes="64px" unoptimized /></span> : <Avatar src={hasAvatar ? "/account/avatar" : null} alt="صورة حسابك" size="lg" />}
       </div>
-      <label className="block">
-        تغيير صورة الحساب
-        <input
-          type="file"
-          name="avatar"
-          accept="image/jpeg,image/png,image/webp"
-          className="mt-2 block w-full rounded-xl border border-white/10 p-3 text-white"
-        />
-      </label>
-      <label className="block">
-        الاسم الكامل
-        <input
-          required
-          minLength={2}
-          name="full_name"
-          defaultValue={fullName}
-          className="field mt-1 w-full rounded-xl p-3"
-        />
-      </label>
-      <label className="block">
-        رقم الهاتف
-        <input
-          name="phone"
-          defaultValue={phone}
-          className="field mt-1 w-full rounded-xl p-3"
-        />
-      </label>
-      <button
-        disabled={pending}
-        className="rounded-xl bg-[#00C292] px-5 py-3 font-bold text-black"
-      >
-        {pending ? "جارٍ الحفظ…" : "حفظ"}
-      </button>
-      {state.error && (
-        <p role="alert" className="text-red-300">
-          {state.error}
-        </p>
-      )}
-      {state.success && <p className="text-emerald-300">{state.success}</p>}
+      <div className="min-w-0 flex-1"><h2>صورة الحساب</h2><p className="md-type-body-sm md-muted">JPEG أو PNG أو WebP، حتى 5MB. تظهر الصورة نفسها في الشريط العلوي وكل طبقات مَدار.</p></div>
+      {hasAvatar ? <form action={removeAction}><Button type="submit" variant="ghost" size="sm" loading={removing}>إزالة الصورة</Button></form> : null}
+    </div>
+    {removeState.error ? <Notice title={removeState.error} variant="danger" /> : removeState.success ? <Notice title={removeState.success} variant="success" /> : null}
+
+    <form action={action} encType="multipart/form-data" className="md-profile-form">
+      <Field label="استبدال صورة الحساب" help="اترك الحقل فارغًا للإبقاء على الصورة الحالية.">
+        <Input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+          const file = event.target.files?.[0];
+          setPreview((current) => { if (current) URL.revokeObjectURL(current); return file ? URL.createObjectURL(file) : null; });
+        }} />
+      </Field>
+      <div className="md-profile-fields">
+        <Field label="الاسم الكامل"><Input required minLength={2} maxLength={120} name="full_name" defaultValue={fullName} autoComplete="name" /></Field>
+        <Field label="رقم الهاتف" help="اختياري، ويُستخدم للتواصل المرتبط بالخدمات فقط."><Input name="phone" defaultValue={phone} autoComplete="tel" dir="ltr" /></Field>
+      </div>
+      {state.error ? <Notice title={state.error} variant="danger" /> : state.success ? <Notice title={state.success} variant="success" /> : null}
+      <div className="md-form-actions"><Button type="submit" loading={pending}>حفظ التغييرات</Button></div>
     </form>
-  );
+  </section>;
 }

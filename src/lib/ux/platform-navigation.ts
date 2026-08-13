@@ -31,6 +31,7 @@ export const accountNavigationGroups: PlatformNavigationGroup[] = [
     items: [
       { key: "store", href: "/store", label: "المتجر", description: "اكتشاف المنتجات والخدمات", icon: "store" },
       { key: "orders", href: "/account/orders", label: "طلباتي", description: "الدفع والمراجعة والتنفيذ", icon: "document" },
+      { key: "payments", href: "/account/payments", label: "مدفوعاتي", description: "دفعات الخدمات والاشتراكات والمتجر", icon: "document" },
       { key: "library", href: "/account/purchases", label: "مكتبتي", description: "المشتريات والملفات المتاحة", icon: "briefcase" },
     ],
   },
@@ -41,6 +42,7 @@ export const accountNavigationGroups: PlatformNavigationGroup[] = [
       { key: "profile", href: "/account/profile", label: "الملف الشخصي", description: "الاسم والصورة وبيانات التواصل", icon: "user" },
       { key: "security", href: "/account/security", label: "الحساب والأمان", description: "البريد وكلمة المرور والجلسة", icon: "shield" },
       { key: "subscriptions", href: "/account/subscriptions", label: "الاشتراكات", description: "الخطط والتواريخ والتجديد", icon: "clock" },
+      { key: "account-orby", href: "/account/orby", label: "ORBY والخطة", description: "الخطة والاستخدام وPlus", icon: "sparkles", orby: true },
       { key: "notifications", href: "/account/notifications", label: "الإشعارات", description: "الأحداث التي تستحق المتابعة", icon: "bell" },
       { key: "appearance", href: "/account/appearance", label: "المظهر واللغة", description: "فاتح أو داكن أو حسب النظام", icon: "settings" },
       { key: "privacy", href: "/account/privacy", label: "الخصوصية والبيانات", description: "التصدير وطلبات البيانات", icon: "shield" },
@@ -66,6 +68,7 @@ export const platformLayerNavigation: PlatformNavigationGroup[] = [
       accountNavigationGroups[1].items[0],
       accountNavigationGroups[1].items[1],
       accountNavigationGroups[1].items[2],
+      accountNavigationGroups[1].items[3],
     ],
   },
   {
@@ -76,6 +79,7 @@ export const platformLayerNavigation: PlatformNavigationGroup[] = [
       accountNavigationGroups[2].items[2],
       accountNavigationGroups[2].items[3],
       accountNavigationGroups[2].items[4],
+      accountNavigationGroups[2].items[5],
     ],
   },
 ];

@@ -1,238 +1,44 @@
-import Link from "next/link";
 import ActionFeedback from "@/components/business/ActionFeedback";
 import { submitSupportFeedback } from "@/app/actions/support";
-import { requireUser } from "@/src/lib/auth";
+import { AccountPage, AccountPageHeader } from "@/components/account/AccountPage";
+import { Badge, Button, EmptyState, Field, Input, Select, Textarea } from "@/components/ui/Enterprise";
+import { formatDateTime } from "@/src/lib/format";
+import { getOptionalShellIdentity } from "@/src/lib/shell/server";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "الدعم والملاحظات | مَدار" };
-const typeLabels: { [key: string]: string } = {
-  bug: "مشكلة",
-  suggestion: "اقتراح",
-  question: "سؤال",
-  rating: "تقييم",
-};
-const statusLabels: { [key: string]: string } = {
-  new: "جديد",
-  reviewing: "قيد المراجعة",
-  planned: "مخطط له",
-  resolved: "تم الحل",
-  closed: "مغلق",
-};
-export default async function SupportPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ success?: string; error?: string }>;
-}) {
-  const user = await requireUser(),
-    feedback = await searchParams;
-  const memberships = await supabaseFetch(
-      `/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=organizations(id,name,type,status)`,
-    ),
-    business = memberships?.find(
-      (item: { organizations?: { type?: string; status?: string } }) =>
-        item.organizations?.type !== "STUDENT" &&
-        item.organizations?.status === "active",
-    )?.organizations;
-  const items = await supabaseFetch(
-    `/rest/v1/platform_feedback?user_id=eq.${encodeURIComponent(user.id)}&select=id,feedback_type,severity,title,message,page_path,rating,status,admin_note,attachment_name,created_at,resolved_at&order=created_at.desc&limit=100`,
-  );
-  return (
-    <main className="mx-auto max-w-6xl p-6 py-12">
-      <div className="flex flex-wrap items-end justify-between gap-5">
-        <div>
-          <p className="font-bold text-[#70E4D4]">MADAR SUPPORT</p>
-          <h1 className="mt-2 text-4xl font-black">الدعم والملاحظات</h1>
-          <p className="mt-3 max-w-3xl leading-8 text-slate-300">
-            أرسل مشكلة أو اقتراحًا أو تقييمًا. يظهر البلاغ للإدارة فقط، ويمكنك
-            متابعة حالته من هنا.
-          </p>
-        </div>
-        <Link
-          href="/account"
-          className="rounded-xl border border-white/15 px-4 py-3 font-bold"
-        >
-          العودة إلى حسابي
-        </Link>
-      </div>
-      <div className="mt-6">
-        <ActionFeedback {...feedback} />
-      </div>
-      <section className="mt-8 grid gap-8 lg:grid-cols-[420px_1fr]">
-        <form
-          action={submitSupportFeedback}
-          encType="multipart/form-data"
-          className="grid gap-4 rounded-3xl border border-white/10 bg-white/[.04] p-6"
-        >
-          <input
-            type="hidden"
-            name="organization_id"
-            value={business?.id || ""}
-          />
-          <h2 className="text-2xl font-black">بلاغ جديد</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="grid gap-2 text-sm font-bold">
-              النوع
-              <select name="feedback_type" className="field rounded-xl p-3">
-                <option value="bug">مشكلة</option>
-                <option value="suggestion">اقتراح</option>
-                <option value="question">سؤال</option>
-                <option value="rating">تقييم</option>
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm font-bold">
-              الأهمية
-              <select
-                name="severity"
-                defaultValue="normal"
-                className="field rounded-xl p-3"
-              >
-                <option value="low">منخفضة</option>
-                <option value="normal">عادية</option>
-                <option value="high">عالية</option>
-                <option value="critical">تمنع الاستخدام</option>
-              </select>
-            </label>
-          </div>
-          <label className="grid gap-2 text-sm font-bold">
-            العنوان
-            <input
-              name="title"
-              required
-              minLength={3}
-              maxLength={180}
-              className="field rounded-xl p-3"
-              placeholder="وصف مختصر وواضح"
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-bold">
-            التفاصيل
-            <textarea
-              name="message"
-              required
-              minLength={10}
-              maxLength={5000}
-              rows={7}
-              className="field rounded-xl p-3"
-              placeholder="ما الذي حدث؟ وما الذي كنت تتوقعه؟ اذكر الخطوات إن كانت مشكلة."
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-bold">
-            مسار الصفحة اختياري
-            <input
-              name="page_path"
-              maxLength={500}
-              className="field rounded-xl p-3"
-              placeholder="مثال: /workspace/inventory"
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-bold">
-            التقييم اختياري
-            <select
-              name="rating"
-              defaultValue=""
-              className="field rounded-xl p-3"
-            >
-              <option value="">بدون تقييم</option>
-              {[1, 2, 3, 4, 5].map((value) => (
-                <option key={value} value={value}>
-                  {value} / 5
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-bold">
-            لقطة شاشة أو PDF اختياري
-            <input
-              name="attachment"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
-              className="field rounded-xl p-3 file:ml-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:font-bold file:text-slate-950"
-            />
-          </label>
-          <p className="text-xs leading-6 text-slate-500">
-            لا ترفق كلمات مرور أو أرقام بطاقات أو بيانات شخصية حساسة. الحد
-            الأقصى 10MB.
-          </p>
-          <button className="rounded-xl bg-gradient-to-l from-violet-500 to-emerald-400 p-3 font-black">
-            إرسال البلاغ
-          </button>
-        </form>
-        <article>
-          <h2 className="text-2xl font-black">بلاغاتي</h2>
-          <div className="mt-4 space-y-4">
-            {items?.length ? (
-              items.map(
-                (item: {
-                  id: string;
-                  feedback_type: string;
-                  severity: string;
-                  title: string;
-                  message: string;
-                  page_path: string | null;
-                  rating: number | null;
-                  status: string;
-                  admin_note: string | null;
-                  attachment_name: string | null;
-                  created_at: string;
-                }) => (
-                  <div
-                    key={item.id}
-                    className="rounded-3xl border border-white/10 p-5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <div className="flex gap-2 text-xs">
-                          <span className="rounded-full bg-violet-300/10 px-3 py-1">
-                            {typeLabels[item.feedback_type] ||
-                              item.feedback_type}
-                          </span>
-                          <span className="rounded-full bg-white/10 px-3 py-1">
-                            {statusLabels[item.status] || item.status}
-                          </span>
-                          <span className="rounded-full bg-white/10 px-3 py-1">
-                            {item.severity}
-                          </span>
-                        </div>
-                        <h3 className="mt-3 text-xl font-black">
-                          {item.title}
-                        </h3>
-                      </div>
-                      <time className="text-xs text-slate-500">
-                        {new Date(item.created_at).toLocaleString("ar-YE")}
-                      </time>
-                    </div>
-                    <p className="mt-3 whitespace-pre-wrap leading-7 text-slate-300">
-                      {item.message}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
-                      {item.page_path && <span>{item.page_path}</span>}
-                      {item.rating && <span>التقييم: {item.rating}/5</span>}
-                      {item.attachment_name && (
-                        <span>مرفق: {item.attachment_name}</span>
-                      )}
-                    </div>
-                    {item.admin_note && (
-                      <div className="mt-4 rounded-xl border border-[#70E4D4]/20 bg-[#70E4D4]/5 p-4">
-                        <strong className="text-sm text-[#70E4D4]">
-                          رد الإدارة
-                        </strong>
-                        <p className="mt-2 leading-7 text-slate-300">
-                          {item.admin_note}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ),
-              )
-            ) : (
-              <p className="rounded-3xl border border-dashed border-white/10 p-10 text-center text-slate-500">
-                لم ترسل بلاغًا بعد.
-              </p>
-            )}
-          </div>
-        </article>
+const typeLabels: Record<string, string> = { bug: "مشكلة", suggestion: "اقتراح", question: "سؤال", rating: "تقييم" };
+const statusLabels: Record<string, string> = { new: "جديد", reviewing: "قيد المراجعة", planned: "مخطط له", resolved: "تم الحل", closed: "مغلق" };
+type Feedback = { id: string; feedback_type: string; severity: string; title: string; message: string; page_path: string | null; rating: number | null; status: string; admin_note: string | null; attachment_name: string | null; created_at: string };
+
+export default async function SupportPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
+  const identity = await getOptionalShellIdentity();
+  if (!identity) throw new Error("AUTH_REQUIRED");
+  const feedback = await searchParams;
+  const userId = encodeURIComponent(identity.userId);
+  const [memberships, items] = await Promise.all([
+    supabaseFetch(`/rest/v1/organization_members?user_id=eq.${userId}&select=organizations(id,name,type,status)`).catch(() => []),
+    supabaseFetch(`/rest/v1/platform_feedback?user_id=eq.${userId}&select=id,feedback_type,severity,title,message,page_path,rating,status,admin_note,attachment_name,created_at,resolved_at&order=created_at.desc&limit=100`).catch(() => []),
+  ]);
+  const business = memberships?.find((item: { organizations?: { type?: string; status?: string } }) => item.organizations?.type !== "STUDENT" && item.organizations?.status === "active")?.organizations;
+  const rows = items as Feedback[];
+  return <AccountPage>
+    <AccountPageHeader title="الدعم والملاحظات" description="أرسل مشكلة أو اقتراحًا أو سؤالًا، ثم تابع حالته ورد فريق مَدار من المكان نفسه." />
+    <ActionFeedback {...feedback} />
+    <div className="md-account-support-layout">
+      <section className="md-account-section"><span className="md-eyebrow">تواصل مع الفريق</span><h2>بلاغ جديد</h2><form action={submitSupportFeedback} encType="multipart/form-data" className="md-account-form-stack">
+        <input type="hidden" name="organization_id" value={business?.id || ""} />
+        <div className="md-profile-fields"><Field label="النوع"><Select name="feedback_type"><option value="bug">مشكلة</option><option value="suggestion">اقتراح</option><option value="question">سؤال</option><option value="rating">تقييم</option></Select></Field><Field label="الأهمية"><Select name="severity" defaultValue="normal"><option value="low">منخفضة</option><option value="normal">عادية</option><option value="high">عالية</option><option value="critical">تمنع الاستخدام</option></Select></Field></div>
+        <Field label="العنوان"><Input name="title" required minLength={3} maxLength={180} placeholder="وصف مختصر وواضح" /></Field>
+        <Field label="التفاصيل" help="اذكر ما حدث وما كنت تتوقعه والخطوات إن كانت مشكلة."><Textarea name="message" required minLength={10} maxLength={5000} rows={7} /></Field>
+        <div className="md-profile-fields"><Field label="مسار الصفحة" help="اختياري"><Input name="page_path" maxLength={500} placeholder="/workspace/inventory" dir="ltr" /></Field><Field label="التقييم" help="اختياري"><Select name="rating" defaultValue=""><option value="">بدون تقييم</option>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value} / 5</option>)}</Select></Field></div>
+        <Field label="لقطة شاشة أو PDF" help="اختياري، حتى 10MB. لا ترفق كلمات مرور أو بيانات حساسة."><Input name="attachment" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" /></Field>
+        <Button type="submit">إرسال البلاغ</Button>
+      </form></section>
+      <section className="md-account-section"><div className="md-home-section-heading"><div><span className="md-eyebrow">المتابعة</span><h2>بلاغاتي</h2></div></div>
+        {rows.length ? <div className="md-account-record-list">{rows.map((item) => <article key={item.id} className="md-account-record"><div className="md-account-record-heading"><div><div className="flex flex-wrap gap-2"><Badge variant="brand">{typeLabels[item.feedback_type] || item.feedback_type}</Badge><Badge variant={item.status === "resolved" ? "success" : item.status === "closed" ? "default" : "warning"}>{statusLabels[item.status] || item.status}</Badge><Badge>{item.severity}</Badge></div><h3>{item.title}</h3></div><time dateTime={item.created_at}>{formatDateTime(item.created_at)}</time></div><p className="whitespace-pre-wrap">{item.message}</p><div className="md-account-record-meta">{item.page_path ? <span dir="ltr">{item.page_path}</span> : null}{item.rating ? <span>التقييم: {item.rating}/5</span> : null}{item.attachment_name ? <span>مرفق: {item.attachment_name}</span> : null}</div>{item.admin_note ? <p className="md-account-admin-note"><strong>رد الإدارة:</strong> {item.admin_note}</p> : null}</article>)}</div> : <EmptyState title="لم ترسل بلاغًا بعد" description="بعد الإرسال ستظهر الحالة ورد الفريق هنا." icon="help" compact />}
       </section>
-    </main>
-  );
+    </div>
+  </AccountPage>;
 }

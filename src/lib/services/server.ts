@@ -1,7 +1,8 @@
 import "server-only";
 
-import { requireUser } from "@/src/lib/auth";
-import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
+import { cache } from "react";
+import { supabaseFetch } from "@/src/lib/supabase/server";
+import { getOptionalShellIdentity } from "@/src/lib/shell/server";
 import {
   serviceDefinition,
   services,
@@ -86,8 +87,10 @@ function serviceHref(code: ServiceCode, state: ServiceState, request: RequestRow
   return `/account/services/${code}/setup`;
 }
 
-export async function getAccountServices(): Promise<AccountService[]> {
-  const user = await requireUser();
+export const getAccountServices = cache(async (): Promise<AccountService[]> => {
+  const identity = await getOptionalShellIdentity();
+  if (!identity) throw new Error("AUTH_REQUIRED");
+  const user = identity.user;
   const [planRows, requestRows, subscriptionRows] = await Promise.all([
     supabaseFetch(
       "/rest/v1/subscription_plans?select=id,service_code,name,description,price,currency,billing_months,grace_days,is_active,is_available&order=created_at",
@@ -115,17 +118,19 @@ export async function getAccountServices(): Promise<AccountService[]> {
       subscription,
     };
   });
-}
+});
 
 export async function getServiceSetupContext(code: ServiceCode) {
-  const [profile, accountServices] = await Promise.all([currentProfile(), getAccountServices()]);
+  const [identity, accountServices] = await Promise.all([getOptionalShellIdentity(), getAccountServices()]);
   const service = accountServices.find((item) => item.definition.code === code);
   if (!service) throw new Error("SERVICE_NOT_FOUND");
-  return { profile, service };
+  return { profile: identity?.profile || null, service };
 }
 
 export async function activeServiceSubscription(code: ServiceCode) {
-  const user = await requireUser();
+  const identity = await getOptionalShellIdentity();
+  if (!identity) return null;
+  const user = identity.user;
   const rows = (await supabaseFetch(
     `/rest/v1/workspace_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&service_code=eq.${code}&status=eq.active&activation_state=eq.ACTIVE&ends_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id,user_id,service_code,organization_id,status,activation_state,starts_at,ends_at,grace_ends_at,external_workspace_id,suspension_reason&order=created_at.desc&limit=1`,
   ).catch(() => [])) as ServiceSubscriptionRow[];

@@ -30,6 +30,7 @@ export function AccountMenu({ displayName, hasAvatar, isAdmin }: Pick<GlobalUser
       <Link href="/account"><Icon name="home" />الرئيسية</Link>
       <Link href="/account/services"><Icon name="layers" />خدماتي</Link>
       <Link href="/account/subscriptions"><Icon name="clock" />الاشتراكات</Link>
+      <Link href="/account/payments"><Icon name="document" />المدفوعات</Link>
       <Link href="/account/purchases"><Icon name="briefcase" />مكتبتي</Link>
       <Link href="/account/appearance"><Icon name="settings" />المظهر واللغة</Link>
       {isAdmin ? <Link href="/admin"><Icon name="shield" />إدارة مَدار</Link> : null}

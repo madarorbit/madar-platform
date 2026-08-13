@@ -257,3 +257,31 @@ export async function updateProfile(_previous: unknown, form: FormData) {
     };
   }
 }
+
+export async function removeProfileAvatar(previous: unknown, form: FormData) {
+  void previous;
+  void form;
+  const { currentUser, currentProfile, supabaseFetch, serverToken } = await import("@/src/lib/supabase/server");
+  const user = await currentUser();
+  if (!user) return { error: "يجب تسجيل الدخول." };
+  try {
+    const profile = await currentProfile();
+    if (!profile?.avatar_url) return { success: "يستخدم الحساب الصورة الافتراضية بالفعل." };
+    const { url, key } = supabaseConfig();
+    const token = await serverToken();
+    const storagePath = profile.avatar_url.split("/").map(encodeURIComponent).join("/");
+    const response = await fetch(`${url}/storage/v1/object/avatars/${storagePath}`, {
+      method: "DELETE",
+      headers: { apikey: key, Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!response.ok && response.status !== 404) throw new Error("تعذر حذف صورة الحساب من التخزين.");
+    await supabaseFetch(`/rest/v1/profiles?id=eq.${user.id}`, { method: "PATCH", body: JSON.stringify({ avatar_url: null }) });
+    revalidatePath("/account");
+    revalidatePath("/account/profile");
+    revalidatePath("/");
+    return { success: "تمت إزالة الصورة واستخدام Avatar مَدار الافتراضي." };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "تعذر إزالة صورة الحساب." };
+  }
+}

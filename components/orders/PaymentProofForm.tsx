@@ -1,1 +1,19 @@
-'use client';import{useActionState}from'react';import{submitPaymentProof,type OrderState}from'@/app/actions/orders';const initial:OrderState={};export default function PaymentProofForm({orderId}:{orderId:string}){const[state,action,pending]=useActionState<OrderState,FormData>(submitPaymentProof,initial);return <form action={action} className="space-y-4 rounded-3xl border border-white/10 bg-white/[.04] p-6"><input type="hidden" name="order_id" value={orderId}/><h2 className="text-xl font-black">إرسال بيانات التحويل</h2><label className="block text-sm font-bold">رقم العملية — إلزامي<input required name="payment_reference" minLength={3} maxLength={120} className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950 p-3 text-white" dir="ltr"/></label><label className="block text-sm font-bold">صورة أو PDF للإثبات — اختياري<input name="proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="mt-2 block w-full rounded-xl border border-dashed border-white/20 bg-slate-950 p-4 text-sm text-white"/></label><p className="text-xs leading-6 text-slate-400">يمكن إرسال الطلب برقم العملية فقط. إذا أرفقت سندًا فسيبقى خاصًا.</p>{state.error&&<p role="alert" className="rounded-xl bg-red-500/15 p-3 text-red-200">{state.error}</p>}{state.success&&<p role="status" className="rounded-xl bg-emerald-500/15 p-3 text-emerald-200">{state.success}</p>}<button disabled={pending} className="w-full rounded-xl bg-white px-5 py-3 font-black text-slate-950 disabled:opacity-50">{pending?'جارٍ الإرسال...':'إرسال للمراجعة'}</button></form>}
+"use client";
+
+import { useActionState } from "react";
+import { submitPaymentProof, type OrderState } from "@/app/actions/orders";
+import { Button, Field, Input, Notice } from "@/components/ui/Enterprise";
+
+const initial: OrderState = {};
+
+export default function PaymentProofForm({ orderId }: { orderId: string }) {
+  const [state, action, pending] = useActionState<OrderState, FormData>(submitPaymentProof, initial);
+  return <form action={action} className="md-account-section md-account-form-stack">
+    <input type="hidden" name="order_id" value={orderId} />
+    <div><span className="md-eyebrow">متابعة الدفع</span><h2>إرسال بيانات التحويل</h2></div>
+    <Field label="رقم العملية" help="إلزامي، من 3 إلى 120 حرفًا."><Input required name="payment_reference" minLength={3} maxLength={120} dir="ltr" /></Field>
+    <Field label="صورة أو PDF للإثبات" help="اختياري حتى الحد المعتمد. يبقى المرفق خاصًا بالمراجعة."><Input name="proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" /></Field>
+    {state.error ? <Notice title={state.error} variant="danger" /> : state.success ? <Notice title={state.success} variant="success" /> : null}
+    <Button type="submit" loading={pending} className="w-full">إرسال للمراجعة</Button>
+  </form>;
+}

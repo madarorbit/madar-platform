@@ -20,7 +20,7 @@ export default function ServiceCards({services,compact=false,emptyTitle='لا ت
  if(!services.length)return <EmptyState title={emptyTitle} description={emptyDescription} compact={compact} action={<ButtonLink href={emptyHref}>{emptyAction}</ButtonLink>}/>;
  return <div className={compact?'md-service-grid is-compact':'md-service-grid'}>
   {services.map(service=><Card as="article" key={service.definition.code} className={`md-service-card is-${service.state.toLowerCase()}`}>
-   {!compact?<div className="md-service-card-media"><Image src={service.definition.coverImage} alt={`صورة ${service.definition.name}`} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover"/></div>:null}
+   <div className="md-service-card-media"><Image src={service.definition.coverImage} alt={`صورة ${service.definition.name}`} fill sizes={compact?'96px':'(max-width: 1024px) 100vw, 33vw'} className="object-cover"/></div>
    <div className="md-service-card-body">
     <div className="md-service-card-meta"><span className="md-service-card-icon"><Icon name={service.definition.icon}/></span><StatusBadge status={statusTone[service.state]}>{serviceStateLabels[service.state]}</StatusBadge></div>
     <div><h2 className="md-service-card-title">{compact?service.definition.shortName:service.definition.name}</h2><p className="md-service-card-description">{compact?service.definition.description:service.definition.detail}</p></div>
