@@ -38,6 +38,7 @@ test("mobile is an independent four-destination layer plus More and safe areas",
   ]);
   assert.match(shell, /mobileItems\.slice\(0, 4\)/);
   assert.match(shell, /<span>المزيد<\/span>/);
+  assert.match(css, /\.md-public-mobile-nav\.md-public-mobile-nav-sheet \{ display: block; \}/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
   for (const breakpoint of ["1023px", "767px", "389px", "1440px"])
     assert.ok(css.includes(breakpoint), breakpoint);

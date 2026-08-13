@@ -7,6 +7,7 @@
 }
 .md-layers-trigger,
 .md-public-layer-button { display: grid; flex: none; }
+.md-public-mobile-nav.md-public-mobile-nav-sheet { display: block; }
 
 .md-shell-context { display: grid; gap: var(--md-space-2); }
 .md-context-menu > .md-menu-trigger { width: 100%; }
