@@ -1,8 +1,6 @@
-import {createHash} from 'node:crypto';
 import {NextResponse} from 'next/server';
 import {currentUser,supabaseFetch,SupabaseRequestError} from '@/src/lib/supabase/server';
-import {IntegrationDatabase} from '@/src/lib/integration/platform';
-import {IntegrationError} from '@/src/lib/integration/errors';
+import {reserveOrbyGuestRequest} from '@/src/lib/orby/guest-meter';
 import {
  deterministicGeneralOrbyResponse,deterministicOrbyResponse,orbyModes,orbySystemPrompt,type OrbyContext,type OrbyMode,
 } from '@/src/lib/orby';
@@ -28,9 +26,9 @@ type ConversationScope={id:string;organization_id:string|null;service_code:Servi
 type RetailEvidence={snapshot:AnalyticsSnapshot;customers:Array<{name:string;balance_due:number}>;suppliers:Array<{name:string;balance_due:number}>;workspace:{id:string;name:string;currency:string;timezone:string}};
 
 const scalar=<T,>(value:unknown)=>Array.isArray(value)?value[0] as T:value as T;
+const reserve_orby_guest_request=reserveOrbyGuestRequest;
 const tokenFrom=(request:Request)=>{const header=request.headers.get('authorization')||'';const[scheme,token]=header.split(/\s+/,2);return scheme?.toLowerCase()==='bearer'&&token?token:undefined;};
 const encode=(event:string,data:unknown)=>`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-const guestCookie=(request:Request)=>request.headers.get('cookie')?.split(';').map(item=>item.trim()).find(item=>item.startsWith('madar-orby-guest='))?.slice('madar-orby-guest='.length)||'';
 const normalizedNumbers=(text:string)=>new Set((text.match(/[\d٠-٩۰-۹]+(?:[.,٬٫][\d٠-٩۰-۹]+)*/g)??[]).map(value=>value.replace(/[٬,]/g,'')));
 const answerUsesOnlyEvidence=(answer:string,evidence:unknown)=>{const allowed=normalizedNumbers(JSON.stringify(evidence));return [...normalizedNumbers(answer)].every(value=>allowed.has(value));};
 
@@ -52,28 +50,11 @@ function retailSource(evidence:RetailEvidence):OrbyContextSource{
 function historySource(messages:Array<{role:string;content:string}>):OrbyContextSource{
  return{key:'madar.account-history',priority:100,async load(){return{key:'madar.account-history',title:'سياق المحادثة السابقة للمستخدم',content:JSON.stringify(messages.slice(-24)),priority:100,trusted:false,sensitive:true,metadata:{source:'account-conversation'}};}};
 }
-function rawIntegrationReason(error:unknown){
- if(error instanceof IntegrationError&&error.cause&&typeof error.cause==='object'){
-  const value=error.cause as{message?:unknown};return typeof value.message==='string'?value.message:'';
- }
- return'';
-}
 function usageErrorResponse(error:unknown,authenticated:boolean){
  if(error instanceof Error&&(error.message.includes('ORBY_GUEST_DAILY_LIMIT')||error.message.includes('ORBY_DAILY_LIMIT')))return NextResponse.json({error:authenticated?'وصلت إلى حد أوربي اليومي. يمكنك الترقية إلى ORBY Plus للمتابعة.':'وصلت إلى 5 رسائل اليوم. أنشئ حسابًا للاستمرار مع ORBY.',code:authenticated?'ORBY_DAILY_LIMIT':'ORBY_GUEST_DAILY_LIMIT'},{status:429});
  if(error instanceof SupabaseRequestError&&error.code==='P0001')return NextResponse.json({error:'وصلت إلى حد الاستخدام الحالي أو طبقة الحماية من الإساءة. حاول لاحقًا أو راجع خطتك.',code:'ORBY_USAGE_LIMIT'},{status:429});
  console.error('ORBY usage reservation failed',{name:error instanceof Error?error.name:'unknown'});
  return NextResponse.json({error:'تعذر التحقق من استخدام أوربي الآن.',code:'ORBY_USAGE_UNAVAILABLE'},{status:503});
-}
-async function reserveGuest(request:Request,promptLength:number){
- const existing=guestCookie(request),id=uuidPattern.test(existing)?existing:crypto.randomUUID(),ip=(request.headers.get('x-forwarded-for')||request.headers.get('x-real-ip')||'unknown').split(',')[0].trim(),ua=request.headers.get('user-agent')||'unknown';
- const visitorHash=createHash('sha256').update(`${id}|${ip}|${ua}`).digest('hex');
- try{
-  const usage=await new IntegrationDatabase().rpc<Usage>('reserve_orby_guest_request',{visitor_hash:visitorHash,submitted_characters:promptLength} as never);
-  return{usage,id,isNew:id!==existing};
- }catch(error){
-  if(rawIntegrationReason(error).includes('ORBY_GUEST_DAILY_LIMIT'))throw new Error('ORBY_GUEST_DAILY_LIMIT');
-  throw error;
- }
 }
 async function resolveConversationScope(fetcher:(path:string,init?:RequestInit)=>Promise<unknown>,conversationId:string,userId:string){
  if(!uuidPattern.test(conversationId))return null;
@@ -116,7 +97,7 @@ export async function POST(request:Request){
     if(stored.organization_id){scope=await activeScope(fetcher,stored.organization_id,user.id);if(!scope)return NextResponse.json({error:'الخدمة المرتبطة بهذه المحادثة ليست فعالة حاليًا.'},{status:403});}
    }else if(body.organizationId){scope=await activeScope(fetcher,String(body.organizationId),user.id);if(!scope)return NextResponse.json({error:'لا تملك خدمة فعالة في هذه المساحة.'},{status:403});}
   }else{
-   const reserved=await reserveGuest(request,prompt.length);usage=reserved.usage;guestId=reserved.id;guestIsNew=reserved.isNew;
+   const reserved=await reserve_orby_guest_request(request.headers,prompt.length);usage=reserved.usage;guestId=reserved.id;guestIsNew=reserved.isNew;
   }
  }catch(error){
   return usageErrorResponse(error,Boolean(user));

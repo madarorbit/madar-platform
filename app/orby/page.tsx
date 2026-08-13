@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import OrbyShell from "@/components/orby/OrbyShell";
 import OrbyChat from "@/components/orby/OrbyChat";
 import OrbyConversationSidebar from "@/components/orby/OrbyConversationSidebar";
@@ -9,6 +10,7 @@ import {
 import { supabaseFetch } from "@/src/lib/supabase/server";
 import type { ShellContextDefinition } from "@/src/lib/ux/shell";
 import { isServiceCode } from "@/src/lib/services/catalog";
+import { readOrbyGuestUsage } from "@/src/lib/orby/guest-meter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -35,6 +37,7 @@ export default async function OrbyPage({
   const params = await searchParams;
   const identity = await getOptionalShellIdentity();
   if (!identity) {
+    const guestUsage = await readOrbyGuestUsage(await headers()).catch(() => ({ remaining: 5, daily_limit: 5 }));
     const guestKey = `guest:${String(params.session || "chat").slice(0, 80)}:${params.starter || "chat"}`;
     return (
       <OrbyShell
@@ -52,8 +55,8 @@ export default async function OrbyPage({
           contextLabel="محادثة عامة"
           initialConversationId={null}
           initialMessages={[]}
-          initialRemaining={5}
-          initialLimit={5}
+          initialRemaining={Number(guestUsage.remaining)}
+          initialLimit={Number(guestUsage.daily_limit)}
           tier="guest"
           starter={params.starter}
         />
