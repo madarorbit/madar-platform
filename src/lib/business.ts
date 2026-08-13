@@ -1,10 +1,12 @@
 import "server-only";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/src/lib/auth";
 import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
 import { authorizeOrganizationAction } from "@/src/lib/platform-integrations";
 import type { OperatingMode } from "@/src/lib/v2/account";
 import type { VerticalExtension } from "@/src/lib/v2/verticals";
+import { commercialWorkspaceCookie } from "@/src/lib/workspace-selection";
 
 export type WorkspaceType = "INDIVIDUAL" | "MERCHANT" | "COMPANY";
 export type WorkspaceRecord = {
@@ -77,6 +79,7 @@ export async function requireBusinessWorkspace({
   allowCancelled = false,
 }: RequireBusinessWorkspaceOptions = {}) {
   const user = await requireUser(), profile = await currentProfile();
+  const selectedOrganization = (await cookies()).get(commercialWorkspaceCookie)?.value;
   const [rows, serviceRows] = await Promise.all([
     supabaseFetch(
       `/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name,slug,type,status,currency,operating_mode,source_of_truth,setup_status,navigation_state)`,
@@ -98,7 +101,7 @@ export async function requireBusinessWorkspace({
     if (allowCancelled && subscription.status === "cancelled") return true;
     return allowMissing;
   });
-  const preferred = profile?.default_commercial_organization_id;
+  const preferred = selectedOrganization || profile?.default_commercial_organization_id;
   const candidate =
     memberships.find(
       (row) => organizationOf(row.organizations)?.id === preferred && eligible.some((subscription) => subscription.organization_id === preferred),
