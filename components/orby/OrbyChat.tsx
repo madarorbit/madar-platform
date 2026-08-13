@@ -18,8 +18,6 @@ function Markdown({content}:{content:string}){const chunks=content.split(/```/);
 
 export default function OrbyChat({authenticated,organizationId,serviceCode,initialConversationId,initialMessages,initialRemaining,initialLimit,tier:initialTier,starter}:Props){
  const router=useRouter(),[messages,setMessages]=useState<Message[]>(initialMessages),[conversationId,setConversationId]=useState<string|null>(initialConversationId),[prompt,setPrompt]=useState(starterText(starter)),[remaining,setRemaining]=useState(initialRemaining),[limit,setLimit]=useState(initialLimit),[tier,setTier]=useState<Tier>(initialTier),[busy,setBusy]=useState(false),[error,setError]=useState(''),[status,setStatus]=useState(''),[citations,setCitations]=useState<Citation[]>([]),[generationState,setGenerationState]=useState<{status:'idle'|'streaming'|'stopped'}>({status:'idle'}),controllerRef=useRef<AbortController|null>(null),scrollRef=useRef<HTMLDivElement|null>(null),nearBottom=useRef(true),textareaRef=useRef<HTMLTextAreaElement|null>(null);
- useEffect(()=>{setMessages(initialMessages);setConversationId(initialConversationId);setCitations([]);},[initialMessages,initialConversationId]);
- useEffect(()=>{if(starterText(starter))setPrompt(starterText(starter));},[starter]);
  useEffect(()=>{const element=scrollRef.current;if(!element||!nearBottom.current)return;element.scrollTo({top:element.scrollHeight,behavior:'smooth'});},[messages,status]);
  useEffect(()=>{const box=textareaRef.current;if(!box)return;box.style.height='auto';box.style.height=`${Math.min(box.scrollHeight,180)}px`;},[prompt]);
  const blocked=remaining===0&&tier!=='plus',usageLabel=useMemo(()=>tier==='plus'?'Plus · استخدام مرن':limit>0?`${Math.max(limit-remaining,0)} من ${limit} اليوم`:null,[tier,limit,remaining]);
@@ -30,6 +28,7 @@ export default function OrbyChat({authenticated,organizationId,serviceCode,initi
   if(!options.retry){setMessages(current=>[...current,{id:crypto.randomUUID(),role:'user',content:clean}]);setPrompt('');}
   const assistantId=crypto.randomUUID();setMessages(current=>[...current,{id:assistantId,role:'assistant',content:''}]);
   const controller=new AbortController();controllerRef.current=controller;
+  let preserveAssistant=false;
   try{
    const response=await fetch('/api/orby/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({organizationId,conversationId,prompt:clean}),signal:controller.signal});
    if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(String(payload.error||'تعذر تشغيل أوربي.'));}
@@ -37,9 +36,17 @@ export default function OrbyChat({authenticated,organizationId,serviceCode,initi
    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
    while(true){const{done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const parsed=parseSse(buffer);buffer=parsed.rest;for(const item of parsed.events){
     if(item.event==='status')setStatus(String(item.data.label||''));
-    else if(item.event==='delta'){const delta=String(item.data.text||'');setMessages(current=>current.map(message=>message.id===assistantId?{...message,content:message.content+delta}:message));}
+    else if(item.event==='delta'){const delta=String(item.data.text||'');if(delta)preserveAssistant=true;setMessages(current=>current.map(message=>message.id===assistantId?{...message,content:message.content+delta}:message));}
     else if(item.event==='citations'&&Array.isArray(item.data.items))setCitations(item.data.items as Citation[]);
-    else if(item.event==='error')throw new Error(String(item.data.message||'تعذر إكمال الرد.'));
+    else if(item.event==='error'){
+     const message=String(item.data.message||'تعذر إكمال الرد.'),code=String(item.data.code||'');
+     if(code==='SAVE_FAILED'){
+      preserveAssistant=true;
+      setError(`${message} سيبقى الرد ظاهرًا في هذه الجلسة، لكن قد لا يظهر بعد تحديث الصفحة.`);
+      setStatus('');
+      setGenerationState({status:'idle'});
+     }else throw new Error(message);
+    }
     else if(item.event==='complete'){
      const nextConversation=typeof item.data.conversationId==='string'?item.data.conversationId:null;
      if(nextConversation)setConversationId(nextConversation);
@@ -50,7 +57,7 @@ export default function OrbyChat({authenticated,organizationId,serviceCode,initi
      if(authenticated&&nextConversation&&!conversationId){window.history.replaceState(null,'',`/orby?conversation=${encodeURIComponent(nextConversation)}`);router.refresh();}
     }
    }}
-  }catch(reason){if((reason as Error)?.name==='AbortError'){setStatus('تم إيقاف التوليد.');setGenerationState({status:'stopped'});}else{const message=reason instanceof Error?reason.message:'تعذر تشغيل أوربي.';setError(message);setMessages(current=>current.filter(item=>item.id!==assistantId));setGenerationState({status:'idle'});}}
+  }catch(reason){if((reason as Error)?.name==='AbortError'){setStatus('تم إيقاف التوليد.');setGenerationState({status:'stopped'});}else{const message=reason instanceof Error?reason.message:'تعذر تشغيل أوربي.';setError(message);if(!preserveAssistant)setMessages(current=>current.filter(item=>item.id!==assistantId));setGenerationState({status:'idle'});}}
   finally{controllerRef.current=null;setBusy(false);setTimeout(()=>setStatus(''),1200);}
  }
  function stop(){controllerRef.current?.abort();controllerRef.current=null;setBusy(false);setGenerationState({status:'stopped'});}
