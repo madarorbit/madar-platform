@@ -8,5 +8,6 @@ export * from './analytics';
 export * from './vertical-analytics';
 export * from './isolation';
 export * from './proactive';
+export * from './router';
 export * from './adapters/supabase';
 export * from './adapters/metrics';
