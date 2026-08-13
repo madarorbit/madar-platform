@@ -16,7 +16,7 @@ const nested=<T,>(value:T|T[]|undefined)=>Array.isArray(value)?value[0]:value;
 
 export default async function OrbyPage({searchParams}:{searchParams:Promise<{conversation?:string;organization?:string;starter?:string}>}){
  const params=await searchParams,user=await currentUser();
- if(!user){return <OrbyShell authenticated={false} plus={false} newChatHref="/orby" sidebar={undefined}><OrbyChat authenticated={false} organizationId={null} serviceCode={null} initialConversationId={null} initialMessages={[]} initialRemaining={5} initialLimit={5} tier="guest" starter={params.starter}/></OrbyShell>;}
+ if(!user){const guestKey=`guest:${params.starter||'chat'}`;return <OrbyShell authenticated={false} plus={false} newChatHref="/orby" sidebar={undefined}><OrbyChat key={guestKey} authenticated={false} organizationId={null} serviceCode={null} initialConversationId={null} initialMessages={[]} initialRemaining={5} initialLimit={5} tier="guest" starter={params.starter}/></OrbyShell>;}
  const[conversationRows,subscriptionRows,usageRaw]=await Promise.all([
   supabaseFetch(`/rest/v1/orby_conversations?user_id=eq.${encodeURIComponent(user.id)}&status=eq.active&select=id,title,last_message_at,organization_id,service_code&order=last_message_at.desc&limit=100`).catch(()=>[]),
   supabaseFetch(`/rest/v1/workspace_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&status=eq.active&activation_state=eq.ACTIVE&ends_at=gt.${encodeURIComponent(new Date().toISOString())}&select=organization_id,service_code,organizations(name,status)&order=created_at.desc`).catch(()=>[]),
@@ -31,5 +31,6 @@ export default async function OrbyPage({searchParams}:{searchParams:Promise<{con
  if(selected){messages=(await supabaseFetch(`/rest/v1/orby_messages?conversation_id=eq.${encodeURIComponent(selected.id)}&user_id=eq.${encodeURIComponent(user.id)}&select=id,role,content,source&role=in.(user,assistant)&order=created_at.asc,id.asc`).catch(()=>[])) as Message[];}
  const newChatHref=selectedOrganizationId?`/orby?conversation=new&organization=${encodeURIComponent(selectedOrganizationId)}`:'/orby?conversation=new';
  const sidebar=<OrbyConversationSidebar conversations={conversations} selectedId={selected?.id||null} scopes={scopes} selectedOrganizationId={selectedOrganizationId} tier={usage.tier}/>;
- return <OrbyShell authenticated plus={usage.tier==='plus'} newChatHref={newChatHref} sidebar={sidebar}><OrbyChat authenticated organizationId={selectedOrganizationId} serviceCode={selectedServiceCode} initialConversationId={selected?.id||null} initialMessages={messages} initialRemaining={Number(usage.remaining??5)} initialLimit={Number(usage.daily_limit??5)} tier={usage.tier||'registered'} starter={params.starter}/></OrbyShell>;
+ const chatKey=[selected?.id||'new',selectedOrganizationId||'general',params.starter||'chat'].join(':');
+ return <OrbyShell authenticated plus={usage.tier==='plus'} newChatHref={newChatHref} sidebar={sidebar}><OrbyChat key={chatKey} authenticated organizationId={selectedOrganizationId} serviceCode={selectedServiceCode} initialConversationId={selected?.id||null} initialMessages={messages} initialRemaining={Number(usage.remaining??5)} initialLimit={Number(usage.daily_limit??5)} tier={usage.tier||'registered'} starter={params.starter}/></OrbyShell>;
 }
