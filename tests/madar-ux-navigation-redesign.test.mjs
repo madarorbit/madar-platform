@@ -12,10 +12,15 @@ test("workspace navigation is grouped by user intent", async () => {
 });
 
 test("unified shell includes command search and real mobile navigation", async () => {
-  const source = await read("components/workspace/EnterpriseWorkspaceShell.tsx");
+  const [adapter, source, layer] = await Promise.all([
+    read("components/workspace/EnterpriseWorkspaceShell.tsx"),
+    read("components/shell/MadarGlobalShell.tsx"),
+    read("components/shell/MadarLayerNavigation.tsx"),
+  ]);
+  assert.match(adapter, /MadarGlobalShell/);
   assert.match(source, /WorkspaceCommandPalette/);
   assert.match(source, /md-mobile-bottom-nav/);
-  assert.match(source, /الحساب والخدمات/);
+  assert.match(layer, /account\/services/);
   assert.match(source, /NavigationControls showBreadcrumbs=\{false\}/);
 });
 

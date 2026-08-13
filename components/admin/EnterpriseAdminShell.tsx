@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icons";
 import { cx } from "@/components/ui/Enterprise";
+import { Sheet } from "@/components/ui/EnterpriseClient";
 import { siteConfig } from "@/src/config/site";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import NavigationControls from "@/components/navigation/NavigationControls";
@@ -45,7 +46,7 @@ export default function EnterpriseAdminShell({ children, displayName, isFounder 
   return <div className={cx("md-ux-shell", "md-admin-ux-shell", compact && "is-compact")}>
     <aside className="md-ux-sidebar md-no-print">
       <div className="md-workspace-switcher">
-        <Link href="/" className="md-brand-mark" aria-label="مَدار | ORBIT"><Image src={siteConfig.assets.logo} alt="مَدار | ORBIT" width={150} height={36} className="h-7 w-auto" /></Link>
+        <Link href="/account" className="md-brand-mark" aria-label="العودة إلى منصة مَدار"><Image src={siteConfig.assets.logo} alt="مَدار | ORBIT" width={150} height={36} className="h-7 w-auto" /></Link>
         <details>
           <summary><span className="md-workspace-avatar">{displayName.slice(0, 1)}</span><span className="md-workspace-switcher-copy"><strong>{displayName}</strong><small>{isFounder ? "مركز قيادة المؤسس" : "إدارة المنصة"}</small></span><Icon name="arrow" className="h-3.5 w-3.5" /></summary>
           <div className="md-workspace-menu">
@@ -91,7 +92,7 @@ export default function EnterpriseAdminShell({ children, displayName, isFounder 
       <button type="button" onClick={() => setMobileOpen(true)}><Icon name="layers" className="h-5 w-5" /><span>المزيد</span></button>
     </nav>
 
-    {mobileOpen && <div className="md-mobile-drawer-layer md-no-print" onMouseDown={() => setMobileOpen(false)}><aside onMouseDown={(event) => event.stopPropagation()}><header><div><strong>{isFounder ? "مركز قيادة المؤسس" : "إدارة المنصة"}</strong><span>{current.label}</span></div><button type="button" onClick={() => setMobileOpen(false)} aria-label="إغلاق">×</button></header>{navigation(true)}</aside></div>}
+    <Sheet open={mobileOpen} onClose={() => setMobileOpen(false)} title={isFounder ? "مركز قيادة المؤسس" : "إدارة المنصة"} description={`${currentGroup.label} · ${current.label}`}>{navigation(true)}</Sheet>
     <WorkspaceCommandPalette groups={groups} open={paletteOpen} onOpenChange={setPaletteOpen} />
   </div>;
 }

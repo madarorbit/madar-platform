@@ -37,11 +37,13 @@ test('account and guest ORBY load the governed global runtime configuration inst
 });
 
 test('MADAR Retail uses the same modern workspace-shell interaction model as MADAR Native',async()=>{
- const[layout,shell,dashboard]=await Promise.all([read('app/retail/workspace/layout.tsx'),read('components/retail-v0/layout/RetailWorkspaceShell.tsx'),read('app/retail/workspace/page.tsx')]);
+ const[layout,adapter,shell,dashboard]=await Promise.all([read('app/retail/workspace/layout.tsx'),read('components/retail-v0/layout/RetailWorkspaceShell.tsx'),read('components/shell/MadarGlobalShell.tsx'),read('app/retail/workspace/page.tsx')]);
  assert.match(layout,/RetailWorkspaceShell/);
- for(const contract of [/md-ux-shell/,/md-ux-sidebar/,/md-ux-topbar/,/md-mobile-bottom-nav/,/Sheet/,/GlobalUserActions/,/retailNavigationGroups/,/siteConfig\.assets\.orby/])assert.match(shell,contract);
- assert.match(shell,/platformOrganizationId/);
- assert.match(shell,/\/orby\?conversation=new&organization=/);
+ assert.match(adapter,/MadarGlobalShell/);
+ for(const contract of [/md-ux-shell/,/md-ux-sidebar/,/md-ux-topbar/,/md-mobile-bottom-nav/,/Sheet/,/GlobalUserActions/])assert.match(shell,contract);
+ assert.match(adapter,/retailNavigationGroups/);
+ assert.match(adapter,/platformOrganizationId/);
+ assert.match(adapter,/\/orby\?conversation=new&organization=/);
  assert.match(dashboard,/<Card/);
  assert.match(dashboard,/<Panel/);
  assert.match(dashboard,/بيع جديد/);

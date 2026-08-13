@@ -30,11 +30,12 @@ test('refreshed session is propagated to the same request and persisted', async 
 });
 
 test('authenticated navigation depends on the verified auth user, not a profile row', async () => {
-  const [navbar,home,server]=await Promise.all([read('components/layout/Navbar.tsx'),read('app/page.tsx'),read('src/lib/supabase/server.ts')]);
-  assert.match(navbar,/const user=await currentUser\(\)/);
-  assert.match(navbar,/authenticated=\{Boolean\(user\)\}/);
-  assert.match(navbar,/profileForUser\(user\.id\)/);
-  assert.match(home,/Boolean\(await currentUser\(\)/);
+  const [navbar,identity,home,server]=await Promise.all([read('components/layout/Navbar.tsx'),read('src/lib/shell/server.ts'),read('app/page.tsx'),read('src/lib/supabase/server.ts')]);
+  assert.match(navbar,/getOptionalShellIdentity/);
+  assert.match(navbar,/authenticated=\{Boolean\(identity\)\}/);
+  assert.match(identity,/currentUser\(\)/);
+  assert.match(identity,/profileForUser\(user\.id\)/);
+  assert.match(home,/Boolean\(await getOptionalShellIdentity\(\)\)/);
   assert.doesNotMatch(home,/Boolean\(await currentProfile\(\)/);
   assert.match(server,/export async function profileForUser/);
 });

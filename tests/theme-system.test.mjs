@@ -39,10 +39,11 @@ test("light and dark tokens cover the enterprise design system", async () => {
 });
 
 test("theme is quick on public and admin surfaces and explicit in account preferences", async () => {
-  const [navbar, admin, workspace, accountMenu, preferences] = await Promise.all([
+  const [navbar, admin, workspace, globalShell, accountMenu, preferences] = await Promise.all([
     read("components/layout/NavbarClient.tsx"),
     read("components/admin/EnterpriseAdminShell.tsx"),
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
+    read("components/shell/MadarGlobalShell.tsx"),
     read("components/platform/GlobalUserActions.tsx"),
     read("components/theme/ThemePreferences.tsx"),
   ]);
@@ -53,8 +54,9 @@ test("theme is quick on public and admin surfaces and explicit in account prefer
     "desktop and mobile navigation must always expose the toggle",
   );
   assert.match(admin, /<ThemeToggle\s*\/>/);
-  assert.match(workspace, /GlobalUserActions/);
-  assert.doesNotMatch(workspace, /<ThemeToggle\s*\/>/);
+  assert.match(workspace, /MadarGlobalShell/);
+  assert.match(globalShell, /GlobalUserActions/);
+  assert.doesNotMatch(`${workspace}\n${globalShell}`, /<ThemeToggle\s*\/>/);
   assert.match(accountMenu, /\/account\/appearance/);
   for (const preference of ['"light"','"dark"','"system"']) assert.ok(preferences.includes(preference));
 });

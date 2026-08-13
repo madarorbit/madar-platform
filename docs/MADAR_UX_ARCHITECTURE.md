@@ -380,3 +380,7 @@ Back: browser back يبقى افتراضيًا، logo/account entry يعود ل�
 ## 24. Quality gate لهذه المرحلة
 
 لا تعد Architecture مثبتة حتى تنجح: typecheck، lint، tests، production build، ثم رحلات Guest/Registered/Customer/Retail/Commerce/Account/Theme على Desktop وMobile، وفحص deep links والاستحقاقات وProduction deployment/logs. نتائج التشغيل تُسجل في تقرير التسليم، لا في هذا الدستور الثابت.
+
+## 25. Phase 3 implementation note
+
+ثُبّت العقد المعتمد في هذه الوثيقة عبر `MadarGlobalShell` واحد للحساب وRetail وConnected/Native، و`MadarLayerNavigation` للمستوى العالمي، وWorkspace switch خادمي يتحقق من الاستحقاق. تستخدم Public/Commerce نفس Top bar العامة، ويستخدم ORBY طبقات وإجراءات الحساب نفسها مع بقاء تخطيط المحادثة المركز. المرجع التنفيذي الكامل هو `docs/MADAR_GLOBAL_SHELL.md`؛ لم تتغير IA أو المصطلحات المعتمدة هنا.

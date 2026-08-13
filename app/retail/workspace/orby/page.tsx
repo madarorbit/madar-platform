@@ -7,5 +7,5 @@ export const dynamic='force-dynamic';
 
 export default async function RetailOrbyPage(){
  const{user}=await requireWorkspace();
- redirect(`/orby?conversation=new&organization=${encodeURIComponent(user.platformOrganizationId)}`);
+ redirect(`/orby?conversation=new&organization=${encodeURIComponent(user.platformOrganizationId)}&service=MADAR_RETAIL`);
 }

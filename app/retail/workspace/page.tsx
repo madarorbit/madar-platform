@@ -40,7 +40,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <p className="md-type-body-sm md-muted mt-2 max-w-2xl">لوحة تشغيل يومية مختصرة للمبيعات والمخزون والصندوق والديون. افتح التفاصيل عند الحاجة بدل ازدحام الشاشة بكل شيء.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/orby?conversation=new&organization=${encodeURIComponent(user.platformOrganizationId)}`} className="md-button md-button-secondary"><Icon name="sparkles" />اسأل ORBY</Link>
+          <Link href={`/orby?conversation=new&organization=${encodeURIComponent(user.platformOrganizationId)}&service=MADAR_RETAIL`} className="md-button md-button-secondary"><Icon name="sparkles" />اسأل ORBY</Link>
           <Link href="/retail/workspace/sales" className="md-button md-button-primary"><Icon name="store" />بيع جديد</Link>
         </div>
       </header>

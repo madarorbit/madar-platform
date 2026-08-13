@@ -1,11 +1,18 @@
 "use client";
 
-export default function WorkspaceError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+import { useEffect } from "react";
+import { Button, EmptyState } from "@/components/ui/Enterprise";
+
+export default function WorkspaceError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => { console.error("retail-ui-error", error); }, [error]);
   return (
-    <div className="surface p-8">
-      <p className="eyebrow">تعذر تحميل القسم</p><h2 className="mt-2 text-2xl font-black">بياناتك لم تتغير.</h2>
-      <p className="muted mt-2">حدث خطأ أثناء القراءة. أعد المحاولة، وإذا استمر الخطأ راجع سجل النظام.</p>
-      <button className="button-primary mt-5" onClick={reset}>إعادة المحاولة</button>
-    </div>
+    <main className="md-workspace-module">
+      <EmptyState
+        icon="warning"
+        title="تعذر تحميل قسم Retail"
+        description="بيانات تجارتك لم تتغير، والتنقل إلى بقية مَدار ما زال متاحًا."
+        action={<Button onClick={reset}>إعادة المحاولة</Button>}
+      />
+    </main>
   );
 }

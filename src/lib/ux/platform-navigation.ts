@@ -53,6 +53,54 @@ export const accountMobileNavigation = ["home", "services", "orby", "store"]
   .map((key) => accountNavigationGroups.flatMap((group) => group.items).find((item) => item.key === key))
   .filter(Boolean) as PlatformNavigationItem[];
 
+export const platformLayerNavigation: PlatformNavigationGroup[] = [
+  {
+    key: "platform-layer",
+    label: "منصة مَدار",
+    items: accountNavigationGroups[0].items,
+  },
+  {
+    key: "commerce-layer",
+    label: "التجارة والملكية",
+    items: [
+      accountNavigationGroups[1].items[0],
+      accountNavigationGroups[1].items[1],
+      accountNavigationGroups[1].items[2],
+    ],
+  },
+  {
+    key: "account-layer",
+    label: "الحساب",
+    items: [
+      accountNavigationGroups[2].items[0],
+      accountNavigationGroups[2].items[2],
+      accountNavigationGroups[2].items[3],
+      accountNavigationGroups[2].items[4],
+    ],
+  },
+];
+
+export const guestLayerNavigation: PlatformNavigationGroup[] = [
+  {
+    key: "guest-platform",
+    label: "مَدار",
+    items: [
+      { key: "public-home", href: "/", label: "الرئيسية", description: "العودة إلى مَدار", icon: "home" },
+      { key: "public-services", href: "/services", label: "الخدمات", description: "استكشف خدمات مَدار", icon: "layers" },
+      { key: "public-orby", href: "/orby", label: "ORBY", description: "محادثة عامة مع ORBY", icon: "sparkles", orby: true },
+      { key: "public-store", href: "/store", label: "المتجر", description: "المنتجات والخدمات الرقمية", icon: "store" },
+    ],
+  },
+  {
+    key: "guest-account",
+    label: "الحساب",
+    items: [
+      { key: "login", href: "/login", label: "تسجيل الدخول", description: "متابعة إلى حسابك", icon: "user" },
+      { key: "register", href: "/register", label: "إنشاء حساب", description: "حساب واحد لكل خدمات مَدار", icon: "plus" },
+    ],
+  },
+];
+
 export const retailNavigationGroups: PlatformNavigationGroup[] = [
   {
     key: "retail-overview",
@@ -111,6 +159,6 @@ export const retailMobileNavigation = ["retail-home", "retail-sales", "retail-pr
 
 export function platformRouteMatches(pathname: string, href: string) {
   const route = href.split("?")[0];
-  if (["/account", "/store", "/orby", "/retail/workspace"].includes(route)) return pathname === route;
+  if (["/account", "/store", "/orby", "/workspace", "/retail/workspace"].includes(route)) return pathname === route;
   return pathname === route || pathname.startsWith(`${route}/`);
 }

@@ -23,9 +23,9 @@ test('legacy pages inherit the enterprise system without business changes',async
 });
 
 test('ORBY is present in the main and workspace navigation',async()=>{
- const[navbar,workspace,actions,navigation,config]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('components/platform/GlobalUserActions.tsx'),read('src/lib/ux/platform-navigation.ts'),read('src/config/site.ts')]);
- assert.match(navbar,/أوربي/);assert.match(navbar,/siteConfig\.assets\.orby/);
- assert.match(workspace,/GlobalUserActions/);assert.match(workspace,/orbyHref="\/workspace\/orby"/);
+ const[navbar,workspace,shell,actions,navigation,config]=await Promise.all([read('components/layout/NavbarClient.tsx'),read('components/workspace/EnterpriseWorkspaceShell.tsx'),read('components/shell/MadarGlobalShell.tsx'),read('components/platform/GlobalUserActions.tsx'),read('src/lib/ux/platform-navigation.ts'),read('src/config/site.ts')]);
+ assert.match(navbar,/MadarLayerNavigation/);
+ assert.match(workspace,/MadarGlobalShell/);assert.match(workspace,/orbyHref="\/workspace\/orby"/);assert.match(shell,/GlobalUserActions/);
  assert.match(actions,/orby-assistant\.svg/);assert.match(navigation,/\/orby/);
  assert.match(config,/orby:'\/brand\/orby-assistant\.svg'/);
 });

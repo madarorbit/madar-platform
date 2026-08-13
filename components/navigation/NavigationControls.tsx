@@ -49,12 +49,29 @@ const labels: Record<string, string> = {
 export default function NavigationControls({
   className,
   showBreadcrumbs = true,
+  fallbackHref = "/account",
 }: {
   className?: string;
   showBreadcrumbs?: boolean;
+  fallbackHref?: string;
 }) {
   const pathname = usePathname() || "/";
   const router = useRouter();
+  const back = () => {
+    const previous = document.referrer;
+    if (previous) {
+      try {
+        if (
+          new URL(previous).origin === window.location.origin &&
+          new URL(previous).href !== window.location.href
+        ) {
+          router.back();
+          return;
+        }
+      } catch {}
+    }
+    router.push(fallbackHref);
+  };
   const parts = pathname.split("/").filter(Boolean);
   const crumbs = parts.map((part, index) => ({
     label: labels[part] || decodeURIComponent(part).replaceAll("-", " "),
@@ -68,7 +85,7 @@ export default function NavigationControls({
       >
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={back}
           className="md-history-button"
           aria-label="العودة إلى الصفحة السابقة"
           title="رجوع"

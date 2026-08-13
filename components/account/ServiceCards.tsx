@@ -32,7 +32,7 @@ export default function ServiceCards({services,compact=false,emptyTitle='لا ت
     {service.request?.rejection_reason&&service.state==='REJECTED'?<p className="md-service-card-reason" role="status">{service.request.rejection_reason}</p>:null}
     <div className="md-service-card-actions">
      {service.href?<ButtonLink href={service.href} variant={service.state==='ACTIVE'?'primary':'secondary'}>{serviceStateCtas[service.state]}<Icon name="arrow" className="md-icon-directional"/></ButtonLink>:<button disabled className="md-button md-button-secondary">{serviceStateCtas[service.state]}</button>}
-     {!compact&&service.state==='ACTIVE'&&service.subscription?.organization_id?<Link href={`/orby?conversation=new&organization=${encodeURIComponent(service.subscription.organization_id)}`} className="md-button md-button-ghost"><Icon name="sparkles"/>فتح ORBY في سياق الخدمة</Link>:null}
+     {!compact&&service.state==='ACTIVE'&&service.subscription?.organization_id?<Link href={`/orby?conversation=new&organization=${encodeURIComponent(service.subscription.organization_id)}&service=${service.definition.code}`} className="md-button md-button-ghost"><Icon name="sparkles"/>فتح ORBY في سياق الخدمة</Link>:null}
     </div>
    </div>
   </Card>)}

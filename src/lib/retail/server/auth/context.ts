@@ -3,12 +3,12 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import {
-  currentProfile,
   currentUser,
   profileForUser,
   supabaseFetch,
   type Profile,
 } from "@/src/lib/supabase/server";
+import { getOptionalShellIdentity } from "@/src/lib/shell/server";
 import {
   authorizeOrganizationAction,
   type MadarOrganizationRelation,
@@ -70,21 +70,19 @@ function userContext(id: string, email: string | null, profile: Profile): UserCo
 }
 
 async function resolveUserContext(accessToken?: string): Promise<UserContext | null> {
-  const user = await currentUser(accessToken);
+  const shellIdentity = accessToken ? null : await getOptionalShellIdentity();
+  const user = shellIdentity?.user || (await currentUser(accessToken));
   if (!user) return null;
-  const profile = accessToken
-    ? await profileForUser(user.id, accessToken)
-    : await currentProfile();
+  const profile = shellIdentity?.profile || await profileForUser(user.id, accessToken);
   if (!profile || profile.status !== "active") return null;
   return userContext(user.id, user.email ?? profile.email, profile);
 }
 
 async function resolveRetailPrincipal(accessToken?: string): Promise<RetailPrincipal | null> {
-  const user = await currentUser(accessToken);
+  const shellIdentity = accessToken ? null : await getOptionalShellIdentity();
+  const user = shellIdentity?.user || (await currentUser(accessToken));
   if (!user) return null;
-  const profile = accessToken
-    ? await profileForUser(user.id, accessToken)
-    : await currentProfile();
+  const profile = shellIdentity?.profile || await profileForUser(user.id, accessToken);
   if (!profile || profile.status !== "active") return null;
 
   const rows = (await supabaseFetch(

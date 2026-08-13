@@ -1,23 +1,19 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import AccountShell from "@/components/account/AccountShell";
-import { requireUser } from "@/src/lib/auth";
-import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
+import {
+  getOptionalShellIdentity,
+  getShellServiceOptions,
+} from "@/src/lib/shell/server";
 
 export default async function AccountLayout({ children }: { children: ReactNode }) {
-  const [user, profile, unreadRows] = await Promise.all([
-    requireUser(),
-    currentProfile(),
-    supabaseFetch("/rest/v1/notifications?read_at=is.null&select=id").catch(() => []),
+  const [identity, serviceOptions] = await Promise.all([
+    getOptionalShellIdentity(),
+    getShellServiceOptions(),
   ]);
-  const displayName = profile?.full_name || user.email?.split("@")[0] || "حسابي";
+  if (!identity) redirect("/login?next=/account");
   return (
-    <AccountShell
-      displayName={displayName}
-      email={user.email || profile?.email || ""}
-      hasAvatar={Boolean(profile?.avatar_url)}
-      isAdmin={profile?.role === "ADMIN" || profile?.role === "SUPER_ADMIN"}
-      unread={unreadRows?.length || 0}
-    >
+    <AccountShell identity={identity.shell} serviceOptions={serviceOptions}>
       {children}
     </AccountShell>
   );

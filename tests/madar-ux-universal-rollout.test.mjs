@@ -4,13 +4,15 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("workspace and admin use the unified app-shell architecture", async () => {
-  const [workspace, admin, navigation] = await Promise.all([
+test("workspace and admin use intentional app-shell architectures", async () => {
+  const [workspace, globalShell, admin, navigation] = await Promise.all([
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
+    read("components/shell/MadarGlobalShell.tsx"),
     read("components/admin/EnterpriseAdminShell.tsx"),
     read("src/lib/ux/navigation.ts"),
   ]);
-  for (const shell of [workspace, admin]) {
+  assert.match(workspace, /MadarGlobalShell/);
+  for (const shell of [globalShell, admin]) {
     assert.match(shell, /md-ux-shell/);
     assert.match(shell, /WorkspaceCommandPalette/);
     assert.match(shell, /md-mobile-bottom-nav/);
@@ -22,9 +24,9 @@ test("workspace and admin use the unified app-shell architecture", async () => {
 });
 
 test("remaining workspace modules inherit contextual headers and adaptive surfaces", async () => {
-  const shell = await read("components/workspace/EnterpriseWorkspaceShell.tsx");
+  const shell = await read("components/shell/MadarGlobalShell.tsx");
   assert.match(shell, /md-adaptive-module-surface/);
-  assert.match(shell, /routesWithNativeHeaders/);
+  assert.match(shell, /nativeHeaderRoutes/);
   assert.match(shell, /ShellModuleContext/);
 });
 

@@ -7,5 +7,6 @@
 @import "./ux-navigation-redesign.css";
 @import "./ux-universal-rollout.css";
 @import "./design-system-2-surfaces.css";
+@import "./global-shell-3.css";
 
 .prose p{margin-bottom:1rem}

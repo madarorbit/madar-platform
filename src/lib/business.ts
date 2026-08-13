@@ -1,12 +1,17 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/src/lib/auth";
-import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
+import { cache } from "react";
+import { supabaseFetch } from "@/src/lib/supabase/server";
 import { authorizeOrganizationAction } from "@/src/lib/platform-integrations";
 import type { OperatingMode } from "@/src/lib/v2/account";
 import type { VerticalExtension } from "@/src/lib/v2/verticals";
 import { commercialWorkspaceCookie } from "@/src/lib/workspace-selection";
+import {
+  getOptionalShellIdentity,
+  getShellServiceOptions,
+  getShellSubscriptionRows,
+} from "@/src/lib/shell/server";
 
 export type WorkspaceType = "INDIVIDUAL" | "MERCHANT" | "COMPANY";
 export type WorkspaceRecord = {
@@ -73,24 +78,28 @@ const subscriptionStatuses: WorkspaceSubscriptionStatus[] = [
   "missing",
 ];
 
-export async function requireBusinessWorkspace({
+async function resolveBusinessWorkspace({
   allowExpired = false,
   allowMissing = false,
   allowCancelled = false,
 }: RequireBusinessWorkspaceOptions = {}) {
-  const user = await requireUser(), profile = await currentProfile();
+  const shellIdentity = await getOptionalShellIdentity();
+  if (!shellIdentity) redirect("/login?next=/workspace");
+  const { user, profile } = shellIdentity;
   const selectedOrganization = (await cookies()).get(commercialWorkspaceCookie)?.value;
-  const [rows, serviceRows] = await Promise.all([
+  const [rows, allServiceRows, serviceOptions] = await Promise.all([
     supabaseFetch(
       `/rest/v1/organization_members?user_id=eq.${encodeURIComponent(user.id)}&select=role,organizations(id,name,slug,type,status,currency,operating_mode,source_of_truth,setup_status,navigation_state)`,
     ),
-    supabaseFetch(
-      `/rest/v1/workspace_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&service_code=in.(CONNECT_EXISTING,BUILD_ON_MADAR)&select=id,organization_id,status,activation_state,ends_at&order=created_at.desc`,
-    ).catch(() => []),
+    getShellSubscriptionRows(),
+    getShellServiceOptions(),
   ]);
   const memberships = (rows || []) as WorkspaceMembership[];
-  const subscriptions = (serviceRows || []) as Array<{
+  const subscriptions = allServiceRows.filter((row) =>
+    ["CONNECT_EXISTING", "BUILD_ON_MADAR"].includes(row.service_code),
+  ) as Array<{
     organization_id: string;
+    service_code: "CONNECT_EXISTING" | "BUILD_ON_MADAR";
     status: string;
     activation_state: string;
     ends_at: string;
@@ -202,11 +211,26 @@ export async function requireBusinessWorkspace({
     workspace,
     subscriptionStatus,
     sector,
+    shellIdentity: shellIdentity.shell,
+    serviceOptions,
   };
 }
 
+const getDefaultBusinessWorkspace = cache(() => resolveBusinessWorkspace());
+
+export function requireBusinessWorkspace(
+  options?: RequireBusinessWorkspaceOptions,
+) {
+  return options &&
+    (options.allowExpired || options.allowMissing || options.allowCancelled)
+    ? resolveBusinessWorkspace(options)
+    : getDefaultBusinessWorkspace();
+}
+
 export async function requirePersonalAccount() {
-  const user = await requireUser(), profile = await currentProfile();
+  const shellIdentity = await getOptionalShellIdentity();
+  if (!shellIdentity) redirect("/login?next=/account");
+  const { user, profile } = shellIdentity;
   return { user, profile };
 }
 export function businessMoney(

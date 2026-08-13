@@ -7,10 +7,11 @@ const migrationPath =
   "supabase/migrations/20260802090000_madar_v2_p0_p11_platform.sql";
 
 test("P0 and P1 history is preserved while registration now creates one account path", async () => {
-  const [migration, registration, business, transition] = await Promise.all([
+  const [migration, registration, business, shellServer, transition] = await Promise.all([
     read(migrationPath),
     read("components/auth/RegisterWizard.tsx"),
     read("src/lib/business.ts"),
+    read("src/lib/shell/server.ts"),
     read("supabase/migrations/20260811190000_account_services_production.sql"),
   ]);
   for (const decision of [
@@ -33,7 +34,7 @@ test("P0 and P1 history is preserved while registration now creates one account 
   assert.match(migration, /BUSINESS_ACCOUNT_STUDENT_SPACE_FORBIDDEN/);
   assert.match(registration, /إنشاء حساب مَدار/);
   assert.doesNotMatch(registration, /activity_specialization_code|data-step/);
-  assert.match(business, /workspace_subscriptions/);
+  assert.match(`${business}\n${shellServer}`, /workspace_subscriptions/);
   assert.match(transition, /Account-only profile synchronization/);
   assert.match(transition, /preserved in madarorbit\/madar-student/);
 });
@@ -210,18 +211,20 @@ test("P9 and P10 preserve restaurant and hotel domain models with full operating
 });
 
 test("P11 resolves sector navigation, terminology, themes, RTL and dashboard-app entry", async () => {
-  const [navigation, shell, tokens, surfaces, dashboardApp, mobile] = await Promise.all([
+  const [navigation, adapter, shell, tokens, surfaces, dashboardApp, mobile] = await Promise.all([
     read("src/lib/v2/navigation.ts"),
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
+    read("components/shell/MadarGlobalShell.tsx"),
     read("app/design-tokens.css"),
     read("app/design-system-2-surfaces.css"),
     read("app/dashboard-app/page.tsx"),
     read("app/api/mobile/v1/dashboard/route.ts"),
   ]);
   assert.match(navigation, /workspaceNavigation/);
-  assert.match(shell, /navigation_state|localStorage/);
+  assert.match(adapter, /initialCompact/);
+  assert.match(shell, /localStorage/);
   assert.match(shell, /saveWorkspaceNavigationState/);
-  assert.match(shell, /dashboard-app/);
+  assert.match(adapter, /dashboard-app/);
   assert.match(surfaces, /\.md-ux-shell\.is-compact/);
   assert.match(tokens, /color-scheme/);
   assert.match(dashboardApp, /NEXT_PUBLIC_DASHBOARD_APP_IOS_URL/);
