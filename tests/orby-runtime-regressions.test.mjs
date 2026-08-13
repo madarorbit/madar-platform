@@ -20,6 +20,22 @@ test('Retail ORBY customer and supplier summaries qualify ambiguous balances',as
  assert.doesNotMatch(migration,/select supplier_id, sum\(balance_due\)/);
 });
 
+test('guest ORBY quota uses an unambiguous conflict target and still enforces the existing meter',async()=>{
+ const migration=await read('supabase/migrations/20260813002000_fix_orby_guest_quota_conflict.sql');
+ assert.match(migration,/on conflict on constraint orby_guest_usage_daily_pkey/);
+ assert.match(migration,/requests<5/);
+ assert.match(migration,/ORBY_GUEST_DAILY_LIMIT/);
+ assert.match(migration,/grant execute on function public\.reserve_orby_guest_request\(text,integer\) to service_role/);
+});
+
+test('account and guest ORBY load the governed global runtime configuration instead of disabled defaults',async()=>{
+ const runtime=await read('src/lib/orby/account-runtime.ts');
+ assert.match(runtime,/SupabaseOrbyConfigurationStore/);
+ assert.match(runtime,/configurationStore:new SupabaseOrbyConfigurationStore\(database\)/);
+ assert.match(runtime,/loadSupabaseOrbyModels\(database\)/);
+ assert.match(runtime,/providersFromEnvironment\(\)/);
+});
+
 test('MADAR Retail uses the same modern workspace-shell interaction model as MADAR Native',async()=>{
  const[layout,shell,dashboard]=await Promise.all([read('app/retail/workspace/layout.tsx'),read('components/retail-v0/layout/RetailWorkspaceShell.tsx'),read('app/retail/workspace/page.tsx')]);
  assert.match(layout,/RetailWorkspaceShell/);
