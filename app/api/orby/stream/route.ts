@@ -58,6 +58,12 @@ function rawIntegrationReason(error:unknown){
  }
  return'';
 }
+function usageErrorResponse(error:unknown,authenticated:boolean){
+ if(error instanceof Error&&(error.message.includes('ORBY_GUEST_DAILY_LIMIT')||error.message.includes('ORBY_DAILY_LIMIT')))return NextResponse.json({error:authenticated?'وصلت إلى حد أوربي اليومي. يمكنك الترقية إلى ORBY Plus للمتابعة.':'وصلت إلى 5 رسائل اليوم. أنشئ حسابًا للاستمرار مع ORBY.',code:authenticated?'ORBY_DAILY_LIMIT':'ORBY_GUEST_DAILY_LIMIT'},{status:429});
+ if(error instanceof SupabaseRequestError&&error.code==='P0001')return NextResponse.json({error:'وصلت إلى حد الاستخدام الحالي أو طبقة الحماية من الإساءة. حاول لاحقًا أو راجع خطتك.',code:'ORBY_USAGE_LIMIT'},{status:429});
+ console.error('ORBY usage reservation failed',{name:error instanceof Error?error.name:'unknown'});
+ return NextResponse.json({error:'تعذر التحقق من استخدام أوربي الآن.',code:'ORBY_USAGE_UNAVAILABLE'},{status:503});
+}
 async function reserveGuest(request:Request,promptLength:number){
  const existing=guestCookie(request),id=uuidPattern.test(existing)?existing:crypto.randomUUID(),ip=(request.headers.get('x-forwarded-for')||request.headers.get('x-real-ip')||'unknown').split(',')[0].trim(),ua=request.headers.get('user-agent')||'unknown';
  const visitorHash=createHash('sha256').update(`${id}|${ip}|${ua}`).digest('hex');
@@ -101,7 +107,7 @@ export async function POST(request:Request){
  if(!user&&(body.organizationId||body.conversationId))return NextResponse.json({error:'سجّل الدخول للوصول إلى محادثات أو بيانات خاصة.'},{status:401});
 
  let conversationId=body.conversationId&&uuidPattern.test(String(body.conversationId))?String(body.conversationId):null;
- let scope:Scope|null=null,usage:Usage,guestId:string|null=null,guestIsNew=false;
+ let scope:Scope|null=null,usage:Usage|null=null,guestId:string|null=null,guestIsNew=false;
  try{
   if(user){
    if(conversationId){
@@ -109,15 +115,11 @@ export async function POST(request:Request){
     if(!stored)return NextResponse.json({error:'المحادثة غير موجودة أو لا تملك صلاحيتها.'},{status:404});
     if(stored.organization_id){scope=await activeScope(fetcher,stored.organization_id,user.id);if(!scope)return NextResponse.json({error:'الخدمة المرتبطة بهذه المحادثة ليست فعالة حاليًا.'},{status:403});}
    }else if(body.organizationId){scope=await activeScope(fetcher,String(body.organizationId),user.id);if(!scope)return NextResponse.json({error:'لا تملك خدمة فعالة في هذه المساحة.'},{status:403});}
-   usage=scalar<Usage>(await fetcher('/rest/v1/rpc/consume_orby_account_quota',{method:'POST',body:JSON.stringify({submitted_characters:prompt.length})}));
   }else{
    const reserved=await reserveGuest(request,prompt.length);usage=reserved.usage;guestId=reserved.id;guestIsNew=reserved.isNew;
   }
  }catch(error){
-  if(error instanceof Error&&(error.message.includes('ORBY_GUEST_DAILY_LIMIT')||error.message.includes('ORBY_DAILY_LIMIT')))return NextResponse.json({error:user?'وصلت إلى حد أوربي اليومي. يمكنك الترقية إلى ORBY Plus للمتابعة.':'وصلت إلى 5 رسائل اليوم. أنشئ حسابًا للاستمرار مع ORBY.',code:user?'ORBY_DAILY_LIMIT':'ORBY_GUEST_DAILY_LIMIT'},{status:429});
-  if(error instanceof SupabaseRequestError&&error.code==='P0001')return NextResponse.json({error:'وصلت إلى حد الاستخدام الحالي أو طبقة الحماية من الإساءة. حاول لاحقًا أو راجع خطتك.',code:'ORBY_USAGE_LIMIT'},{status:429});
-  console.error('ORBY usage reservation failed',{name:error instanceof Error?error.name:'unknown'});
-  return NextResponse.json({error:'تعذر التحقق من استخدام أوربي الآن.'},{status:503});
+  return usageErrorResponse(error,Boolean(user));
  }
 
  let businessContext:OrbyContext|undefined,retailContext:RetailEvidence|undefined;
@@ -126,8 +128,13 @@ export async function POST(request:Request){
   else if(user&&scope)businessContext=scalar<OrbyContext>(await fetcher('/rest/v1/rpc/orby_business_context',{method:'POST',body:JSON.stringify({target_organization:scope.organizationId})}));
  }catch(error){
   console.error('ORBY scoped context failed',{service:scope?.serviceCode||null,name:error instanceof Error?error.name:'unknown'});
-  return NextResponse.json({error:'تعذر تحميل بيانات الخدمة المصرح بها. لم يتم خلطها بسياق آخر.'},{status:503});
+  return NextResponse.json({error:'تعذر تحميل بيانات الخدمة المصرح بها. لم يتم خلطها بسياق آخر.',code:'ORBY_CONTEXT_UNAVAILABLE'},{status:503});
  }
+ if(user){
+  try{usage=scalar<Usage>(await fetcher('/rest/v1/rpc/consume_orby_account_quota',{method:'POST',body:JSON.stringify({submitted_characters:prompt.length})}));}
+  catch(error){return usageErrorResponse(error,true);}
+ }
+ if(!usage)return NextResponse.json({error:'تعذر التحقق من استخدام أوربي الآن.',code:'ORBY_USAGE_UNAVAILABLE'},{status:503});
 
  const sector=retailContext?'commerce':businessContext?mapBusinessSector(businessContext.activity?.family||businessContext.activity?.type):'general';
  const dialogue=new OrbyDialogueManager().decide({message:prompt,sector,hasWorkspaceContext:Boolean(scope),hasTargetEntity:Boolean(scope)}),mode=internalMode(dialogue.classification.intent);

@@ -49,6 +49,7 @@ export default async function OrbyPage({
           authenticated={false}
           organizationId={null}
           serviceCode={null}
+          contextLabel="محادثة عامة"
           initialConversationId={null}
           initialMessages={[]}
           initialRemaining={5}
@@ -98,10 +99,13 @@ export default async function OrbyPage({
   const selectedOrganizationId = activeOption?.organizationId || null;
   const selectedServiceCode = activeOption?.serviceCode || null;
   let messages: Message[] = [];
+  let historyLimited = false;
   if (selected) {
-    messages = (await supabaseFetch(
-      `/rest/v1/orby_messages?conversation_id=eq.${encodeURIComponent(selected.id)}&user_id=eq.${encodeURIComponent(user.id)}&select=id,role,content,source&role=in.(user,assistant)&order=created_at.asc,id.asc`,
+    const recentMessages = (await supabaseFetch(
+      `/rest/v1/orby_messages?conversation_id=eq.${encodeURIComponent(selected.id)}&user_id=eq.${encodeURIComponent(user.id)}&select=id,role,content,source&role=in.(user,assistant)&order=created_at.desc,id.desc&limit=201`,
     ).catch(() => [])) as Message[];
+    historyLimited = recentMessages.length > 200;
+    messages = recentMessages.slice(0, 200).reverse();
   }
   const newChatHref = selectedOrganizationId
     ? `/orby?conversation=new&organization=${encodeURIComponent(selectedOrganizationId)}&service=${encodeURIComponent(selectedServiceCode || "")}`
@@ -138,6 +142,8 @@ export default async function OrbyPage({
       selectedOrganizationId={selectedOrganizationId}
       selectedServiceCode={selectedServiceCode}
       tier={usage.tier}
+      remaining={Number(usage.remaining ?? 5)}
+      limit={Number(usage.daily_limit ?? 5)}
     />
   );
   const chatKey = [selected?.id || "new", selectedOrganizationId || "general", params.starter || "chat"].join(":");
@@ -157,12 +163,14 @@ export default async function OrbyPage({
         authenticated
         organizationId={selectedOrganizationId}
         serviceCode={selectedServiceCode}
+        contextLabel={contextLabel}
         initialConversationId={selected?.id || null}
         initialMessages={messages}
         initialRemaining={Number(usage.remaining ?? 5)}
         initialLimit={Number(usage.daily_limit ?? 5)}
         tier={usage.tier || "registered"}
         starter={params.starter}
+        historyLimited={historyLimited}
       />
     </OrbyShell>
   );

@@ -33,6 +33,7 @@ export default function OrbyShell({
   shellContext?: ShellContextDefinition;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeLayers = useCallback(() => setLayersOpen(false), []);
@@ -52,12 +53,21 @@ export default function OrbyShell({
               <Icon name="back" className="md-icon-directional" />
             </IconLink>
             {authenticated && sidebar ? (
-              <IconButton
-                label="فتح محادثات ORBY"
-                className="md-orby-mobile-sidebar-button"
-                onClick={() => setSidebarOpen(true)}
-                aria-expanded={sidebarOpen}
-              ><Icon name="menu" /></IconButton>
+              <>
+                <IconButton
+                  label="فتح محادثات ORBY"
+                  className="md-orby-mobile-sidebar-button"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-expanded={sidebarOpen}
+                ><Icon name="menu" /></IconButton>
+                <IconButton
+                  label={sidebarCollapsed ? "إظهار محادثات ORBY" : "إخفاء محادثات ORBY"}
+                  className="md-orby-desktop-sidebar-button"
+                  onClick={() => setSidebarCollapsed((value) => !value)}
+                  aria-expanded={!sidebarCollapsed}
+                  aria-controls="orby-conversation-sidebar"
+                ><Icon name="menu" /></IconButton>
+              </>
             ) : null}
             <Image src="/brand/orby-assistant.svg" width={36} height={36} alt="ORBY" className="md-orby-header-avatar" />
             <div className="md-orby-header-copy">
@@ -87,8 +97,8 @@ export default function OrbyShell({
             </Menu>
           </div>
         </header>
-        <div className={authenticated && sidebar ? "md-orby-frame has-sidebar" : "md-orby-frame"}>
-          {authenticated && sidebar ? <aside className="md-orby-desktop-sidebar">{sidebar}</aside> : null}
+        <div className={authenticated && sidebar && !sidebarCollapsed ? "md-orby-frame has-sidebar" : "md-orby-frame"}>
+          {authenticated && sidebar && !sidebarCollapsed ? <aside id="orby-conversation-sidebar" className="md-orby-desktop-sidebar">{sidebar}</aside> : null}
           <section id="orby-content" tabIndex={-1} className="md-orby-content">{children}</section>
         </div>
       </div>
