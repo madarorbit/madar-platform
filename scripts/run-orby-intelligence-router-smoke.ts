@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type {OrbyModelDescriptor,OrbyRuntimeConfiguration} from '../src/lib/orby/core/contracts';
-import {createOrbyFoundation} from '../src/lib/orby';
+import {createOrbyFoundation} from '../src/lib/orby/index';
 import {MockOrbyProvider} from '../src/lib/orby/providers/mock';
 
 async function main(){
