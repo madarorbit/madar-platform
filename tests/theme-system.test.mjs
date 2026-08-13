@@ -12,7 +12,7 @@ test("theme is applied before hydration and stored for later visits", async () =
   assert.match(root, /madar-theme/);
   assert.match(root, /suppressHydrationWarning/);
   assert.match(root, /ThemeProvider/);
-  assert.match(provider, /localStorage\.setItem\(STORAGE_KEY,theme\)/);
+  assert.match(provider, /localStorage\.setItem\(STORAGE_KEY,preference\)/);
   assert.match(provider, /prefers-color-scheme: dark/);
   assert.match(provider, /md-theme-transition/);
 });
@@ -37,11 +37,13 @@ test("light and dark tokens cover the enterprise design system", async () => {
   assert.match(css, /\.md-footer/);
 });
 
-test("public and authenticated navigation shells expose the theme toggle", async () => {
-  const [navbar, admin, workspace] = await Promise.all([
+test("theme is quick on public and admin surfaces and explicit in account preferences", async () => {
+  const [navbar, admin, workspace, accountMenu, preferences] = await Promise.all([
     read("components/layout/NavbarClient.tsx"),
     read("components/admin/EnterpriseAdminShell.tsx"),
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
+    read("components/platform/GlobalUserActions.tsx"),
+    read("components/theme/ThemePreferences.tsx"),
   ]);
   assert.doesNotMatch(navbar, /authenticated&&<ThemeToggle/);
   assert.equal(
@@ -50,5 +52,8 @@ test("public and authenticated navigation shells expose the theme toggle", async
     "desktop and mobile navigation must always expose the toggle",
   );
   assert.match(admin, /<ThemeToggle\s*\/>/);
-  assert.match(workspace, /<ThemeToggle\s*\/>/);
+  assert.match(workspace, /GlobalUserActions/);
+  assert.doesNotMatch(workspace, /<ThemeToggle\s*\/>/);
+  assert.match(accountMenu, /\/account\/appearance/);
+  for (const preference of ['"light"','"dark"','"system"']) assert.ok(preferences.includes(preference));
 });

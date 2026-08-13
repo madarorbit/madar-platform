@@ -1,2 +1,25 @@
-import Link from'next/link';import PageShell from'@/components/ui/PageShell';import{PageHero,Section}from'@/components/ui/Section';import{requireUser}from'@/src/lib/auth';import{supabaseFetch}from'@/src/lib/supabase/server';import{money,orderStatus,paymentStatus}from'@/src/lib/order-status';export const dynamic='force-dynamic';export const metadata={title:'طلباتي'};
-export default async function Page(){await requireUser();const orders=await supabaseFetch('/rest/v1/orders?select=id,order_number,status,payment_status,total,currency,created_at&order=created_at.desc');return <PageShell><PageHero eyebrow="حسابي" title="طلباتي" description="تابع الدفع والتنفيذ والتسليم من مكان واحد."/><Section>{!orders?.length?<div className="rounded-3xl border border-white/10 bg-white/[.04] p-10 text-center"><p>لا توجد طلبات بعد.</p><Link href="/store" className="mt-5 inline-flex rounded-xl bg-white px-5 py-3 font-bold text-slate-950">استعرض المتجر</Link></div>:<div className="space-y-4">{orders.map((o:any)=><Link href={`/account/orders/${o.id}`} key={o.id} className="grid gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-5 transition hover:border-[#70E4D4]/40 sm:grid-cols-4 sm:items-center"><div><p className="text-xs text-slate-400">رقم الطلب</p><strong dir="ltr">{o.order_number}</strong></div><div><p className="text-xs text-slate-400">الحالة</p><strong>{orderStatus[o.status]||o.status}</strong></div><div><p className="text-xs text-slate-400">الدفع</p><strong>{paymentStatus[o.payment_status]||o.payment_status}</strong></div><strong className="text-[#70E4D4] sm:text-left">{money(o.total,o.currency)}</strong></Link>)}</div>}</Section></PageShell>}
+import Link from "next/link";
+import { AccountPage, AccountPageHeader } from "@/components/account/AccountPage";
+import { requireUser } from "@/src/lib/auth";
+import { money, orderStatus, paymentStatus } from "@/src/lib/order-status";
+import { supabaseFetch } from "@/src/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+export const metadata = { title: "طلباتي | حساب مَدار" };
+
+type Order = { id: string; order_number: string; status: string; payment_status: string; total: number; currency: string; created_at: string };
+
+export default async function OrdersPage() {
+  await requireUser();
+  const orders = (await supabaseFetch("/rest/v1/orders?select=id,order_number,status,payment_status,total,currency,created_at&order=created_at.desc")) as Order[];
+  return (
+    <AccountPage>
+      <AccountPageHeader title="طلباتي" description="من إنشاء الطلب إلى إثبات الدفع والمراجعة والتسليم في مسار واحد." />
+      {!orders?.length ? <div className="md-empty"><div><h2 className="text-xl font-black">لا توجد طلبات بعد</h2><p className="mt-2 text-slate-400">ابدأ من المتجر، ثم ستظهر هنا حالة الدفع والتنفيذ.</p><Link href="/store" className="md-button md-button-primary mt-5">استعراض المتجر</Link></div></div> : (
+        <div className="grid gap-3">
+          {orders.map((order) => <Link href={`/account/orders/${order.id}`} key={order.id} className="md-order-row"><div><span>رقم الطلب</span><strong dir="ltr">{order.order_number}</strong></div><div><span>الحالة</span><strong>{orderStatus[order.status] || order.status}</strong></div><div><span>الدفع</span><strong>{paymentStatus[order.payment_status] || order.payment_status}</strong></div><div><span>التاريخ</span><strong>{new Date(order.created_at).toLocaleDateString("ar-YE")}</strong></div><b>{money(order.total, order.currency)}</b></Link>)}
+        </div>
+      )}
+    </AccountPage>
+  );
+}

@@ -82,7 +82,7 @@ function resolveState(subscription: ServiceSubscriptionRow | null, request: Requ
 function serviceHref(code: ServiceCode, state: ServiceState, request: RequestRow | null) {
   if (state === "ACTIVE") return serviceDefinition(code).openHref;
   if (state === "SETUP_REQUIRED" && request?.status === "pending_payment") return `/workspace-payment/${request.id}`;
-  if (state === "PENDING_APPROVAL") return null;
+  if (state === "PENDING_APPROVAL") return `/account/services/${code}/setup`;
   return `/account/services/${code}/setup`;
 }
 

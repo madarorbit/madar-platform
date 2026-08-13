@@ -12,7 +12,7 @@ import OrbyFloatingFace from '@/components/orby/OrbyFloatingFace';
 
 const metadataBase=new URL(siteConfig.baseUrl);
 const googleAnalyticsId='G-PT7RKF7295';
-const themeBootstrap=`(()=>{try{const saved=localStorage.getItem('madar-theme');const theme=saved==='light'||saved==='dark'?saved:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const root=document.documentElement;root.dataset.theme=theme;root.style.colorScheme=theme}catch{document.documentElement.dataset.theme='dark'}})();`;
+const themeBootstrap=`(()=>{try{const raw=localStorage.getItem('madar-theme');const preference=raw==='light'||raw==='dark'||raw==='system'?raw:'system';const theme=preference==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):preference;const root=document.documentElement;root.dataset.theme=theme;root.dataset.themePreference=preference;root.style.colorScheme=theme}catch{document.documentElement.dataset.theme='dark';document.documentElement.dataset.themePreference='system'}})();`;
 const organizationJsonLd={
  '@context':'https://schema.org','@type':'Organization','@id':`${siteConfig.baseUrl}/#organization`,name:siteConfig.name,url:siteConfig.baseUrl,logo:absoluteUrl('/brand/symbol-512x512.png'),image:absoluteUrl(siteConfig.assets.ogImage),email:siteConfig.email,telephone:siteConfig.phone,sameAs:[siteConfig.social.x,siteConfig.social.instagram],contactPoint:{'@type':'ContactPoint',contactType:'customer support',email:siteConfig.email,telephone:siteConfig.phone,availableLanguage:['ar']},
 };

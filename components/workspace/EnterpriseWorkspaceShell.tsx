@@ -8,7 +8,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/ui/Icons";
 import { cx } from "@/components/ui/Enterprise";
 import { siteConfig } from "@/src/config/site";
-import ThemeToggle from "@/components/theme/ThemeToggle";
+import GlobalUserActions from "@/components/platform/GlobalUserActions";
 import NavigationControls from "@/components/navigation/NavigationControls";
 import ShellModuleContext from "@/components/navigation/ShellModuleContext";
 import WorkspaceCommandPalette from "@/components/workspace/WorkspaceCommandPalette";
@@ -58,6 +58,10 @@ export default function EnterpriseWorkspaceShell({
   enabledModules,
   operatingMode,
   initialCompact,
+  displayName,
+  hasAvatar,
+  isAdmin,
+  unread,
 }: {
   children: ReactNode;
   workspaceName: string;
@@ -69,6 +73,10 @@ export default function EnterpriseWorkspaceShell({
   enabledModules: string[];
   operatingMode: OperatingMode;
   initialCompact: boolean;
+  displayName: string;
+  hasAvatar: boolean;
+  isAdmin: boolean;
+  unread: number;
 }) {
   const pathname = usePathname() || "/workspace";
   const [compact, setCompact] = useState(initialCompact);
@@ -76,13 +84,13 @@ export default function EnterpriseWorkspaceShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [, startTransition] = useTransition();
   const groups = useMemo(
-    () => workspaceNavigationGroups(extension, enabledModules),
-    [extension, enabledModules],
+    () => workspaceNavigationGroups(extension, enabledModules, operatingMode),
+    [extension, enabledModules, operatingMode],
   );
   const paletteGroups = groups as ProductNavigationGroup[];
   const mobileItems = useMemo(
-    () => workspaceMobileNavigation(extension, enabledModules),
-    [extension, enabledModules],
+    () => workspaceMobileNavigation(extension, enabledModules, operatingMode),
+    [extension, enabledModules, operatingMode],
   );
   const flatItems = groups.flatMap((group) => group.items);
   const current = flatItems.find((item) =>
@@ -262,30 +270,7 @@ export default function EnterpriseWorkspaceShell({
             <span>بحث شامل</span>
             <kbd>⌘ K</kbd>
           </button>
-          <div className="md-topbar-actions">
-            <ThemeToggle />
-            <Link href="/workspace/orby" className="md-orby-topbar">
-              <Image
-                src={siteConfig.assets.orby}
-                alt="أوربي"
-                width={28}
-                height={28}
-                unoptimized
-              />
-              <span>اسأل أوربي</span>
-            </Link>
-            <Link
-              href="/account/notifications"
-              className="md-topbar-icon"
-              aria-label="الإشعارات"
-            >
-              <Icon name="bell" />
-            </Link>
-            <Link href="/account" className="md-account-button">
-              <Icon name="user" />
-              <span>حسابي</span>
-            </Link>
-          </div>
+          <GlobalUserActions displayName={displayName} hasAvatar={hasAvatar} isAdmin={isAdmin} unread={unread} orbyHref="/workspace/orby" />
         </header>
         <div
           className={cx(

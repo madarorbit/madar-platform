@@ -4,8 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServiceRequest } from "@/app/actions/services";
 import { Badge, ButtonLink, Card, Field, Input, Notice, Select } from "@/components/ui/Enterprise";
 import { Icon } from "@/components/ui/Icons";
-import PageShell from "@/components/ui/PageShell";
-import { PageHero, Section } from "@/components/ui/Section";
+import { AccountPage, AccountPageHeader } from "@/components/account/AccountPage";
 import { businessMoney } from "@/src/lib/business";
 import { isServiceCode, serviceStateLabels } from "@/src/lib/services/catalog";
 import { getServiceSetupContext } from "@/src/lib/services/server";
@@ -24,11 +23,11 @@ export default async function ServiceSetupPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ service: string }>;
+  params: Promise<{ code: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ service: rawService }, query] = await Promise.all([params, searchParams]);
-  const code = rawService.toUpperCase();
+  const [{ code: rawCode }, query] = await Promise.all([params, searchParams]);
+  const code = rawCode.toUpperCase();
   if (!isServiceCode(code)) notFound();
   const { profile, service } = await getServiceSetupContext(code);
   if (service.state === "ACTIVE") redirect(service.definition.openHref);
@@ -40,14 +39,13 @@ export default async function ServiceSetupPage({
   const canSubmit = Boolean(service.plan?.is_active && service.plan?.is_available);
 
   return (
-    <PageShell>
-      <PageHero
+    <AccountPage>
+      <AccountPageHeader
         eyebrow="إعداد خدمة مستقلة"
         title={service.definition.name}
         description={service.definition.detail}
       />
-      <Section>
-        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <Card className="p-5 sm:p-7">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -191,8 +189,7 @@ export default async function ServiceSetupPage({
               </Card>
             ) : null}
           </aside>
-        </div>
-      </Section>
-    </PageShell>
+      </div>
+    </AccountPage>
   );
 }

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function LegacySubscriptionRedirect() {
-  redirect("/account");
+  redirect("/account/subscriptions");
 }

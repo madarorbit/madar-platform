@@ -39,7 +39,7 @@ test('account and guest ORBY load the governed global runtime configuration inst
 test('MADAR Retail uses the same modern workspace-shell interaction model as MADAR Native',async()=>{
  const[layout,shell,dashboard]=await Promise.all([read('app/retail/workspace/layout.tsx'),read('components/retail-v0/layout/RetailWorkspaceShell.tsx'),read('app/retail/workspace/page.tsx')]);
  assert.match(layout,/RetailWorkspaceShell/);
- for(const contract of [/md-ux-shell/,/md-ux-sidebar/,/md-ux-topbar/,/md-mobile-bottom-nav/,/md-mobile-drawer-layer/,/ThemeToggle/,/siteConfig\.assets\.orby/])assert.match(shell,contract);
+ for(const contract of [/md-ux-shell/,/md-ux-sidebar/,/md-ux-topbar/,/md-mobile-bottom-nav/,/md-mobile-drawer-layer/,/GlobalUserActions/,/retailNavigationGroups/,/siteConfig\.assets\.orby/])assert.match(shell,contract);
  assert.match(shell,/platformOrganizationId/);
  assert.match(shell,/\/orby\?conversation=new&organization=/);
  assert.match(dashboard,/md-card/);
@@ -48,12 +48,11 @@ test('MADAR Retail uses the same modern workspace-shell interaction model as MAD
 });
 
 test('customer account is segmented into focused views instead of one long service feed',async()=>{
- const account=await read('app/account/page.tsx');
- for(const view of ['overview','services','orby','account'])assert.ok(account.includes(`"${view}"`));
- assert.match(account,/viewFrom/);
- assert.match(account,/نظرة عامة/);
- assert.match(account,/الخدمات والاشتراكات/);
- assert.match(account,/سياقات الأعمال/);
- assert.match(account,/إدارة الحساب/);
- assert.match(account,/coverImage/);
+ const[account,layout,services,navigation]=await Promise.all([read('app/account/page.tsx'),read('app/account/layout.tsx'),read('app/account/services/page.tsx'),read('src/lib/ux/platform-navigation.ts')]);
+ assert.match(layout,/AccountShell/);
+ assert.match(account,/ماذا أملك/);
+ assert.match(account,/ماذا حدث/);
+ assert.match(account,/يحتاج انتباهك/);
+ assert.match(services,/ServiceCards/);
+ for(const route of ['/account/services','/account/subscriptions','/account/profile','/account/appearance'])assert.ok(navigation.includes(route));
 });

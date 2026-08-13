@@ -8,8 +8,10 @@ import { siteConfig } from "@/src/config/site";
 import { Icon } from "@/components/ui/Icons";
 import { cx } from "@/components/ui/Enterprise";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import CartStatusLink from "@/components/platform/CartStatusLink";
+import GlobalUserActions from "@/components/platform/GlobalUserActions";
 
-type Props = { authenticated: boolean; displayName?: string; hasAvatar: boolean; isAdmin: boolean };
+type Props = { authenticated: boolean; displayName?: string; hasAvatar: boolean; isAdmin: boolean; unread: number };
 const publicGroups = [
   { label: "المنصة", links: [{ label: "الرئيسية", href: "/" }, { label: "عن مَدار", href: "/about" }, { label: "أوربي", href: "/about#orby" }] },
   { label: "الاكتشاف", links: [{ label: "المتجر", href: "/store" }, { label: "المدونة", href: "/blog" }, { label: "المجتمع", href: "/community" }] },
@@ -23,7 +25,7 @@ function AccountLink({ hasAvatar, displayName, onClick }: { hasAvatar: boolean; 
   </Link>;
 }
 
-export default function NavbarClient({ authenticated, displayName, hasAvatar, isAdmin }: Props) {
+export default function NavbarClient({ authenticated, displayName, hasAvatar, isAdmin, unread }: Props) {
   const pathname = usePathname() || "/";
   const [open, setOpen] = useState(false);
   const active = (href: string) => {
@@ -42,15 +44,19 @@ export default function NavbarClient({ authenticated, displayName, hasAvatar, is
         </details>)}
       </div>
       <div className="md-public-nav-actions">
-        <Link href="/search" className="md-public-search" aria-label="البحث في مَدار"><Icon name="search" className="h-4 w-4" /><span>بحث</span><kbd>/</kbd></Link>
+        <Link href="/search" className="md-public-search" aria-label="البحث في متجر مَدار"><Icon name="search" className="h-4 w-4" /><span>بحث في المتجر</span><kbd>/</kbd></Link>
         <ThemeToggle/>
-        {authenticated ? <>{isAdmin && <Link href="/admin" className="md-button md-button-secondary md-button-sm">الإدارة</Link>}<AccountLink hasAvatar={hasAvatar} displayName={displayName} /></> : <><Link href="/login" className="md-public-login">تسجيل الدخول</Link><Link href="/register" className="md-button md-button-primary md-button-sm">ابدأ مع مَدار</Link></>}
+        {authenticated ? <GlobalUserActions displayName={displayName || "حسابي"} hasAvatar={hasAvatar} isAdmin={isAdmin} unread={unread} /> : <><CartStatusLink /><Link href="/login" className="md-public-login">تسجيل الدخول</Link><Link href="/register" className="md-button md-button-primary md-button-sm">ابدأ مع مَدار</Link></>}
       </div>
-      <button type="button" onClick={() => setOpen((value) => !value)} className="md-public-menu-button" aria-expanded={open} aria-controls="public-mobile-nav" aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}><Icon name={open ? "check" : "layers"} /></button>
+      <div className="md-public-mobile-actions">
+        <CartStatusLink />
+        {authenticated ? <Link href="/account" className="md-public-mobile-avatar" aria-label="فتح حساب مَدار">{hasAvatar ? <Image src="/account/avatar" alt="" width={32} height={32} unoptimized /> : <Icon name="user" />}</Link> : null}
+        <button type="button" onClick={() => setOpen((value) => !value)} className="md-public-menu-button" aria-expanded={open} aria-controls="public-mobile-nav" aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}><Icon name={open ? "check" : "layers"} /></button>
+      </div>
     </div>
     {open && <div id="public-mobile-nav" className="md-public-mobile-nav"><div className="md-container">
       <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2"><span className="text-xs font-bold text-slate-400">المظهر</span><ThemeToggle/></div>
-      <Link href="/search" onClick={close} className="md-public-mobile-search"><Icon name="search" />البحث في مَدار</Link>
+      <Link href="/search" onClick={close} className="md-public-mobile-search"><Icon name="search" />البحث في المتجر</Link>
       {publicGroups.map((group) => <section key={group.label}><h2>{group.label}</h2>{group.links.map((link) => <Link key={link.href} href={link.href} onClick={close} aria-current={active(link.href) ? "page" : undefined}>{link.label}</Link>)}</section>)}
       <Link href={siteConfig.links.orby} onClick={close} className="md-public-orby-link"><Image src={siteConfig.assets.orby} alt="أوربي" width={42} height={42} unoptimized /><span><strong>أوربي</strong><small>مساعد الأعمال الذكي</small></span></Link>
       {authenticated ? <div className="md-public-mobile-account">{isAdmin && <Link href="/admin" onClick={close}>لوحة الإدارة</Link>}<AccountLink hasAvatar={hasAvatar} displayName={displayName} onClick={close} /></div> : <div className="md-public-mobile-auth"><Link href="/login" onClick={close}>تسجيل الدخول</Link><Link href="/register" onClick={close}>ابدأ مع مَدار</Link></div>}

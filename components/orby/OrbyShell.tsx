@@ -3,14 +3,15 @@
 import Link from 'next/link';
 import {useState,type ReactNode} from 'react';
 
-export default function OrbyShell({children,sidebar,plus,newChatHref,authenticated}:{children:ReactNode;sidebar?:ReactNode;plus:boolean;newChatHref:string;authenticated:boolean}){
+export default function OrbyShell({children,sidebar,plus,newChatHref,authenticated,contextLabel,returnHref}:{children:ReactNode;sidebar?:ReactNode;plus:boolean;newChatHref:string;authenticated:boolean;contextLabel:string;returnHref:string}){
  const[open,setOpen]=useState(false);
  return <main className="min-h-[calc(100dvh-4rem)] bg-[radial-gradient(circle_at_top,#17122d_0%,#080b12_38%,#05070c_100%)] text-slate-100">
   <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-[1600px] flex-col px-2 py-2 sm:px-4 sm:py-4">
    <header className="sticky top-2 z-30 flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0b0f18]/90 px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-xl sm:px-4">
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
+     <Link href={returnHref} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[.04] transition hover:bg-white/[.08]" aria-label="العودة إلى مَدار"><span aria-hidden>→</span></Link>
      {authenticated&&sidebar?<button type="button" onClick={()=>setOpen(value=>!value)} className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] transition hover:bg-white/[.08]" aria-label={open?'إغلاق قائمة أوربي':'فتح قائمة أوربي'} aria-expanded={open}><span className="grid gap-1"><i className="block h-0.5 w-5 rounded-full bg-current"/><i className="block h-0.5 w-3.5 rounded-full bg-current"/></span></button>:null}
-     <div className="flex items-center gap-2"><strong className="text-base font-black tracking-wide sm:text-lg">ORBY</strong>{plus?<span className="rounded-full border border-violet-300/30 bg-violet-400/15 px-2 py-0.5 text-[11px] font-black text-violet-100">Plus</span>:null}</div>
+     <div className="min-w-0"><div className="flex items-center gap-2"><strong className="text-base font-black tracking-wide sm:text-lg">ORBY</strong>{plus?<span className="rounded-full border border-violet-300/30 bg-violet-400/15 px-2 py-0.5 text-[11px] font-black text-violet-100">Plus</span>:null}</div><span className="block max-w-40 truncate text-[10px] text-slate-500 sm:max-w-64">{contextLabel}</span></div>
     </div>
     <div className="flex items-center gap-2">
      <Link href={newChatHref} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-3 text-xs font-bold text-emerald-100 transition hover:bg-emerald-300/15"><span aria-hidden>＋</span><span className="hidden sm:inline">محادثة جديدة</span></Link>

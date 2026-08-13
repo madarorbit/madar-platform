@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/ui/Icons";
+import type { OperatingMode } from "./account";
 import type { VerticalExtension } from "./verticals";
 
 export type WorkspaceNavigationItem = {
@@ -12,14 +13,13 @@ export type WorkspaceNavigationItem = {
 };
 
 export type WorkspaceNavigationGroup = {
-  key: "overview" | "operations" | "automation" | "management" | "account";
+  key: "overview" | "operations" | "automation" | "monitoring" | "management" | "account";
   label: string;
   items: WorkspaceNavigationItem[];
 };
 
 const overview: WorkspaceNavigationItem[] = [
   { key: "dashboard", href: "/workspace", label: "نظرة عامة", icon: "home", description: "المؤشرات والاختصارات اليومية", keywords: ["الرئيسية", "لوحة المعلومات"] },
-  { key: "retail", href: "/retail/workspace", label: "MADAR Retail", icon: "store", description: "تشغيل التجزئة والمخزون والصندوق", keywords: ["تجزئة", "بيع", "مخزون", "صندوق"] },
   { key: "orby", href: "/workspace/orby", label: "أوربي", icon: "sparkles", description: "المساعد الذكي داخل سياق العمل", keywords: ["محادثة", "ذكاء", "تحليل"], orby: true },
   { key: "analytics", href: "/workspace/analytics", label: "التقارير والتحليلات", icon: "chart", description: "الأداء والاتجاهات والفترات", keywords: ["تقارير", "مؤشرات"] },
 ];
@@ -58,45 +58,55 @@ const management: WorkspaceNavigationItem[] = [
   { key: "activity", href: "/workspace/activity", label: "سجل النشاط", icon: "clock", description: "الأحداث والقرارات والتغييرات", keywords: ["سجل", "تدقيق"] },
 ];
 
+const connectedOverview = [overview[0], automation[0], overview[1]];
+const connectedMonitoring = [overview[2], management.find((item) => item.key === "activity") as WorkspaceNavigationItem];
+
 const account: WorkspaceNavigationItem[] = [
   { key: "account", href: "/account", label: "الحساب والخدمات", icon: "user", description: "الخدمات والاشتراكات المستقلة", keywords: ["حساب", "اشتراك", "خدمة"] },
   { key: "support", href: "/account/support", label: "الدعم والملاحظات", icon: "help", description: "التواصل والملاحظات", keywords: ["مساعدة", "دعم"] },
 ];
 
 const alwaysEnabled = new Set([
-  "dashboard", "retail", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "account", "support",
+  "dashboard", "orby", "analytics", "connect", "tasks", "permissions", "settings", "activity", "account", "support",
 ]);
 
 export function workspaceNavigationGroups(
   extension: VerticalExtension,
   enabledKeys?: readonly string[],
+  operatingMode: OperatingMode = "MADAR_NATIVE",
 ): WorkspaceNavigationGroup[] {
   const enabled = enabledKeys?.length ? new Set(enabledKeys) : null;
   const filter = (items: WorkspaceNavigationItem[]) =>
     enabled ? items.filter((item) => alwaysEnabled.has(item.key) || enabled.has(item.key)) : items;
+  const connected = operatingMode === "CONNECTED_EXTERNAL";
+  const managementItems = connected ? management.filter((item) => item.key !== "activity") : management;
   return [
-    { key: "overview", label: "نظرة عامة", items: filter(overview) },
-    { key: "operations", label: "التشغيل", items: filter(operations[extension]) },
-    { key: "automation", label: "الربط والأتمتة", items: filter(automation) },
-    { key: "management", label: "الإدارة", items: filter(management) },
-    { key: "account", label: "الحساب", items: filter(account) },
+    { key: "overview", label: "نظرة عامة", items: filter(connected ? connectedOverview : overview) },
+    { key: "operations", label: connected ? "البيانات الواصلة" : "التشغيل", items: filter(operations[extension]) },
+    ...(connected
+      ? [{ key: "monitoring" as const, label: "المراقبة والتقارير", items: filter(connectedMonitoring) }, { key: "automation" as const, label: "المهام", items: filter(automation.filter((item) => item.key === "tasks")) }]
+      : [{ key: "automation" as const, label: "الربط والأتمتة", items: filter(automation) }]),
+    { key: "management", label: "الإدارة", items: filter(managementItems) },
+    { key: "account", label: "حساب مَدار", items: filter(account) },
   ].filter((group) => group.items.length) as WorkspaceNavigationGroup[];
 }
 
 export function workspaceNavigation(
   extension: VerticalExtension,
   enabledKeys?: readonly string[],
+  operatingMode: OperatingMode = "MADAR_NATIVE",
 ) {
-  return workspaceNavigationGroups(extension, enabledKeys).flatMap((group) => group.items);
+  return workspaceNavigationGroups(extension, enabledKeys, operatingMode).flatMap((group) => group.items);
 }
 
 export function workspaceMobileNavigation(
   extension: VerticalExtension,
   enabledKeys?: readonly string[],
+  operatingMode: OperatingMode = "MADAR_NATIVE",
 ) {
-  const items = workspaceNavigation(extension, enabledKeys);
+  const items = workspaceNavigation(extension, enabledKeys, operatingMode);
   const operationKey = extension === "food_service" ? "restaurant" : extension === "hospitality" ? "hotel" : "sales";
-  return ["dashboard", operationKey, "orby", "analytics"]
+  return ["dashboard", operatingMode === "CONNECTED_EXTERNAL" ? "connect" : operationKey, "orby", "analytics"]
     .map((key) => items.find((item) => item.key === key))
     .filter(Boolean) as WorkspaceNavigationItem[];
 }

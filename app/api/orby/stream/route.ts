@@ -6,7 +6,7 @@ import {IntegrationError} from '@/src/lib/integration/errors';
 import {
  deterministicGeneralOrbyResponse,deterministicOrbyResponse,orbyModes,orbySystemPrompt,type OrbyContext,type OrbyMode,
 } from '@/src/lib/orby';
-import type {OrbyContextSource,OrbyKernelResponse,OrbyJsonValue} from '@/src/lib/orby/core/contracts';
+import type {OrbyContextSource,OrbyKernelResponse} from '@/src/lib/orby/core/contracts';
 import {isOrbyError,publicOrbyError} from '@/src/lib/orby/core/errors';
 import {createAccountOrbyFoundation} from '@/src/lib/orby/account-runtime';
 import {createServerOrbyFoundation} from '@/src/lib/orby/server';

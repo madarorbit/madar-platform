@@ -89,7 +89,7 @@ test("P2 and P3 implement a certified versioned vertical engine and sector UDM c
 test("production services use one database-driven plan and central payment flow", async () => {
   const [transition, setup, payment, admin] = await Promise.all([
     read("supabase/migrations/20260811190000_account_services_production.sql"),
-    read("app/account/services/[service]/setup/page.tsx"),
+    read("app/account/services/[code]/setup/page.tsx"),
     read("app/workspace-payment/[id]/page.tsx"),
     read("app/admin/local-payments/page.tsx"),
   ]);

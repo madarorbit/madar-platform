@@ -46,9 +46,9 @@ test("account services and business space have focused navigation", async () => 
     read("src/lib/v2/navigation.ts"),
   ]);
   assert.match(accountPage, /getAccountServices/);
-  assert.match(accountPage, /خدمات مَدار/);
+  assert.match(accountPage, /فتح خدماتي/);
   assert.doesNotMatch(accountPage, /student|طالب/i);
-  assert.match(workspaceShell, /workspaceNavigation/);
+  assert.match(workspaceShell, /workspaceNavigationGroups/);
   assert.match(workspaceNavigation, /لوحة المعلومات/);
   assert.match(workspacePage, /ملخص مباشر/);
 });

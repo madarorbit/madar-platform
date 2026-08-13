@@ -13,11 +13,11 @@ test('unified ORBY keeps one core and account-level quota tiers',async()=>{
 });
 
 test('service launch is exact and uses supplied service artwork',async()=>{
- const[catalog,launch,account]=await Promise.all([read('src/lib/services/catalog.ts'),read('app/account/services/[code]/open/route.ts'),read('app/account/page.tsx')]);
+ const[catalog,launch,serviceCards]=await Promise.all([read('src/lib/services/catalog.ts'),read('app/account/services/[code]/open/route.ts'),read('components/account/ServiceCards.tsx')]);
  for(const asset of ['connect-existing.webp','build-on-madar.webp','madar-retail.webp'])assert.match(catalog,new RegExp(asset.replace('.','\\.')));
  for(const route of ['/workspace/connect','/workspace','/retail/workspace'])assert.ok(catalog.includes(route));
  for(const service of ['CONNECT_EXISTING','BUILD_ON_MADAR','MADAR_RETAIL'])assert.ok(catalog.includes(`/account/services/${service}/open`));
- assert.match(launch,/service_code=eq/);assert.match(launch,/activation_state=eq\.ACTIVE/);assert.match(launch,/default_commercial_organization_id/);assert.match(account,/coverImage/);
+ assert.match(launch,/service_code=eq/);assert.match(launch,/activation_state=eq\.ACTIVE/);assert.match(launch,/default_commercial_organization_id/);assert.match(serviceCards,/coverImage/);
 });
 
 test('Retail and workspace ORBY converge on unified account chat',async()=>{

@@ -46,7 +46,7 @@ test("service subscription, payment and approval state are database driven", asy
     read(mainMigrationPath),
     read("supabase/migrations/20260811195000_service_config_audit_trigger_fix.sql"),
     read("supabase/migrations/20260811194000_legacy_onboarding_runtime_lock.sql"),
-    read("app/account/services/[service]/setup/page.tsx"),
+    read("app/account/services/[code]/setup/page.tsx"),
     read("app/workspace-payment/[id]/page.tsx"),
     read("app/admin/workspace-requests/page.tsx"),
     read("app/actions/services.ts"),

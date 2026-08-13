@@ -11,7 +11,7 @@ export const services: readonly ServiceDefinition[] = [
  {code:"MADAR_RETAIL",name:"MADAR Retail",shortName:"مَدار للتجزئة",description:"تشغيل خفيف وآمن للمبيعات والمخزون والصندوق والديون.",detail:"بيانات Retail معزولة حسب مساحة التجارة، مع دخول موحّد وتحليلات وORBY ضمن صلاحيات حساب مَدار.",icon:"store",coverImage:"/services/madar-retail.webp",openHref:"/account/services/MADAR_RETAIL/open",runtimeHref:"/retail/workspace",accent:"mixed"},
 ] as const;
 
-export const serviceStateLabels: Record<ServiceState,string>={NOT_SUBSCRIBED:"غير مشترك",SETUP_REQUIRED:"الإعداد أو الدفع مطلوب",PENDING_APPROVAL:"بانتظار موافقة الإدارة",ACTIVE:"فعّالة",EXPIRED:"منتهية",SUSPENDED:"موقوفة",REJECTED:"مرفوضة"};
-export const serviceStateCtas: Record<ServiceState,string>={NOT_SUBSCRIBED:"ابدأ",SETUP_REQUIRED:"أكمل الإعداد",PENDING_APPROVAL:"بانتظار الموافقة",ACTIVE:"فتح الخدمة",EXPIRED:"تجديد الاشتراك",SUSPENDED:"تجديد أو مراجعة الحالة",REJECTED:"إعادة تقديم الطلب"};
+export const serviceStateLabels: Record<ServiceState,string>={NOT_SUBSCRIBED:"غير مفعّلة",SETUP_REQUIRED:"بانتظار الدفع",PENDING_APPROVAL:"قيد المراجعة",ACTIVE:"فعّالة",EXPIRED:"منتهية",SUSPENDED:"موقوفة",REJECTED:"مرفوضة"};
+export const serviceStateCtas: Record<ServiceState,string>={NOT_SUBSCRIBED:"بدء التفعيل",SETUP_REQUIRED:"إكمال الدفع",PENDING_APPROVAL:"عرض حالة الطلب",ACTIVE:"فتح الخدمة",EXPIRED:"تجديد الاشتراك",SUSPENDED:"مراجعة الحالة",REJECTED:"إعادة تقديم الطلب"};
 export function isServiceCode(value:string):value is ServiceCode{return serviceCodes.includes(value as ServiceCode);}
 export function serviceDefinition(code:ServiceCode){return services.find(service=>service.code===code) as ServiceDefinition;}
