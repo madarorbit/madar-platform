@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/Icons";
+import { IconButton } from "@/components/ui/Enterprise";
+import { Sheet } from "@/components/ui/EnterpriseClient";
 import GlobalUserActions from "@/components/platform/GlobalUserActions";
 import NavigationControls from "@/components/navigation/NavigationControls";
 import { siteConfig } from "@/src/config/site";
@@ -52,6 +54,7 @@ export default function RetailWorkspaceShell({
 }) {
   const pathname = usePathname() || "/retail/workspace";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
   const flatItems = retailNavigationGroups.flatMap((group) => group.items);
   const isActive = (href: string) => platformRouteMatches(pathname, href);
   const current = flatItems.find((item) => isActive(item.href)) || flatItems[0];
@@ -67,7 +70,7 @@ export default function RetailWorkspaceShell({
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
                 aria-current={isActive(item.href) ? "page" : undefined}
                 className={`md-ux-nav-link ${isActive(item.href) ? "is-active" : ""} ${item.orby ? "is-orby" : ""}`}
               >
@@ -111,7 +114,7 @@ export default function RetailWorkspaceShell({
       <div className="md-ux-main">
         <header className="md-ux-topbar md-ux-topbar-compact md-no-print">
           <div className="md-topbar-context">
-            <button type="button" className="md-mobile-menu-button" onClick={() => setMobileOpen(true)} aria-label="فتح التنقل"><Icon name="layers" /></button>
+            <IconButton className="md-mobile-menu-button" onClick={() => setMobileOpen(true)} label="فتح التنقل"><Icon name="menu" /></IconButton>
             <NavigationControls showBreadcrumbs={false} />
             <div className="md-current-route"><span>{currentGroup?.label || "MADAR Retail"}</span><strong>{current.label}</strong></div>
           </div>
@@ -133,14 +136,7 @@ export default function RetailWorkspaceShell({
         <button type="button" onClick={() => setMobileOpen(true)}><Icon name="layers" className="h-5 w-5" /><span>المزيد</span></button>
       </nav>
 
-      {mobileOpen ? (
-        <div className="md-mobile-drawer-layer md-no-print" onMouseDown={() => setMobileOpen(false)}>
-          <aside onMouseDown={(event) => event.stopPropagation()}>
-            <header><div><strong>{workspaceName}</strong><span>MADAR Retail · {currency}</span></div><button type="button" onClick={() => setMobileOpen(false)} aria-label="إغلاق">×</button></header>
-            {navigation(true)}
-          </aside>
-        </div>
-      ) : null}
+      <Sheet open={mobileOpen} onClose={closeMobile} title={workspaceName} description={`MADAR Retail · ${currency}`}>{navigation(true)}</Sheet>
     </div>
   );
 }

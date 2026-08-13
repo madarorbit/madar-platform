@@ -35,7 +35,7 @@ test('Platform Health is defensive and no longer reads stale pending_renewals',a
 });
 
 test('floating ORBY uses official asset and supports drag snap',async()=>{
- const floating=await read('components/orby/OrbyFloatingFace.tsx');assert.match(floating,/\/brand\/orby-assistant\.svg/);assert.match(floating,/onPointerMove/);assert.match(floating,/localStorage/);assert.match(floating,/motion-reduce:transition-none/);assert.match(floating,/window\.innerWidth\/2/);
+ const[floating,surfaces]=await Promise.all([read('components/orby/OrbyFloatingFace.tsx'),read('app/design-system-2-surfaces.css')]);assert.match(floating,/\/brand\/orby-assistant\.svg/);assert.match(floating,/onPointerMove/);assert.match(floating,/localStorage/);assert.match(floating,/md-orby-floating/);assert.match(floating,/window\.innerWidth\/2/);assert.match(surfaces,/prefers-reduced-motion: reduce/);
 });
 
 test('conversation RLS is user-owned and workspace scoped',async()=>{

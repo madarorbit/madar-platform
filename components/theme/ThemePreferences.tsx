@@ -16,7 +16,7 @@ export default function ThemePreferences() {
       <legend className="sr-only">اختيار مظهر مَدار</legend>
       {options.map((option) => (
         <button key={option.value} type="button" role="radio" aria-checked={preference === option.value} onClick={() => setTheme(option.value)} className={preference === option.value ? "is-selected" : ""}>
-          <span className="md-theme-choice-icon"><Icon name={option.value === "system" ? "layers" : "settings"} /></span>
+          <span className="md-theme-choice-icon"><Icon name={option.value === "system" ? "monitor" : option.value === "light" ? "sun" : "moon"} /></span>
           <span><strong>{option.label}</strong><small>{option.description}</small></span>
           {preference === option.value ? <Icon name="check" className="md-theme-choice-check" /> : null}
         </button>

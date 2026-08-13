@@ -1,10 +1,11 @@
 import type { SVGProps } from 'react';
 
-export type IconName = 'home'|'store'|'search'|'user'|'arrow'|'back'|'forward'|'sparkles'|'automation'|'chart'|'layers'|'shield'|'document'|'help'|'community'|'briefcase'|'code'|'megaphone'|'x'|'instagram'|'whatsapp'|'github'|'mail'|'check'|'calendar'|'book'|'note'|'clock'|'settings'|'bell';
+export type IconName = 'home'|'store'|'cart'|'search'|'user'|'arrow'|'back'|'forward'|'sparkles'|'automation'|'chart'|'layers'|'shield'|'document'|'help'|'community'|'briefcase'|'code'|'megaphone'|'x'|'instagram'|'whatsapp'|'github'|'mail'|'check'|'calendar'|'book'|'note'|'clock'|'settings'|'bell'|'menu'|'close'|'plus'|'more'|'sun'|'moon'|'monitor'|'mic'|'send'|'copy'|'refresh'|'warning'|'info'|'spinner';
 
 const paths: Record<IconName, React.ReactNode> = {
   home:<><path d="M3 10.8 12 3l9 7.8"/><path d="M5.5 9.5V21h13V9.5M9 21v-7h6v7"/></>,
   store:<><path d="M4 10v10h16V10M3 4h18l-1 6H4L3 4Z"/><path d="M8 14h8M9 20v-6"/></>,
+  cart:<><path d="M3 4h2l2 11h10l3-8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></>,
   search:<><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
   user:<><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,
   arrow:<path d="m9 18 6-6-6-6"/>,
@@ -33,6 +34,20 @@ const paths: Record<IconName, React.ReactNode> = {
   clock:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
   settings:<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21v4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></>,
   bell:<><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></>,
+  menu:<><path d="M4 7h16M4 12h16M4 17h16"/></>,
+  close:<><path d="m6 6 12 12M18 6 6 18"/></>,
+  plus:<><path d="M12 5v14M5 12h14"/></>,
+  more:<><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></>,
+  sun:<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></>,
+  moon:<path d="M20.5 15.4A8.5 8.5 0 0 1 8.6 3.5a8.6 8.6 0 1 0 11.9 11.9Z"/>,
+  monitor:<><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></>,
+  mic:<><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></>,
+  send:<><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></>,
+  copy:<><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></>,
+  refresh:<><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.8-2L20 9M4 15l2.1 2a7 7 0 0 0 11.8-2"/></>,
+  warning:<><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 9v4M12 17h.01"/></>,
+  info:<><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></>,
+  spinner:<><path d="M12 3a9 9 0 1 1-9 9"/></>,
 };
 
 export function Icon({name,className='h-5 w-5',...props}:{name:IconName;className?:string}&SVGProps<SVGSVGElement>){return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name]}</svg>}

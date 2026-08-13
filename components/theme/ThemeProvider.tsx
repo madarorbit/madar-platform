@@ -32,7 +32,7 @@ function resolvedTheme(preference:MadarTheme):ResolvedTheme{
 }
 
 function updateThemeColor(theme:ResolvedTheme){
- const color=theme==='dark'?'#070a12':'#f7f8fc';
+ const color=theme==='dark'?'#090b10':'#f7f8fb';
  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach(meta=>meta.content=color);
 }
 

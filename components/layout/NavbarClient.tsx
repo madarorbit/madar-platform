@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { siteConfig } from "@/src/config/site";
 import { Icon } from "@/components/ui/Icons";
-import { cx } from "@/components/ui/Enterprise";
+import { Avatar, IconButton, cx } from "@/components/ui/Enterprise";
+import { Sheet } from "@/components/ui/EnterpriseClient";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import CartStatusLink from "@/components/platform/CartStatusLink";
 import GlobalUserActions from "@/components/platform/GlobalUserActions";
@@ -20,7 +21,7 @@ const publicGroups = [
 
 function AccountLink({ hasAvatar, displayName, onClick }: { hasAvatar: boolean; displayName?: string; onClick?: () => void }) {
   return <Link href="/account" onClick={onClick} className="md-public-account-link">
-    {hasAvatar ? <Image src="/account/avatar" alt="صورة الحساب" width={30} height={30} unoptimized /> : <span><Icon name="user" className="h-4 w-4" /></span>}
+    <Avatar src={hasAvatar ? "/account/avatar" : null} size="sm" />
     <strong>{displayName || "حسابي"}</strong>
   </Link>;
 }
@@ -32,7 +33,7 @@ export default function NavbarClient({ authenticated, displayName, hasAvatar, is
     const route = href.split("#")[0];
     return route === "/" ? pathname === "/" : pathname === route || pathname.startsWith(`${route}/`);
   };
-  const close = () => setOpen(false);
+  const close = useCallback(() => setOpen(false), []);
 
   return <nav className="md-public-nav md-no-print" aria-label="التنقل الرئيسي">
     <div className="md-container md-public-nav-inner">
@@ -50,16 +51,16 @@ export default function NavbarClient({ authenticated, displayName, hasAvatar, is
       </div>
       <div className="md-public-mobile-actions">
         <CartStatusLink />
-        {authenticated ? <Link href="/account" className="md-public-mobile-avatar" aria-label="فتح حساب مَدار">{hasAvatar ? <Image src="/account/avatar" alt="" width={32} height={32} unoptimized /> : <Icon name="user" />}</Link> : null}
-        <button type="button" onClick={() => setOpen((value) => !value)} className="md-public-menu-button" aria-expanded={open} aria-controls="public-mobile-nav" aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}><Icon name={open ? "check" : "layers"} /></button>
+        {authenticated ? <Link href="/account" className="md-public-mobile-avatar" aria-label="فتح حساب مَدار"><Avatar src={hasAvatar ? "/account/avatar" : null} size="sm" /></Link> : null}
+        <IconButton onClick={() => setOpen(true)} className="md-public-menu-button" aria-expanded={open} aria-controls="public-mobile-nav" label="فتح القائمة"><Icon name="menu" /></IconButton>
       </div>
     </div>
-    {open && <div id="public-mobile-nav" className="md-public-mobile-nav"><div className="md-container">
+    <Sheet open={open} onClose={close} title="مَدار | ORBIT" description="التنقل الرئيسي"><div id="public-mobile-nav" className="md-public-mobile-nav md-public-mobile-nav-sheet"><div>
       <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2"><span className="text-xs font-bold text-slate-400">المظهر</span><ThemeToggle/></div>
       <Link href="/search" onClick={close} className="md-public-mobile-search"><Icon name="search" />البحث في المتجر</Link>
       {publicGroups.map((group) => <section key={group.label}><h2>{group.label}</h2>{group.links.map((link) => <Link key={link.href} href={link.href} onClick={close} aria-current={active(link.href) ? "page" : undefined}>{link.label}</Link>)}</section>)}
       <Link href={siteConfig.links.orby} onClick={close} className="md-public-orby-link"><Image src={siteConfig.assets.orby} alt="أوربي" width={42} height={42} unoptimized /><span><strong>أوربي</strong><small>مساعد الأعمال الذكي</small></span></Link>
       {authenticated ? <div className="md-public-mobile-account">{isAdmin && <Link href="/admin" onClick={close}>لوحة الإدارة</Link>}<AccountLink hasAvatar={hasAvatar} displayName={displayName} onClick={close} /></div> : <div className="md-public-mobile-auth"><Link href="/login" onClick={close}>تسجيل الدخول</Link><Link href="/register" onClick={close}>ابدأ مع مَدار</Link></div>}
-    </div></div>}
+    </div></div></Sheet>
   </nav>;
 }

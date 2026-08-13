@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type {Product} from '@/src/data/products';
 import {formatPrice} from '@/src/data/products';
@@ -5,6 +6,14 @@ import {Icon} from '@/components/ui/Icons';
 import {arabicDisplay} from '@/src/lib/arabic-display';
 
 function graphic(product:Product){const text=`${product.category} ${product.title}`;if(/ذكاء|اصطناعي/i.test(text))return 'sparkles';if(/أتمت|عمليات/i.test(text))return'automation';if(/بيانات|مبيعات|جداول/i.test(text))return'chart';return'layers'}
+
 export default function ProductCard({product}:{product:Product}){
  const title=arabicDisplay(product.title),category=arabicDisplay(product.category),description=arabicDisplay(product.description);
- return <article className="md-card md-card-interactive group flex h-full flex-col overflow-hidden p-0"><div className="relative aspect-[16/10] overflow-hidden bg-[#0b1020]">{product.thumbnailUrl?<div className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{backgroundImage:`url("${product.thumbnailUrl.replace(/["\\]/g,'')}")`}} role="img" aria-label={`صورة ${title}`}/>:<div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_30%_25%,rgba(124,77,255,.48),transparent_34%),radial-gradient(circle_at_75%_70%,rgba(50,214,189,.35),transparent_38%)]"><div className="grid h-24 w-24 place-items-center rounded-3xl border border-white/15 bg-white/10 text-white shadow-2xl backdrop-blur"><Icon name={graphic(product)} className="h-12 w-12"/></div></div>}<span className="md-badge absolute right-4 top-4 border-white/15 bg-black/55 text-white backdrop-blur">منتج رقمي</span></div><div className="flex flex-1 flex-col p-6"><p className="text-sm font-black text-emerald-300">{category}</p><h3 className="mt-2 text-2xl font-black leading-8 text-white">{title}</h3><p className="mt-3 flex-1 leading-7 text-slate-400">{description}</p><div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-5"><span className="text-xl font-black text-emerald-300">{formatPrice(product)}</span><Link href={`/products/${product.slug}`} className="md-button md-button-secondary md-button-sm">التفاصيل <Icon name="arrow" className="h-4 w-4"/></Link></div></div></article>}
+ return <article className="md-card md-card-interactive md-product-card group">
+  <div className="md-product-card-media">
+   {product.thumbnailUrl?<Image src={product.thumbnailUrl} alt={`صورة ${title}`} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"/>:<div className="md-product-card-placeholder"><span><Icon name={graphic(product)} className="h-10 w-10"/></span></div>}
+   <span className="md-badge md-product-type">منتج رقمي</span>
+  </div>
+  <div className="md-product-card-body"><p className="md-type-label text-[var(--md-mint)]">{category}</p><h3 className="md-type-h2 mt-2">{title}</h3><p className="md-type-body-sm md-muted mt-3 flex-1">{description}</p><div className="md-product-card-footer"><span className="md-type-h3 text-[var(--md-mint)]">{formatPrice(product)}</span><Link href={`/products/${product.slug}`} className="md-button md-button-secondary md-button-sm">التفاصيل <Icon name="arrow" className="md-icon-directional h-4 w-4"/></Link></div></div>
+ </article>;
+}

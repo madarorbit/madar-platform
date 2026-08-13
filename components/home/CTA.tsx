@@ -7,16 +7,15 @@ export default function CTA({
 }) {
   return (
     <section className="md-section px-4 sm:px-6">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1020] px-6 py-14 text-center text-white shadow-2xl sm:px-12 sm:py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(124,77,255,.38),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(50,214,189,.25),transparent_40%)]" />
-        <div className="relative">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-white/10 bg-white/[.06] text-emerald-200">
+      <div className="md-home-cta">
+        <div>
+          <span className="md-feature-icon is-mixed mx-auto">
             <Icon name="sparkles" className="h-8 w-8" />
           </span>
-          <h2 className="mx-auto mt-5 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">
+          <h2 className="md-type-h1 mx-auto mt-5 max-w-3xl">
             ابنِ منظومة أوضح لأعمالك مع مَدار | ORBIT
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-300">
+          <p className="md-type-body-lg md-secondary mx-auto mt-5 max-w-2xl">
             {authenticated
               ? "تابع حسابك وخدماتك المستقلة من مركز واحد متناسق."
               : "أنشئ حساب مَدار، ثم اختر الخدمة التي تحتاجها وفعّلها بخطوات واضحة."}

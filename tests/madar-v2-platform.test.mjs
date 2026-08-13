@@ -210,10 +210,11 @@ test("P9 and P10 preserve restaurant and hotel domain models with full operating
 });
 
 test("P11 resolves sector navigation, terminology, themes, RTL and dashboard-app entry", async () => {
-  const [navigation, shell, css, dashboardApp, mobile] = await Promise.all([
+  const [navigation, shell, tokens, surfaces, dashboardApp, mobile] = await Promise.all([
     read("src/lib/v2/navigation.ts"),
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
-    read("app/design-system.css"),
+    read("app/design-tokens.css"),
+    read("app/design-system-2-surfaces.css"),
     read("app/dashboard-app/page.tsx"),
     read("app/api/mobile/v1/dashboard/route.ts"),
   ]);
@@ -221,8 +222,8 @@ test("P11 resolves sector navigation, terminology, themes, RTL and dashboard-app
   assert.match(shell, /navigation_state|localStorage/);
   assert.match(shell, /saveWorkspaceNavigationState/);
   assert.match(shell, /dashboard-app/);
-  assert.match(css, /sidebar-compact/);
-  assert.match(css, /color-scheme/);
+  assert.match(surfaces, /\.md-ux-shell\.is-compact/);
+  assert.match(tokens, /color-scheme/);
   assert.match(dashboardApp, /NEXT_PUBLIC_DASHBOARD_APP_IOS_URL/);
   assert.match(mobile, /activity_profiles/);
   assert.match(mobile, /sectorReport/);

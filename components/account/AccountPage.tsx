@@ -7,7 +7,7 @@ export function AccountPage({ children, size = "wide" }: { children: ReactNode; 
 export function AccountPageHeader({ eyebrow = "حساب مَدار", title, description, actions }: { eyebrow?: string; title: string; description: string; actions?: ReactNode }) {
   return (
     <header className="md-account-page-header">
-      <div><span className="md-eyebrow">{eyebrow}</span><h1>{title}</h1><p>{description}</p></div>
+      <div><span className="md-eyebrow">{eyebrow}</span><h1 className="md-type-h1">{title}</h1><p className="md-type-body-sm md-muted">{description}</p></div>
       {actions ? <div className="md-account-page-actions">{actions}</div> : null}
     </header>
   );

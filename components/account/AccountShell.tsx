@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import GlobalUserActions from "@/components/platform/GlobalUserActions";
 import NavigationControls from "@/components/navigation/NavigationControls";
+import { Avatar, IconButton } from "@/components/ui/Enterprise";
+import { Sheet } from "@/components/ui/EnterpriseClient";
 import { Icon } from "@/components/ui/Icons";
 import { siteConfig } from "@/src/config/site";
 import {
@@ -31,6 +33,7 @@ export default function AccountShell({
 }) {
   const pathname = usePathname() || "/account";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
   const items = accountNavigationGroups.flatMap((group) => group.items);
   const current = [...items].sort((a, b) => b.href.length - a.href.length).find((item) => platformRouteMatches(pathname, item.href)) || items[0];
   const currentGroup = accountNavigationGroups.find((group) => group.items.some((item) => item.key === current.key));
@@ -43,7 +46,7 @@ export default function AccountShell({
           <summary><span>{group.label}</span><Icon name="arrow" className="h-3.5 w-3.5" /></summary>
           <div>
             {group.items.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} aria-current={isActive(item.href) ? "page" : undefined} className={`md-ux-nav-link ${isActive(item.href) ? "is-active" : ""} ${item.orby ? "is-orby" : ""}`}>
+              <Link key={item.href} href={item.href} onClick={closeMobile} aria-current={isActive(item.href) ? "page" : undefined} className={`md-ux-nav-link ${isActive(item.href) ? "is-active" : ""} ${item.orby ? "is-orby" : ""}`}>
                 <span className="md-ux-nav-icon">
                   {item.orby ? <Image src={siteConfig.assets.orby} alt="" width={28} height={28} unoptimized className="h-7 w-7 rounded-lg object-cover" /> : <Icon name={item.icon} className="h-4 w-4" />}
                 </span>
@@ -64,7 +67,7 @@ export default function AccountShell({
             <Image src={siteConfig.assets.logo} alt="مَدار | ORBIT" width={150} height={36} className="h-7 w-auto" priority />
           </Link>
           <div className="md-account-sidebar-identity">
-            {hasAvatar ? <Image src="/account/avatar" alt="صورة الحساب" width={36} height={36} unoptimized /> : <span className="md-default-avatar"><Icon name="user" /></span>}
+            <Avatar src={hasAvatar ? "/account/avatar" : null} />
             <span><strong>{displayName}</strong><small dir="ltr">{email}</small></span>
           </div>
         </div>
@@ -75,7 +78,7 @@ export default function AccountShell({
       <div className="md-ux-main">
         <header className="md-ux-topbar md-no-print">
           <div className="md-topbar-context">
-            <button type="button" className="md-mobile-menu-button" onClick={() => setMobileOpen(true)} aria-label="فتح أقسام الحساب"><Icon name="layers" /></button>
+            <IconButton className="md-mobile-menu-button" onClick={() => setMobileOpen(true)} label="فتح أقسام الحساب"><Icon name="menu" /></IconButton>
             <NavigationControls showBreadcrumbs={false} />
             <div className="md-current-route"><span>{currentGroup?.label || "حساب مَدار"}</span><strong>{current.label}</strong></div>
           </div>
@@ -95,14 +98,7 @@ export default function AccountShell({
         <button type="button" onClick={() => setMobileOpen(true)}><Icon name="layers" className="h-5 w-5" /><span>المزيد</span></button>
       </nav>
 
-      {mobileOpen ? (
-        <div className="md-mobile-drawer-layer md-no-print" onMouseDown={() => setMobileOpen(false)}>
-          <aside onMouseDown={(event) => event.stopPropagation()}>
-            <header><div><strong>{displayName}</strong><span>حساب مَدار</span></div><button type="button" onClick={() => setMobileOpen(false)} aria-label="إغلاق">×</button></header>
-            {navigation(true)}
-          </aside>
-        </div>
-      ) : null}
+      <Sheet open={mobileOpen} onClose={closeMobile} title={displayName} description="أقسام حساب مَدار">{navigation(true)}</Sheet>
     </div>
   );
 }

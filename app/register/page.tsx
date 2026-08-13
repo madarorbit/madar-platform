@@ -19,12 +19,12 @@ export default async function Page() {
         <div className="mx-auto grid max-w-3xl gap-6">
           <Panel className="mx-auto w-full max-w-md">
             <GoogleAuthButton next="/account" />
-            <div className="my-5 flex items-center gap-3 text-xs font-bold text-slate-500" aria-hidden="true">
-              <span className="h-px flex-1 bg-white/10" />
+            <div className="md-auth-divider" aria-hidden="true">
+              <span />
               <span>أو إنشاء الحساب بالبريد الإلكتروني</span>
-              <span className="h-px flex-1 bg-white/10" />
+              <span />
             </div>
-            <p className="text-center text-sm leading-6 text-slate-400">لن يُطلب منك تعيين كلمة مرور عند المتابعة باستخدام Google.</p>
+            <p className="md-type-body-sm md-muted text-center">لن يُطلب منك تعيين كلمة مرور عند المتابعة باستخدام Google.</p>
           </Panel>
           <RegisterWizard />
         </div>

@@ -5,11 +5,12 @@ import {readFile} from 'node:fs/promises';
 const read=path=>readFile(new URL(`../${path}`,import.meta.url),'utf8');
 
 test('enterprise design system exposes required foundations',async()=>{
- const css=await read('app/design-system.css');
- for(const token of ['--md-color-brand','--md-color-mint','--md-radius-lg','--md-shadow-md','--md-container','--md-duration-normal'])assert.match(css,new RegExp(token));
- for(const component of ['.md-button','.md-input','.md-table-wrap','.md-empty','.md-skeleton','.md-sidebar','.md-tabs','.md-orby-chip'])assert.ok(css.includes(component),`missing ${component}`);
- assert.match(css,/prefers-reduced-motion/);
- assert.match(css,/\[dir="rtl"\]/);
+ const[css,tokens,surfaces]=await Promise.all([read('app/design-system.css'),read('app/design-tokens.css'),read('app/design-system-2-surfaces.css')]);
+ for(const token of ['--md-color-brand','--md-color-mint','--md-radius-lg','--md-shadow-md','--md-container','--md-duration-normal'])assert.match(tokens,new RegExp(token));
+ for(const component of ['.md-button','.md-input','.md-table-wrap','.md-empty','.md-skeleton','.md-tabs','.md-orby-chip'])assert.ok(css.includes(component),`missing ${component}`);
+ assert.match(surfaces,/\.md-ux-sidebar/);
+ assert.match(`${css}\n${surfaces}`,/prefers-reduced-motion/);
+ assert.match(`${css}\n${surfaces}`,/\[dir="rtl"\]/);
 });
 
 test('legacy pages inherit the enterprise system without business changes',async()=>{

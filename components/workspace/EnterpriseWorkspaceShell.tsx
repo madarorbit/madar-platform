@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/ui/Icons";
-import { cx } from "@/components/ui/Enterprise";
+import { IconButton, cx } from "@/components/ui/Enterprise";
+import { Sheet } from "@/components/ui/EnterpriseClient";
 import { siteConfig } from "@/src/config/site";
 import GlobalUserActions from "@/components/platform/GlobalUserActions";
 import NavigationControls from "@/components/navigation/NavigationControls";
@@ -81,6 +82,7 @@ export default function EnterpriseWorkspaceShell({
   const pathname = usePathname() || "/workspace";
   const [compact, setCompact] = useState(initialCompact);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [, startTransition] = useTransition();
   const groups = useMemo(
@@ -139,7 +141,7 @@ export default function EnterpriseWorkspaceShell({
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
                 aria-current={isActive(item.href) ? "page" : undefined}
                 className={cx(
                   "md-ux-nav-link",
@@ -247,14 +249,13 @@ export default function EnterpriseWorkspaceShell({
       <div className="md-ux-main">
         <header className="md-ux-topbar md-no-print">
           <div className="md-topbar-context">
-            <button
-              type="button"
+            <IconButton
               className="md-mobile-menu-button"
               onClick={() => setMobileOpen(true)}
-              aria-label="فتح التنقل"
+              label="فتح التنقل"
             >
-              <Icon name="layers" />
-            </button>
+              <Icon name="menu" />
+            </IconButton>
             <NavigationControls showBreadcrumbs={false} />
             <div className="md-current-route">
               <span>{currentGroup?.label || "مساحة العمل"}</span>
@@ -324,29 +325,7 @@ export default function EnterpriseWorkspaceShell({
         </button>
       </nav>
 
-      {mobileOpen && (
-        <div
-          className="md-mobile-drawer-layer md-no-print"
-          onMouseDown={() => setMobileOpen(false)}
-        >
-          <aside onMouseDown={(event) => event.stopPropagation()}>
-            <header>
-              <div>
-                <strong>{workspaceName}</strong>
-                <span>{specializationName}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                aria-label="إغلاق"
-              >
-                ×
-              </button>
-            </header>
-            {navigation(true)}
-          </aside>
-        </div>
-      )}
+      <Sheet open={mobileOpen} onClose={closeMobile} title={workspaceName} description={specializationName}>{navigation(true)}</Sheet>
       <WorkspaceCommandPalette
         groups={paletteGroups}
         open={paletteOpen}

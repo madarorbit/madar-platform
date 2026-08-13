@@ -61,6 +61,7 @@ const adminBaseGroups: ProductNavigationGroup[] = [
     key: "content",
     label: "المحتوى والأصول",
     items: [
+      { key: "design-system", href: "/admin/design-system", label: "نظام التصميم 2.0", icon: "layers", description: "كتالوج المكونات والرموز المرجعية", keywords: ["تصميم", "مكونات", "tokens"] },
       { key: "content", href: "/admin/content", label: "محتوى المنصة", icon: "document", description: "النصوص والمحتوى العام", keywords: ["محتوى", "صفحات"] },
       { key: "assets", href: "/admin/assets", label: "الأصول والوسائط", icon: "layers", description: "الصور والملفات المستخدمة", keywords: ["صورة", "ملف"] },
       { key: "files", href: "/admin/files", label: "إدارة الملفات", icon: "document", description: "الملفات الخاصة والتسليمات", keywords: ["ملفات"] },

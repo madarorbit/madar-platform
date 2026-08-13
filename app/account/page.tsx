@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountPage } from "@/components/account/AccountPage";
 import ServiceCards from "@/components/account/ServiceCards";
-import { Badge, ButtonLink, Notice } from "@/components/ui/Enterprise";
+import { Avatar, Badge, ButtonLink, Notice } from "@/components/ui/Enterprise";
 import { Icon } from "@/components/ui/Icons";
+import { formatDate } from "@/src/lib/format";
 import { requireUser } from "@/src/lib/auth";
 import { getAccountServices } from "@/src/lib/services/server";
 import { currentProfile, supabaseFetch } from "@/src/lib/supabase/server";
@@ -43,8 +43,8 @@ export default async function AccountPageRoute({ searchParams }: { searchParams:
 
       <section className="md-account-welcome">
         <div className="flex min-w-0 items-center gap-4">
-          {profile?.avatar_url ? <Image src="/account/avatar" alt="صورة الحساب" width={64} height={64} unoptimized className="h-16 w-16 shrink-0 rounded-2xl object-cover" /> : <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-white/10 bg-violet-300/10"><Icon name="user" className="h-7 w-7" /></span>}
-          <div className="min-w-0"><span className="md-eyebrow">حساب مَدار</span><h1 className="mt-2 truncate text-2xl font-black sm:text-3xl">مرحبًا، {displayName}</h1><p dir="ltr" className="mt-1 truncate text-right text-sm text-slate-400">{user.email}</p></div>
+          <Avatar src={profile?.avatar_url ? "/account/avatar" : null} alt="صورة الحساب" size="lg" />
+          <div className="min-w-0"><span className="md-eyebrow">حساب مَدار</span><h1 className="md-type-h1 mt-2 truncate">مرحبًا، {displayName}</h1><p dir="ltr" className="md-type-body-sm md-muted mt-1 truncate text-right">{user.email}</p></div>
         </div>
         <div className="md-account-primary-actions"><ButtonLink href="/account/services" variant="primary"><Icon name="layers" />فتح خدماتي</ButtonLink><ButtonLink href="/orby" variant="secondary"><Icon name="sparkles" />اسأل ORBY</ButtonLink></div>
       </section>
@@ -67,8 +67,8 @@ export default async function AccountPageRoute({ searchParams }: { searchParams:
         <div className="grid content-start gap-5">
           <section className="md-account-section">
             <div className="flex items-start justify-between gap-3"><div><span className="md-eyebrow">ORBY</span><h2>مساعدك في مكان واحد</h2></div><Badge variant={usage?.tier === "plus" ? "success" : "default"}>{usage?.tier === "plus" ? "Plus" : activeServices.length ? "Customer" : "Free"}</Badge></div>
-            <p className="mt-3 text-sm leading-7 text-slate-400">افتح محادثة عامة من هنا، أو ادخل من الخدمة ليُضبط سياقها تلقائيًا.</p>
-            {usage?.tier !== "plus" ? <p className="mt-3 text-xs text-slate-500">المتبقي اليوم: {Number(usage?.remaining ?? 5)} من {Number(usage?.daily_limit ?? 5)}</p> : null}
+            <p className="md-type-body-sm md-muted mt-3">افتح محادثة عامة من هنا، أو ادخل من الخدمة ليُضبط سياقها تلقائيًا.</p>
+            {usage?.tier !== "plus" ? <p className="md-type-caption md-muted mt-3">المتبقي اليوم: {Number(usage?.remaining ?? 5)} من {Number(usage?.daily_limit ?? 5)}</p> : null}
             <ButtonLink href="/orby" variant="primary" className="mt-4 w-full">فتح ORBY</ButtonLink>
           </section>
           <section className="md-account-section"><h2>وصول سريع</h2><div className="mt-3 grid grid-cols-2 gap-2"><QuickLink href="/account/subscriptions" icon="clock" label="الاشتراكات" /><QuickLink href="/account/orders" icon="document" label="الطلبات" /><QuickLink href="/account/purchases" icon="briefcase" label="المكتبة" /><QuickLink href="/account/profile" icon="user" label="الحساب" /></div></section>
@@ -77,12 +77,12 @@ export default async function AccountPageRoute({ searchParams }: { searchParams:
 
       <section className="md-account-section mt-5">
         <div className="flex items-end justify-between gap-3"><div><span className="md-eyebrow">ماذا حدث؟</span><h2>آخر التحديثات</h2></div><Link href="/account/notifications" className="md-button md-button-ghost md-button-sm">كل الإشعارات</Link></div>
-        <div className="mt-4 grid gap-2">{notifications.length ? notifications.map((item) => <Link key={item.id} href={item.link || "/account/notifications"} className="md-account-activity"><span className={!item.read_at ? "is-unread" : ""} /><div><strong>{item.title}</strong><p>{item.body}</p></div><time>{new Date(item.created_at).toLocaleDateString("ar-YE")}</time></Link>) : <p className="md-account-empty-line">لا توجد تحديثات بعد. ستظهر هنا أحداث الخدمات والطلبات المهمة.</p>}</div>
+        <div className="mt-4 grid gap-2">{notifications.length ? notifications.map((item) => <Link key={item.id} href={item.link || "/account/notifications"} className="md-account-activity"><span className={!item.read_at ? "is-unread" : ""} /><div><strong>{item.title}</strong><p>{item.body}</p></div><time dateTime={item.created_at}>{formatDate(item.created_at)}</time></Link>) : <p className="md-account-empty-line">لا توجد تحديثات بعد. ستظهر هنا أحداث الخدمات والطلبات المهمة.</p>}</div>
       </section>
     </AccountPage>
   );
 }
 
 function QuickLink({ href, icon, label }: { href: string; icon: "clock" | "document" | "briefcase" | "user"; label: string }) {
-  return <Link href={href} className="flex min-h-12 items-center gap-3 rounded-xl border border-white/10 bg-white/[.025] px-3 py-2 text-sm font-bold text-slate-300"><Icon name={icon} className="h-4 w-4" /><span>{label}</span></Link>;
+  return <Link href={href} className="md-account-quick-link"><Icon name={icon} className="h-4 w-4" /><span>{label}</span></Link>;
 }

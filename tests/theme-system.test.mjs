@@ -18,9 +18,9 @@ test("theme is applied before hydration and stored for later visits", async () =
 });
 
 test("light and dark tokens cover the enterprise design system", async () => {
-  const css = await read("app/theme-system.css");
-  assert.match(css, /:root\[data-theme="light"\]/);
-  assert.match(css, /:root\[data-theme="dark"\]/);
+  const [css,tokens,surfaces] = await Promise.all([read("app/theme-system.css"),read("app/design-tokens.css"),read("app/design-system-2-surfaces.css")]);
+  assert.match(tokens, /:root\[data-theme="light"\]/);
+  assert.match(tokens, /:root\[data-theme="dark"\]/);
   for (const token of [
     "--md-color-bg",
     "--md-color-surface",
@@ -29,12 +29,13 @@ test("light and dark tokens cover the enterprise design system", async () => {
     "--md-color-mint",
     "--md-shadow-md",
   ])
-    assert.ok(css.includes(token), `missing ${token}`);
-  assert.match(css, /transition-duration: 300ms/);
+    assert.ok(tokens.includes(token), `missing ${token}`);
+  assert.match(tokens, /--md-motion-slow: 320ms/);
   assert.match(css, /\.md-theme-toggle-sun/);
   assert.match(css, /\.md-theme-toggle-moon/);
-  assert.match(css, /\.md-chart/);
+  assert.match(tokens, /--md-chart/);
   assert.match(css, /\.md-footer/);
+  assert.match(surfaces, /prefers-reduced-motion/);
 });
 
 test("theme is quick on public and admin surfaces and explicit in account preferences", async () => {

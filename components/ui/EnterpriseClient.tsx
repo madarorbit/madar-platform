@@ -1,21 +1,62 @@
 'use client';
 
-import {useEffect,useRef,useState,type ReactNode} from 'react';
-import {Button,cx} from '@/components/ui/Enterprise';
+import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
+import {Button,IconButton,cx} from '@/components/ui/Enterprise';
 import {Icon,type IconName} from '@/components/ui/Icons';
 
-export function Modal({open,title,description,children,onClose,footer}:{open:boolean;title:string;description?:string;children:ReactNode;onClose:()=>void;footer?:ReactNode}){
- const dialogRef=useRef<HTMLDialogElement>(null);
- useEffect(()=>{const dialog=dialogRef.current;if(!dialog)return;if(open&&!dialog.open)dialog.showModal();if(!open&&dialog.open)dialog.close()},[open]);
- return <dialog ref={dialogRef} onCancel={event=>{event.preventDefault();onClose()}} onClose={onClose} className="m-auto w-[min(100%-1.25rem,42rem)] rounded-3xl border border-white/10 bg-[#101625] p-0 text-white shadow-2xl backdrop:bg-black/70"><div className="border-b border-white/10 p-5 sm:p-6"><div className="flex items-start justify-between gap-4"><div><h2 className="text-2xl font-black">{title}</h2>{description&&<p className="mt-2 leading-7 text-slate-400">{description}</p>}</div><button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-slate-300" aria-label="إغلاق النافذة">×</button></div></div><div className="max-h-[65vh] overflow-y-auto p-5 sm:p-6">{children}</div>{footer&&<div className="flex flex-col-reverse gap-3 border-t border-white/10 p-5 sm:flex-row sm:justify-end sm:p-6">{footer}</div>}</dialog>;
+const focusableSelector='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+export function Menu({label,trigger,children,className=''}:{label:string;trigger:ReactNode;children:ReactNode;className?:string}){
+ const[open,setOpen]=useState(false),rootRef=useRef<HTMLDivElement>(null),buttonRef=useRef<HTMLButtonElement>(null),panelRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  if(!open)return;
+  const closeOutside=(event:PointerEvent)=>{if(!rootRef.current?.contains(event.target as Node))setOpen(false)};
+  const keyboard=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();setOpen(false);buttonRef.current?.focus()}};
+  document.addEventListener('pointerdown',closeOutside);
+  document.addEventListener('keydown',keyboard);
+  return()=>{document.removeEventListener('pointerdown',closeOutside);document.removeEventListener('keydown',keyboard)};
+ },[open]);
+ return <div ref={rootRef} className={cx('md-menu-root',className)}><button ref={buttonRef} type="button" className="md-menu-trigger" aria-label={label} aria-haspopup="true" aria-expanded={open} onClick={()=>setOpen(value=>!value)}>{trigger}</button>{open?<div ref={panelRef} className="md-menu-panel" aria-label={label} onClick={event=>{if((event.target as HTMLElement).closest('a,button'))setOpen(false)}}>{children}</div>:null}</div>;
 }
 
-const toastStyles={default:'',success:'md-notice-success',warning:'md-notice-warning',danger:'md-notice-danger'} as const;
-export function Toast({title,message,variant='default',icon='help',duration=5000,onClose}:{title:string;message?:string;variant?:keyof typeof toastStyles;icon?:IconName;duration?:number;onClose?:()=>void}){
+export function Sheet({open,title,description,children,onClose}:{open:boolean;title:string;description?:string;children:ReactNode;onClose:()=>void}){
+ const titleId=useId(),descriptionId=useId(),panelRef=useRef<HTMLElement>(null),returnFocusRef=useRef<HTMLElement|null>(null);
+ useEffect(()=>{
+  if(!open)return;
+  returnFocusRef.current=document.activeElement as HTMLElement|null;
+  const previousOverflow=document.body.style.overflow;
+  document.body.style.overflow='hidden';
+  const panel=panelRef.current;
+  const frame=requestAnimationFrame(()=>{const first=panel?.querySelector(focusableSelector) as HTMLElement|null;if(first)first.focus();else panel?.focus()});
+  const keyboard=(event:KeyboardEvent)=>{
+   if(event.key==='Escape'){event.preventDefault();onClose();return}
+   if(event.key!=='Tab'||!panel)return;
+   const elements=Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector));
+   if(!elements.length){event.preventDefault();return}
+   const first=elements[0],last=elements[elements.length-1];
+   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+  };
+  document.addEventListener('keydown',keyboard);
+  return()=>{cancelAnimationFrame(frame);document.removeEventListener('keydown',keyboard);document.body.style.overflow=previousOverflow;returnFocusRef.current?.focus()};
+ },[open,onClose]);
+ if(!open)return null;
+ return <><button type="button" className="md-sheet-backdrop" aria-label="إغلاق اللوحة" onClick={onClose}/><aside ref={panelRef} className="md-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined} tabIndex={-1}><header className="md-sheet-header"><div><h2 id={titleId} className="md-type-h3">{title}</h2>{description?<p id={descriptionId} className="md-type-caption md-muted">{description}</p>:null}</div><IconButton label="إغلاق" onClick={onClose}><Icon name="close"/></IconButton></header><div className="md-sheet-body">{children}</div></aside></>;
+}
+
+export function Modal({open,title,description,children,onClose,footer}:{open:boolean;title:string;description?:string;children:ReactNode;onClose:()=>void;footer?:ReactNode}){
+ const titleId=useId(),descriptionId=useId(),dialogRef=useRef<HTMLDialogElement>(null);
+ useEffect(()=>{const dialog=dialogRef.current;if(!dialog)return;if(open&&!dialog.open)dialog.showModal();if(!open&&dialog.open)dialog.close()},[open]);
+ return <dialog ref={dialogRef} onCancel={event=>{event.preventDefault();onClose()}} onClose={onClose} aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined} className="md-dialog"><header className="md-dialog-header"><div><h2 id={titleId} className="md-type-h2">{title}</h2>{description?<p id={descriptionId} className="md-type-body-sm md-muted mt-2">{description}</p>:null}</div><IconButton label="إغلاق النافذة" onClick={onClose}><Icon name="close"/></IconButton></header><div className="md-dialog-body">{children}</div>{footer?<footer className="md-dialog-footer">{footer}</footer>:null}</dialog>;
+}
+
+const toastStyles={default:'md-notice-info',success:'md-notice-success',warning:'md-notice-warning',danger:'md-notice-danger'} as const;
+const toastIcons:Record<keyof typeof toastStyles,IconName>={default:'info',success:'check',warning:'warning',danger:'warning'};
+export function Toast({title,message,variant='default',icon,duration=5000,onClose}:{title:string;message?:string;variant?:keyof typeof toastStyles;icon?:IconName;duration?:number;onClose?:()=>void}){
  const[visible,setVisible]=useState(true);
  useEffect(()=>{if(duration<=0)return;const timer=setTimeout(()=>{setVisible(false);onClose?.()},duration);return()=>clearTimeout(timer)},[duration,onClose]);
  if(!visible)return null;
- return <div role={variant==='danger'?'alert':'status'} aria-live={variant==='danger'?'assertive':'polite'} className={cx('md-notice fixed bottom-5 left-5 z-[70] w-[min(calc(100%-2.5rem),24rem)] shadow-2xl',toastStyles[variant])}><span className="mt-0.5 text-emerald-300"><Icon name={icon}/></span><div className="min-w-0 flex-1"><strong className="block">{title}</strong>{message&&<p className="mt-1 text-sm leading-6 text-slate-300">{message}</p>}</div><button type="button" className="grid h-8 w-8 place-items-center rounded-lg hover:bg-white/5" aria-label="إغلاق الإشعار" onClick={()=>{setVisible(false);onClose?.()}}>×</button></div>;
+ return <div role={variant==='danger'?'alert':'status'} aria-live={variant==='danger'?'assertive':'polite'} className={cx('md-notice md-toast',toastStyles[variant])}><span className="md-notice-icon"><Icon name={icon||toastIcons[variant]}/></span><div className="min-w-0 flex-1"><strong className="block">{title}</strong>{message?<p className="md-help mt-1">{message}</p>:null}</div><IconButton label="إغلاق الإشعار" onClick={()=>{setVisible(false);onClose?.()}}><Icon name="close" className="h-4 w-4"/></IconButton></div>;
 }
 
-export function ConfirmDialog({open,title,description,confirmLabel='تأكيد',danger=false,onConfirm,onClose}:{open:boolean;title:string;description:string;confirmLabel?:string;danger?:boolean;onConfirm:()=>void;onClose:()=>void}){return <Modal open={open} title={title} description={description} onClose={onClose} footer={<><Button variant="secondary" onClick={onClose}>إلغاء</Button><Button variant={danger?'danger':'primary'} onClick={()=>{onConfirm();onClose()}}>{confirmLabel}</Button></>}>{danger&&<div className="md-notice md-notice-danger"><Icon name="shield"/><p className="text-sm leading-7">راجع أثر هذا الإجراء قبل المتابعة؛ قد يتطلب التراجع تدخل الإدارة.</p></div>}</Modal>}
+export function ConfirmDialog({open,title,description,confirmLabel='تأكيد',danger=false,busy=false,onConfirm,onClose}:{open:boolean;title:string;description:string;confirmLabel?:string;danger?:boolean;busy?:boolean;onConfirm:()=>void|Promise<void>;onClose:()=>void}){const confirm=async()=>{try{await onConfirm();onClose();}catch{}};return <Modal open={open} title={title} description={description} onClose={onClose} footer={<><Button variant="secondary" onClick={onClose} disabled={busy}>إلغاء</Button><Button variant={danger?'danger':'primary'} loading={busy} onClick={()=>void confirm()}>{confirmLabel}</Button></>}>{danger?<div className="md-notice md-notice-danger"><Icon name="warning"/><p className="md-type-body-sm">راجع أثر هذا الإجراء قبل المتابعة؛ قد يتطلب التراجع تدخل الإدارة.</p></div>:null}</Modal>}

@@ -1,0 +1,241 @@
+/*
+ * MADAR Design System 2.0 — design tokens
+ * Components consume semantic tokens only. Raw palette values live in this file.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand and neutral palette */
+  --md-palette-ink-950: #090b10;
+  --md-palette-ink-900: #0f1219;
+  --md-palette-ink-850: #151922;
+  --md-palette-ink-800: #1b202b;
+  --md-palette-ink-700: #2a313e;
+  --md-palette-cloud-50: #f7f9fc;
+  --md-palette-cloud-100: #edf1f6;
+  --md-palette-cloud-200: #dce3ed;
+  --md-palette-cloud-500: #7e899d;
+  --md-palette-cloud-700: #455167;
+  --md-palette-cloud-900: #172033;
+  --md-palette-purple-700: #6746d8;
+  --md-palette-purple-600: #7658e6;
+  --md-palette-purple-300: #b7a8ff;
+  --md-palette-mint-600: #078a73;
+  --md-palette-mint-400: #2ed4b5;
+
+  /* Semantic color roles */
+  --md-background: var(--md-palette-ink-950);
+  --md-background-subtle: var(--md-palette-ink-900);
+  --md-surface: var(--md-palette-ink-900);
+  --md-surface-raised: var(--md-palette-ink-850);
+  --md-surface-muted: var(--md-palette-ink-800);
+  --md-surface-sunken: #07090d;
+  --md-surface-overlay: rgb(15 18 25 / 92%);
+  --md-backdrop: rgb(0 0 0 / 62%);
+  --md-text-primary: #f5f7fb;
+  --md-text-secondary: #c7cfdd;
+  --md-text-muted: #98a4b8;
+  --md-text-disabled: #697386;
+  --md-text-inverse: #ffffff;
+  --md-border-subtle: rgb(199 207 221 / 10%);
+  --md-border-default: rgb(199 207 221 / 17%);
+  --md-border-strong: rgb(199 207 221 / 30%);
+  --md-accent: var(--md-palette-purple-600);
+  --md-accent-hover: #866af0;
+  --md-accent-pressed: var(--md-palette-purple-700);
+  --md-accent-subtle: rgb(118 88 230 / 15%);
+  --md-accent-text: #c9beff;
+  --md-mint: var(--md-palette-mint-400);
+  --md-mint-hover: #5ce1c8;
+  --md-mint-subtle: rgb(46 212 181 / 13%);
+  --md-focus-ring: #53e1c7;
+  --md-success: #48ce95;
+  --md-success-subtle: rgb(72 206 149 / 13%);
+  --md-success-text: #9de9c6;
+  --md-warning: #eabf59;
+  --md-warning-subtle: rgb(234 191 89 / 14%);
+  --md-warning-text: #f5d992;
+  --md-danger: #ef6b78;
+  --md-danger-subtle: rgb(239 107 120 / 14%);
+  --md-danger-text: #ffabb4;
+  --md-info: #63aef4;
+  --md-info-subtle: rgb(99 174 244 / 14%);
+  --md-info-text: #a9d5ff;
+
+  /* Charts use a stable semantic palette in both themes. */
+  --md-chart-grid: rgb(199 207 221 / 13%);
+  --md-chart-label: var(--md-text-muted);
+  --md-chart-1: #8d75f2;
+  --md-chart-2: #33c9ad;
+  --md-chart-3: #67aef4;
+  --md-chart-positive: var(--md-success);
+  --md-chart-negative: var(--md-danger);
+
+  /* Arabic-first typography */
+  --md-font-sans: "Segoe UI", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+  --md-font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --md-type-display: clamp(2.25rem, 5vw, 4.5rem);
+  --md-type-h1: clamp(1.75rem, 3vw, 2.5rem);
+  --md-type-h2: clamp(1.35rem, 2vw, 1.75rem);
+  --md-type-h3: 1.2rem;
+  --md-type-h4: 1rem;
+  --md-type-body-lg: 1.0625rem;
+  --md-type-body: 0.9375rem;
+  --md-type-body-sm: 0.8125rem;
+  --md-type-label: 0.8125rem;
+  --md-type-caption: 0.71875rem;
+  --md-type-stat: clamp(1.5rem, 3vw, 2.25rem);
+  --md-leading-display: 1.17;
+  --md-leading-heading: 1.35;
+  --md-leading-body: 1.75;
+  --md-leading-compact: 1.45;
+  --md-weight-regular: 400;
+  --md-weight-medium: 600;
+  --md-weight-bold: 700;
+  --md-weight-black: 850;
+
+  /* 4px spacing grid */
+  --md-space-0: 0;
+  --md-space-1: 0.25rem;
+  --md-space-2: 0.5rem;
+  --md-space-3: 0.75rem;
+  --md-space-4: 1rem;
+  --md-space-5: 1.25rem;
+  --md-space-6: 1.5rem;
+  --md-space-8: 2rem;
+  --md-space-10: 2.5rem;
+  --md-space-12: 3rem;
+  --md-space-16: 4rem;
+  --md-space-20: 5rem;
+
+  --md-radius-sm: 0.5rem;
+  --md-radius-md: 0.75rem;
+  --md-radius-lg: 1rem;
+  --md-radius-xl: 1.5rem;
+  --md-radius-pill: 999px;
+
+  /* Elevation is reserved for overlays and floating controls. */
+  --md-shadow-1: 0 1px 2px rgb(0 0 0 / 24%);
+  --md-shadow-2: 0 10px 28px rgb(0 0 0 / 26%);
+  --md-shadow-3: 0 24px 64px rgb(0 0 0 / 38%);
+  --md-shadow-focus: 0 0 0 3px rgb(83 225 199 / 24%);
+
+  --md-size-control-sm: 2.25rem;
+  --md-size-control-md: 2.75rem;
+  --md-size-control-lg: 3.25rem;
+  --md-size-touch: 2.75rem;
+  --md-container: 80rem;
+  --md-content-readable: 46rem;
+  --md-sidebar: 16.5rem;
+
+  --md-z-base: 0;
+  --md-z-sticky: 30;
+  --md-z-header: 50;
+  --md-z-popover: 70;
+  --md-z-modal: 90;
+  --md-z-toast: 100;
+  --md-motion-fast: 120ms;
+  --md-motion-normal: 200ms;
+  --md-motion-slow: 320ms;
+  --md-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --md-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Compatibility aliases; remove only after the legacy migration is complete. */
+  --md-color-bg: var(--md-background);
+  --md-color-bg-soft: var(--md-background-subtle);
+  --md-color-surface: var(--md-surface);
+  --md-color-surface-raised: var(--md-surface-raised);
+  --md-color-surface-muted: var(--md-surface-muted);
+  --md-color-surface-glass: var(--md-surface-overlay);
+  --md-color-border: var(--md-border-default);
+  --md-color-border-strong: var(--md-border-strong);
+  --md-color-text: var(--md-text-primary);
+  --md-color-text-soft: var(--md-text-secondary);
+  --md-color-text-muted: var(--md-text-muted);
+  --md-color-brand: var(--md-accent);
+  --md-color-brand-strong: var(--md-accent-pressed);
+  --md-color-brand-soft: var(--md-accent-subtle);
+  --md-color-mint: var(--md-mint);
+  --md-color-mint-strong: var(--md-palette-mint-600);
+  --md-color-mint-soft: var(--md-mint-subtle);
+  --md-color-info: var(--md-info);
+  --md-color-warning: var(--md-warning);
+  --md-color-danger: var(--md-danger);
+  --md-color-success: var(--md-success);
+  --md-gradient-brand: linear-gradient(135deg, var(--md-mint), var(--md-accent));
+  --md-gradient-surface: linear-gradient(145deg, var(--md-accent-subtle), var(--md-mint-subtle));
+  --md-font-xs: var(--md-type-caption);
+  --md-font-sm: var(--md-type-body-sm);
+  --md-font-md: var(--md-type-body);
+  --md-font-lg: var(--md-type-body-lg);
+  --md-font-xl: var(--md-type-h3);
+  --md-font-2xl: var(--md-type-h2);
+  --md-font-3xl: var(--md-type-h1);
+  --md-font-4xl: var(--md-type-display);
+  --md-line-tight: var(--md-leading-heading);
+  --md-line-normal: var(--md-leading-body);
+  --md-shadow-sm: var(--md-shadow-1);
+  --md-shadow-md: var(--md-shadow-2);
+  --md-shadow-lg: var(--md-shadow-3);
+  --md-shadow-brand: 0 12px 32px rgb(103 70 216 / 22%);
+  --md-duration-fast: var(--md-motion-fast);
+  --md-duration-normal: var(--md-motion-normal);
+  --md-ease: var(--md-ease-standard);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --md-background: #f7f8fb;
+  --md-background-subtle: #eef1f6;
+  --md-surface: #ffffff;
+  --md-surface-raised: #ffffff;
+  --md-surface-muted: #edf1f6;
+  --md-surface-sunken: #e8ecf3;
+  --md-surface-overlay: rgb(255 255 255 / 94%);
+  --md-backdrop: rgb(23 32 51 / 42%);
+  --md-text-primary: var(--md-palette-cloud-900);
+  --md-text-secondary: var(--md-palette-cloud-700);
+  --md-text-muted: #5e6b81;
+  --md-text-disabled: #8a94a6;
+  --md-text-inverse: #ffffff;
+  --md-border-subtle: rgb(23 32 51 / 8%);
+  --md-border-default: rgb(23 32 51 / 13%);
+  --md-border-strong: rgb(23 32 51 / 24%);
+  --md-accent: #6241ce;
+  --md-accent-hover: #5233ba;
+  --md-accent-pressed: #462aa6;
+  --md-accent-subtle: rgb(98 65 206 / 10%);
+  --md-accent-text: #5535bd;
+  --md-mint: #087d69;
+  --md-mint-hover: #066b59;
+  --md-mint-subtle: rgb(8 125 105 / 9%);
+  --md-focus-ring: #087d69;
+  --md-success: #08784f;
+  --md-success-subtle: rgb(8 120 79 / 10%);
+  --md-success-text: #076943;
+  --md-warning: #99620b;
+  --md-warning-subtle: rgb(153 98 11 / 10%);
+  --md-warning-text: #805006;
+  --md-danger: #bf3344;
+  --md-danger-subtle: rgb(191 51 68 / 10%);
+  --md-danger-text: #a32636;
+  --md-info: #166fb8;
+  --md-info-subtle: rgb(22 111 184 / 10%);
+  --md-info-text: #115e9e;
+  --md-chart-grid: rgb(23 32 51 / 12%);
+  --md-chart-label: var(--md-text-muted);
+  --md-chart-1: #6241ce;
+  --md-chart-2: #087d69;
+  --md-chart-3: #166fb8;
+  --md-chart-positive: var(--md-success);
+  --md-chart-negative: var(--md-danger);
+  --md-shadow-1: 0 1px 2px rgb(23 32 51 / 7%);
+  --md-shadow-2: 0 12px 30px rgb(23 32 51 / 10%);
+  --md-shadow-3: 0 24px 64px rgb(23 32 51 / 16%);
+  --md-shadow-focus: 0 0 0 3px rgb(8 125 105 / 20%);
+  --md-shadow-brand: 0 12px 28px rgb(98 65 206 / 18%);
+}
+
+/* Breakpoint contract: mobile < 640, tablet 640–1023, laptop 1024–1279, desktop ≥ 1280. */

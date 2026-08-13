@@ -12,7 +12,7 @@ export default function GoogleAuthButton({ next, className = '' }: Props) {
   return (
     <a
       href={href}
-      className={`group flex min-h-13 w-full items-center justify-center gap-3 rounded-xl border border-slate-300/80 bg-white px-5 py-3.5 text-base font-black text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 disabled:pointer-events-none ${className}`}
+      className={`md-google-button ${className}`}
       aria-label="المتابعة باستخدام Google"
     >
       <svg aria-hidden="true" viewBox="0 0 18 18" className="h-5 w-5 shrink-0">

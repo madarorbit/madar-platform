@@ -9,22 +9,21 @@ export default function Hero({
   authenticated?: boolean;
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-white/10 bg-[#070a12] py-16 sm:py-24 lg:py-28">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_12%,rgba(124,77,255,.2),transparent_32%),radial-gradient(circle_at_14%_86%,rgba(50,214,189,.12),transparent_34%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-violet-400/50 to-transparent" />
-      <div className="md-container relative grid items-center gap-14 lg:grid-cols-[1.08fr_.92fr]">
+    <section className="md-home-hero">
+      <div className="md-home-hero-ambient" aria-hidden="true" />
+      <div className="md-container md-home-hero-grid">
         <div>
           <div className="md-eyebrow">
             <Icon name="sparkles" className="h-4 w-4" />
             منصة عربية مؤسسية للأعمال الذكية
           </div>
-          <h1 className="mt-7 max-w-4xl text-4xl font-black leading-[1.16] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="md-home-hero-title">
             أدر أعمالك من منظومة واحدة، واتخذ قراراتك على أساس{" "}
-            <span className="bg-gradient-to-l from-[#32d6bd] via-[#68a7ff] to-[#a98cff] bg-clip-text text-transparent">
+            <span className="md-brand-text">
               بيانات واضحة وذكاء عملي
             </span>
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-9 text-slate-300">
+          <p className="md-home-hero-description">
             تجمع مَدار | ORBIT المبيعات والمخزون والعملاء والمصروفات والمهام
             والتقارير في تجربة عربية متماسكة، لتمنح تجارتك وضوحًا تشغيليًا وقدرة
             حقيقية على النمو.
@@ -47,49 +46,49 @@ export default function Hero({
           </div>
           <form
             action="/search"
-            className="mt-9 flex max-w-xl items-center gap-2 rounded-2xl border border-white/10 bg-white/[.055] p-2 shadow-2xl backdrop-blur"
+            className="md-home-search"
             role="search"
           >
             <label className="sr-only" htmlFor="home-search">
               ابحث في مَدار | ORBIT
             </label>
-            <Icon name="search" className="mr-2 h-5 w-5 text-slate-400" />
+            <Icon name="search" className="h-5 w-5 md-muted" />
             <input
               id="home-search"
               name="q"
-              className="min-w-0 flex-1 px-2"
+              className="md-input min-w-0 flex-1 border-0 bg-transparent shadow-none"
               placeholder="ابحث عن منتج أو خدمة أو وثيقة"
             />
             <button className="md-button md-button-primary md-button-sm">
               بحث
             </button>
           </form>
-          <div className="mt-8 grid max-w-2xl grid-cols-1 gap-3 border-t border-white/10 pt-7 sm:grid-cols-3">
+          <div className="md-home-value-grid">
             <div className="md-stat">
-              <strong className="md-stat-value text-violet-200">
+              <strong className="md-stat-value">
                 منظومة واحدة
               </strong>
               <span className="md-stat-label">للعمليات والبيانات</span>
             </div>
             <div className="md-stat">
-              <strong className="md-stat-value text-emerald-200">
+              <strong className="md-stat-value">
                 عربية بالكامل
               </strong>
               <span className="md-stat-label">في التجربة والمحتوى</span>
             </div>
             <div className="md-stat">
-              <strong className="md-stat-value text-violet-200">
+              <strong className="md-stat-value">
                 معزولة وآمنة
               </strong>
               <span className="md-stat-label">لكل مساحة عمل</span>
             </div>
           </div>
         </div>
-        <div className="relative mx-auto w-full max-w-xl">
-          <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-violet-500/20 to-emerald-400/15 blur-3xl" />
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1020] p-2 shadow-2xl">
+        <div className="md-home-visual-wrap">
+          <div className="md-home-visual-glow" aria-hidden="true" />
+          <div className="md-home-visual">
             <video
-              className="aspect-square w-full rounded-[1.6rem] object-cover"
+              className="md-home-visual-video"
               autoPlay
               muted
               loop
@@ -102,7 +101,7 @@ export default function Hero({
             </video>
             <Link
               href={siteConfig.links.orby}
-              className="absolute inset-x-5 bottom-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/70 p-3 text-white backdrop-blur-xl"
+              className="md-home-orby-card"
             >
               <Image
                 src={siteConfig.assets.orby}
@@ -110,17 +109,17 @@ export default function Hero({
                 width={58}
                 height={58}
                 unoptimized
-                className="md-orby-alive h-14 w-14 rounded-2xl object-cover shadow-lg shadow-violet-500/20"
+                className="md-orby-alive h-14 w-14 rounded-[var(--md-radius-lg)] object-cover"
               />
               <span>
                 <strong className="block text-base">
                   أوربي، مساعد مَدار | ORBIT الذكي
                 </strong>
-                <span className="mt-1 block text-sm text-slate-300">
+                <span className="md-type-body-sm md-muted mt-1 block">
                   يحلل بياناتك ويقترح الخطوة التالية بوضوح.
                 </span>
               </span>
-              <Icon name="arrow" className="mr-auto h-5 w-5 text-emerald-300" />
+              <Icon name="arrow" className="md-icon-directional mr-auto h-5 w-5 text-[var(--md-mint)]" />
             </Link>
           </div>
         </div>

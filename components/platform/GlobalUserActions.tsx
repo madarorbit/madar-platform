@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import CartStatusLink from "@/components/platform/CartStatusLink";
+import { Menu } from "@/components/ui/EnterpriseClient";
+import { Avatar, IconLink } from "@/components/ui/Enterprise";
 import { Icon } from "@/components/ui/Icons";
 
 export type GlobalUserActionsProps = {
@@ -22,16 +24,14 @@ export default function GlobalUserActions({ displayName, hasAvatar, isAdmin, unr
         <span>ORBY</span>
       </Link>
       <CartStatusLink />
-      <Link href="/account/notifications" className="md-topbar-icon md-notification-link" aria-label={unread ? `الإشعارات، ${unread} غير مقروءة` : "الإشعارات"}>
+      <IconLink href="/account/notifications" className="md-topbar-icon md-notification-link" label={unread ? `الإشعارات، ${unread} غير مقروءة` : "الإشعارات"} badge={unread || undefined}>
         <Icon name="bell" className="h-4 w-4" />
-        {unread ? <span className="md-notification-dot" aria-hidden="true" /> : null}
-      </Link>
-      <details className="md-account-menu">
-        <summary aria-label="فتح قائمة الحساب">
-          {hasAvatar ? <Image src="/account/avatar" alt="صورة الحساب" width={32} height={32} unoptimized /> : <span className="md-default-avatar"><Icon name="user" className="h-4 w-4" /></span>}
+      </IconLink>
+      <Menu label="قائمة الحساب" className="md-account-menu" trigger={<span className="md-account-menu-trigger">
+          <Avatar src={hasAvatar ? "/account/avatar" : null} size="sm" />
           <span className="md-account-menu-name">{displayName}</span>
           <Icon name="arrow" className="h-3 w-3" />
-        </summary>
+        </span>}>
         <div className="md-account-menu-panel">
           <div className="md-account-menu-identity"><strong>{displayName}</strong><span>حساب مَدار</span></div>
           <Link href="/account"><Icon name="home" />الرئيسية</Link>
@@ -41,7 +41,7 @@ export default function GlobalUserActions({ displayName, hasAvatar, isAdmin, unr
           {isAdmin ? <Link href="/admin"><Icon name="shield" />إدارة مَدار</Link> : null}
           <form action={logout}><button><Icon name="back" />تسجيل الخروج</button></form>
         </div>
-      </details>
+      </Menu>
     </div>
   );
 }
