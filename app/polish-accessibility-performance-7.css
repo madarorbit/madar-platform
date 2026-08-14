@@ -19,6 +19,11 @@
 .md-notice p { overflow-wrap: anywhere; }
 .md-ltr-data { unicode-bidi: isolate; }
 
+/* Store: use semantic surfaces and hierarchy in both themes. */
+.md-store-destination-icon { display: grid; width: 3rem; height: 3rem; flex: 0 0 3rem; place-items: center; border-radius: var(--md-radius-lg); background: var(--md-accent-subtle); color: var(--md-accent-text); }
+.md-store-section { border-top: 1px solid var(--md-border-subtle); }
+.md-store-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--md-space-4); margin-bottom: var(--md-space-6); }
+
 /* ORBY: stable scrolling, clear offline composition and resilient narrow-screen feedback. */
 .md-orby-message-scroll { scrollbar-gutter: stable; }
 .md-orby-message,
@@ -45,6 +50,7 @@
 }
 
 @media (max-width: 767px) {
+ .md-store-section-heading { align-items: flex-start; flex-direction: column; }
  .md-checkout-fields { grid-template-columns: 1fr; }
  .md-checkout-summary { position: static; }
  .md-orby-context-bar { flex-wrap: wrap; }

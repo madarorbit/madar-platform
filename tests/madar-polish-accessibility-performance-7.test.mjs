@@ -46,6 +46,17 @@ test("checkout uses semantic MADAR controls and explicit multi-currency feedback
  assert.doesNotMatch(checkout,/bg-white|text-slate|bg-red|text-red|bg-amber|text-amber/);
 });
 
+test("store landing uses semantic theme roles instead of legacy raw utility colors",async()=>{
+ const[store,css]=await Promise.all([read("app/store/page.tsx"),read("app/polish-accessibility-performance-7.css")]);
+ assert.match(store,/md-store-destination-icon/);
+ assert.match(store,/md-store-section/);
+ assert.match(store,/md-type-h2/);
+ assert.match(store,/md-muted/);
+ assert.doesNotMatch(store,/text-slate|bg-violet|text-violet|text-emerald|border-white/);
+ assert.match(css,/\.md-store-destination-icon[\s\S]*var\(--md-accent-subtle\)/);
+ assert.match(css,/\.md-store-section \{ border-top: 1px solid var\(--md-border-subtle\)/);
+});
+
 test("global error and not-found states are theme semantic",async()=>{
  const[error,notFound]=await Promise.all([read("app/error.tsx"),read("app/not-found.tsx")]);
  for(const source of [error,notFound]){
