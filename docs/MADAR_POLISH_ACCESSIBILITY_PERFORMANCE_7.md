@@ -8,23 +8,25 @@
 
 بدأ التدقيق من `main` عند SHA `c69348222ef28813a81ccae5213b66f17a7daef0`، وهو نفسه آخر Production READY في Vercel قبل المرحلة السابعة.
 
-تمت مراجعة عقود المراحل السابقة وتنفيذها الفعلي في Design System، Global Shell، Account/Home، Services وORBY، مع مسح خاص للـerror states وCheckout والمكونات المشتركة.
+تمت مراجعة عقود المراحل السابقة وتنفيذها الفعلي في Design System، Global Shell، Account/Home، Services وORBY، مع مسح خاص للـerror states وCheckout وStore والمكونات المشتركة.
 
 أكبر الخشونة المؤكدة قبل الإصلاح:
 
-- بقايا ألوان ثابتة في صفحات الخطأ و404 وCheckout تؤدي إلى تناقض Light/Dark.
+- بقايا ألوان ثابتة في صفحات الخطأ و404 وCheckout وStore تؤدي إلى تناقض Light/Dark.
 - عناصر Menu وPagination أصغر من معيار touch target المعتمد 44px.
 - Menu يفتح بالماوس وTab، لكنه لم يكن يعلن علاقة `aria-controls` ولم يوفر دخول ArrowDown/ArrowUp مباشرًا إلى العناصر.
 - ORBY كان يعطّل الـtextarea عند Offline، مع أن السلوك المطلوب هو إبقاء المسودة قابلة للكتابة ومنع الإرسال فقط.
 - إيقاف ORBY قبل وصول أول token يمكن أن يترك assistant message فارغة في الحالة المحلية.
 - فشل Clipboard في ORBY لم يكن له feedback قابل للاسترداد.
 - Checkout ظل بصريًا من الطبقة القديمة، مع feedback ألوان مباشر بدل Notices semantic وتسلسل دفع أقل وضوحًا.
+- Store landing وStoreCard استخدما palette خامًا (`slate/violet/emerald/amber/white`) بدل semantic roles، بما يشمل الفواصل والنصوص الثانوية وحالات availability.
 - Motion transition للثيم استخدم 360ms بينما token البطيء المعتمد 320ms.
 
 ## Visual consistency / Light-Dark
 
 - نُقلت صفحات `app/error.tsx` و`app/not-found.tsx` إلى semantic MADAR surfaces/text/state tokens بدل `text-slate-*`, `bg-white/*`, rose/violet hardcoding.
 - Checkout أصبح يعتمد `Panel`, `Field`, `Input`, `Notice`, `Button` من Design System.
+- Store landing وStoreCard انتقلا إلى semantic typography/surfaces/borders/status roles، مع placeholder وصور وحالات availability متوافقة مع Light/Dark.
 - أضيفت طبقة `app/polish-accessibility-performance-7.css` بعد CSS المرحلة السادسة لتثبيت polish contracts من دون إعادة بناء Design System.
 - لم تُحذف legacy compatibility layers عشوائيًا لأن عدداً من الصفحات القديمة لا يزال يعتمدها؛ إزالة هذه الطبقات مؤجلة حتى يثبت عدم وجود consumers.
 
@@ -32,6 +34,7 @@
 
 - حافظت النصوص الطويلة ورسائل المساعدة على `overflow-wrap` لتقليل overflow مع URLs/IDs والنص المختلط.
 - بيانات البريد والعملات والأكواد في Checkout تستخدم اتجاه LTR مع `unicode-bidi: isolate` حيث يلزم.
+- Store يستخدم hierarchy المعتمد `md-type-h2/h3`, `md-eyebrow`, `md-muted` بدل أحجام/ألوان خام متفرقة.
 - لم تُغيّر أحجام الخطوط الأساسية أو hierarchy المعتمدة في Design System.
 
 ## Accessibility baseline
@@ -43,9 +46,10 @@
 - Menu يعلن `aria-expanded` + `aria-controls` ويدعم ArrowDown/ArrowUp للوصول لأول/آخر عنصر، وEscape يعيد focus للمشغّل.
 - Sheet focus trap وModal native dialog الموجودان من المراحل السابقة بقيا كما هما.
 - Checkout يستخدم labels حقيقية عبر `Field` ولا يعتمد على placeholder كاسم للحقل.
+- Store availability لا تعتمد على اللون وحده؛ حالة عدم التوفر تحمل icon + label + color role.
 - صفحات الخطأ تستخدم semantic main/alert وعناوين واضحة.
 - Status system لا يزال يستخدم label + visual status بدل الاعتماد على اللون وحده.
-- `prefers-reduced-motion` يبقى authoritative، بما في ذلك theme transitions.
+- `prefers-reduced-motion` يبقى authoritative، بما في ذلك theme transitions وحركة صورة StoreCard.
 - أضيف forced-colors fallback للنقاط وبعض controls الأساسية.
 
 لم تتم إضافة framework Accessibility ثقيل؛ أضيف Gate ثابت في `tests/madar-polish-accessibility-performance-7.test.mjs` لحماية العقود الحرجة، مع الاستمرار في ESLint/Next checks الحالية.
@@ -59,8 +63,9 @@
 - Checkout يتحول من عمودين إلى عمود واحد تحت 768px، ويُلغي sticky summary على الهاتف.
 - Feedback في ORBY يلتف بدل دفع المحتوى خارج الشاشة، وأزرار error تصبح touch-sized.
 - Context bar في ORBY يسمح بالالتفاف، وتحت 390px يتحول إلى stack.
+- Store section headers تتحول إلى stack على الهاتف، وأزرار/metadata في StoreCard تسمح بالالتفاف بدل overflow.
 - مجموعات CTA في الحالات الضيقة يمكنها التمدد بعرض كامل بدل ضغط الأزرار.
-- Hover transforms لا تُفرض على أجهزة `hover: none`.
+- Hover transforms لا تُفرض على أجهزة `hover: none`، وصورة StoreCard لا تُكبّر على touch/reduced-motion.
 
 الـTablet يستمر في استخدام عقد Shell عند 1024px وعقد content عند 768px، وليس مجرد تكبير نسخة الهاتف.
 
@@ -75,7 +80,7 @@
 
 ## Checkout / Store polish
 
-لم يُعاد بناء الدفع. التعديل UX فقط:
+لم يُعاد بناء الدفع أو Store business logic. التعديل UX فقط:
 
 - Checkout يشرح بوضوح أنه الخطوة 1 من 2، وأن الدفع يُرسل بعد إنشاء الطلب ويحتاج مراجعة.
 - العملات المختلطة تُعرض كحالة Warning واضحة ويُمنع إنشاء الطلب حتى فصل العملات.
@@ -83,11 +88,15 @@
 - الهاتف والبريد read-only يظهران بحالة Design System الصحيحة، ورقم التواصل يستخدم `inputMode=tel` وautocomplete مناسب.
 - الأخطاء والسلة الفارغة تستخدم Notices متسقة.
 - زر الإنشاء يحتفظ بحجمه أثناء loading عبر Button primitive.
+- Store landing تخلص من `text-slate`, `bg-violet`, `text-emerald`, `border-white` الخام لصالح semantic roles.
+- StoreCard تستخدم semantic media surface/placeholder/badges/status/borders/typography، وحالة availability تعرض icon + text.
+- Store image optimization الموجودة عبر `next/image` وresponsive `sizes` بقيت كما هي، مع تعطيل hover scaling عندما لا يوجد hover أو عند reduced motion.
 
 ## Loading / errors / empty states
 
 - Error و404 أصبحا متوافقين مع النظام الدلالي للثيم.
 - ORBY offline/retry/save states تبقى recoverable ولا تدّعي نجاح الحفظ عند فقد الشبكة.
+- Store empty states بقيت على Design System ولم تُستبدل ببطاقات إضافية.
 - لم يُضف optimistic UI للعمليات المالية.
 - Loading architecture الموجودة في Account/ORBY/Shell لم تُستبدل؛ المرحلة السابعة حافظت على shell-first والسياقات الجزئية بدل blank screens.
 
@@ -110,6 +119,7 @@
 - أبقي `content-visibility` في رسائل ORBY الطويلة.
 - أبقي request-level React `cache()` في Shell/Account.
 - Account Home يجلب الأقسام المستقلة عبر `Promise.all` بدل waterfall.
+- Store landing يجلب featured/latest/categories عبر `Promise.all` بدل waterfall كما كان موجودًا، ولم تُضف requests جديدة.
 - لم تُحوّل صفحات Server إلى Client من أجل polish.
 - طبقة CSS الجديدة صغيرة ومحددة، بدل تكرار style logic داخل كل route.
 
@@ -119,7 +129,7 @@
 
 ### Client bundle
 
-لم يُحذف `lucide-react` لأن التدقيق أثبت وجود consumers فعليين في Retail، وحذفه الآن سيكسر الواجهة. لم تُضف مكتبات جديدة، ولم تُحوّل checkout أو صفحات errors إلى dependencies أثقل.
+لم يُحذف `lucide-react` لأن التدقيق أثبت وجود consumers فعليين في Retail، وحذفه الآن سيكسر الواجهة. لم تُضف مكتبات جديدة، ولم تُحوّل checkout أو صفحات errors أو Store إلى dependencies أثقل.
 
 ## Lighthouse / Web Vitals
 
@@ -143,7 +153,7 @@
 
 ## Responsive / Light-Dark / Slow network QA boundaries
 
-- Light/Dark/System: تم تدقيق tokens/bootstrap وsurfaces المعدلة على مستوى الكود، وProduction routes ستُفحص بعد النشر.
+- Light/Dark/System: تم تدقيق tokens/bootstrap وsurfaces المعدلة على مستوى الكود، وProduction routes تُفحص بعد النشر.
 - Slow network: ORBY يحتفظ بالمسودة ويقدم recoverable state؛ لا توجد نتيجة نجاح وهمية.
 - Mobile keyboard: composer يستخدم 100dvh layout وsafe-area من المرحلة السادسة، والتعديل الجديد يمنع قفل الكتابة عند offline.
 - لا يمكن ادعاء اختبار بصري فعلي لكل viewport 320–1440 بدون browser viewport runner؛ العقود اختبرت عبر CSS/tests وProduction response checks.
@@ -172,6 +182,7 @@ Patterns الجاهزة للترجمة للتطبيقين:
 - RTL typography وBiDi isolation.
 - service state language وstatus badges.
 - Checkout summary وحالات pending/error دون optimistic financial mutation.
+- Store cards وحالات availability responsive/semantic من دون اعتماد على hover أو اللون وحده.
 
 قرارات Native التي تبقى لاحقًا:
 
@@ -192,6 +203,7 @@ Patterns الجاهزة للترجمة للتطبيقين:
 - menu keyboard/focus relationship.
 - ORBY offline draft/stop/copy recovery.
 - semantic Checkout.
+- semantic Store landing + StoreCard.
 - semantic Error/404.
 - request parallelism وORBY content visibility.
 - وجود حدود القياس وعدم اختلاق Lighthouse.
