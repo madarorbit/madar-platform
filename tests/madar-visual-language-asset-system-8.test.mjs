@@ -7,11 +7,28 @@ const file = (path) => readFile(new URL(`../${path}`, import.meta.url));
 const text = async (path) => (await file(path)).toString("utf8");
 const sha256 = (buffer) => createHash("sha256").update(buffer).digest("hex");
 const gitBlobSha = (buffer) => createHash("sha1").update(Buffer.concat([Buffer.from(`blob ${buffer.length}\0`), buffer])).digest("hex");
+const u24le = (buffer, offset) => buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16);
 function webpDimensions(buffer) {
-  const marker = Buffer.from([0x9d, 0x01, 0x2a]);
-  const index = buffer.indexOf(marker);
-  assert.ok(index >= 0, "VP8 dimension marker missing");
-  return [buffer.readUInt16LE(index + 3) & 0x3fff, buffer.readUInt16LE(index + 5) & 0x3fff];
+  assert.equal(buffer.toString("ascii", 0, 4), "RIFF");
+  assert.equal(buffer.toString("ascii", 8, 12), "WEBP");
+  let offset = 12;
+  while (offset + 8 <= buffer.length) {
+    const type = buffer.toString("ascii", offset, offset + 4);
+    const size = buffer.readUInt32LE(offset + 4);
+    const data = offset + 8;
+    if (type === "VP8X") return [u24le(buffer, data + 4) + 1, u24le(buffer, data + 7) + 1];
+    if (type === "VP8L") {
+      assert.equal(buffer[data], 0x2f, "invalid VP8L signature");
+      const b1 = buffer[data + 1], b2 = buffer[data + 2], b3 = buffer[data + 3], b4 = buffer[data + 4];
+      return [1 + (((b2 & 0x3f) << 8) | b1), 1 + (((b4 & 0x0f) << 10) | (b3 << 2) | ((b2 & 0xc0) >> 6))];
+    }
+    if (type === "VP8 ") {
+      assert.deepEqual([...buffer.subarray(data + 3, data + 6)], [0x9d, 0x01, 0x2a], "invalid VP8 keyframe signature");
+      return [buffer.readUInt16LE(data + 6) & 0x3fff, buffer.readUInt16LE(data + 8) & 0x3fff];
+    }
+    offset = data + size + (size % 2);
+  }
+  assert.fail("WebP dimension chunk missing");
 }
 
 test("phase 8 visual asset layer is imported after phase 7", async () => {
@@ -39,11 +56,7 @@ test("four official production derivatives keep full master dimensions and known
 });
 
 test("service catalog uses master derivatives and cards do not request thumbnail renditions", async () => {
-  const [catalog, cards, css] = await Promise.all([
-    text("src/lib/services/catalog.ts"),
-    text("components/account/ServiceCards.tsx"),
-    text("app/visual-language-assets-8.css"),
-  ]);
+  const [catalog, cards, css] = await Promise.all([text("src/lib/services/catalog.ts"), text("components/account/ServiceCards.tsx"), text("app/visual-language-assets-8.css")]);
   for (const path of ["connected-business-master.webp", "native-business-master.webp", "madar-retail-master.webp"]) assert.ok(catalog.includes(path), path);
   assert.doesNotMatch(catalog, /\/services\/(connect-existing|build-on-madar|madar-retail)\.webp/);
   assert.match(cards, /sizes="\(max-width: 767px\)/);
@@ -65,12 +78,7 @@ test("ORBY has explicit master and compact contracts and About uses the master r
 });
 
 test("targeted Retail surfaces use the shared functional icon system", async () => {
-  const [landing, nav, icons, pkg] = await Promise.all([
-    text("app/retail/page.tsx"),
-    text("components/retail-v0/layout/workspace-nav.tsx"),
-    text("components/ui/Icons.tsx"),
-    text("package.json"),
-  ]);
+  const [landing, nav, icons, pkg] = await Promise.all([text("app/retail/page.tsx"), text("components/retail-v0/layout/workspace-nav.tsx"), text("components/ui/Icons.tsx"), text("package.json")]);
   assert.doesNotMatch(landing, /from ["']lucide-react["']/);
   assert.doesNotMatch(nav, /from ["']lucide-react["']/);
   assert.match(landing, /@\/components\/ui\/Icons/);
@@ -94,10 +102,7 @@ test("locked home identity video keeps its delivery contract", async () => {
 });
 
 test("phase 8 documentation records source truth, visual language, and visual QA limits", async () => {
-  const [doc, registry] = await Promise.all([
-    text("docs/MADAR_VISUAL_LANGUAGE_ASSET_SYSTEM_8.md"),
-    text("docs/MADAR_ASSET_REGISTRY.md"),
-  ]);
+  const [doc, registry] = await Promise.all([text("docs/MADAR_VISUAL_LANGUAGE_ASSET_SYSTEM_8.md"), text("docs/MADAR_ASSET_REGISTRY.md")]);
   for (const phrase of ["Brand Lock", "Visual Asset Audit", "Duotone Line", "Geometric Minimal", "Soft 3D", "ORBY Visual Identity", "pixel-perfect"]) assert.ok(doc.includes(phrase), phrase);
   for (const asset of ["MADAR Logo", "ORBY Master", "Connected Business Service", "Native Business Service", "MADAR Retail Service"]) assert.ok(registry.includes(asset), asset);
 });

@@ -14,7 +14,7 @@ test('unified ORBY keeps one core and account-level quota tiers',async()=>{
 
 test('service launch is exact and uses supplied service artwork',async()=>{
  const[catalog,launch,business,selection,serviceCards]=await Promise.all([read('src/lib/services/catalog.ts'),read('app/account/services/[code]/open/route.ts'),read('src/lib/business.ts'),read('src/lib/workspace-selection.ts'),read('components/account/ServiceCards.tsx')]);
- for(const asset of ['connect-existing.webp','build-on-madar.webp','madar-retail.webp'])assert.match(catalog,new RegExp(asset.replace('.','\\.')));
+ for(const asset of ['connected-business-master.webp','native-business-master.webp','madar-retail-master.webp'])assert.match(catalog,new RegExp(asset.replace('.','\\.')));
  for(const route of ['/workspace/connect','/workspace','/retail/workspace'])assert.ok(catalog.includes(route));
  for(const service of ['CONNECT_EXISTING','BUILD_ON_MADAR','MADAR_RETAIL'])assert.ok(catalog.includes(`/account/services/${service}/open`));
  assert.match(launch,/service_code=eq/);assert.match(launch,/activation_state=eq\.ACTIVE/);assert.match(launch,/commercialWorkspaceCookie/);assert.doesNotMatch(launch,/profiles\?id=eq/);assert.match(business,/selectedOrganization \|\| profile\?\.default_commercial_organization_id/);assert.match(selection,/httpOnly: true/);assert.match(serviceCards,/coverImage/);
