@@ -9,6 +9,17 @@
 .madar-retail .eyebrow { font-size: var(--md-type-caption); font-weight: var(--md-weight-bold); }
 .madar-retail .muted { color: var(--md-text-muted); }
 .madar-retail .text-violet { color: var(--md-accent-text); }
+.madar-retail .retail-brand-caption { color: var(--md-text-muted); }
+.madar-retail .retail-hero-title { margin-top: var(--md-space-5); max-width: 48rem; font-size: clamp(2.25rem, 8vw, 3.75rem); line-height: 1.12; font-weight: var(--md-weight-black); text-wrap: balance; }
+.madar-retail .retail-hero-glow { position: absolute; inset-block-start: -6rem; inset-inline-start: -5rem; width: 13rem; height: 13rem; border-radius: 999px; background: var(--md-accent-subtle); filter: blur(48px); opacity: .75; pointer-events: none; }
+.madar-retail .retail-divider { border-bottom: 1px solid var(--md-border-subtle); }
+.madar-retail .retail-preview-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--md-space-3); }
+.madar-retail .retail-orby-insight { border: 1px solid color-mix(in srgb, var(--md-mint) 28%, transparent); border-radius: var(--md-radius-md); background: var(--md-mint-subtle); }
+.madar-retail .retail-app-live { transition: border-color var(--md-motion-fast) var(--md-ease-standard), background var(--md-motion-fast) var(--md-ease-standard); }
+.madar-retail .retail-app-live:hover { border-color: color-mix(in srgb, var(--md-mint) 50%, var(--md-border-default)); background: var(--md-surface-raised); }
+.madar-retail .retail-app-live:focus-visible { outline: 3px solid var(--md-focus-ring); outline-offset: 2px; }
+.madar-retail .retail-app-disabled { color: var(--md-text-secondary); }
+.madar-retail .retail-footer { border-top: 1px solid var(--md-border-subtle); color: var(--md-text-muted); }
 
 .madar-retail .button-primary,
 .madar-retail .button-secondary,
@@ -57,6 +68,10 @@
   .madar-retail .button-primary,
   .madar-retail .button-secondary,
   .madar-retail .button-danger { min-height: var(--md-size-touch); }
+}
+@media (max-width: 389px) {
+  .madar-retail .retail-preview-metrics { grid-template-columns: 1fr; }
+  .madar-retail .retail-hero-title { font-size: 2.25rem; }
 }
 @media (max-width: 767px) {
   .madar-retail .table-wrap:has(.data-table[data-mobile="list"]) { overflow: visible; border: 0; background: transparent; }

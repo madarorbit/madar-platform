@@ -63,7 +63,7 @@ export default function LandingPage() {
       <section className="container-shell grid min-h-[75vh] items-center gap-10 py-16 lg:grid-cols-[1.15fr_.85fr]">
         <div>
           <p className="eyebrow">RETAIL SMALL BUSINESS OS</p>
-          <h1 className="mt-5 max-w-3xl text-5xl leading-[1.12] font-black sm:text-6xl">
+          <h1 className="retail-hero-title">
             نظام تشغيل ذكي وخفيف{" "}
             <span className="text-mint">للتجارة الصغيرة.</span>
           </h1>
@@ -85,15 +85,15 @@ export default function LandingPage() {
         </div>
 
         <div className="surface relative overflow-hidden p-5 sm:p-7">
-          <div className="absolute -top-24 -left-20 h-52 w-52 rounded-full bg-violet-500/15 blur-3xl" />
-          <div className="relative flex items-center justify-between border-b border-slate-800 pb-5">
+          <div className="retail-hero-glow" aria-hidden="true" />
+          <div className="retail-divider relative flex items-center justify-between pb-5">
             <div>
               <p className="muted text-sm">نظرة اليوم</p>
               <p className="mt-1 text-xl font-black">متجرك أمامك بوضوح</p>
             </div>
-            <Cloud className="text-mint" />
+            <Cloud className="text-mint" aria-hidden="true" />
           </div>
-          <div className="relative mt-5 grid grid-cols-2 gap-3">
+          <div className="retail-preview-metrics relative mt-5">
             {[
               ["المبيعات", "184,500 YER"],
               ["الربح التقديري", "47,200 YER"],
@@ -106,9 +106,9 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <div className="relative mt-3 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4">
+          <div className="retail-orby-insight relative mt-3 p-4">
             <p className="text-mint text-sm font-bold">ORBY</p>
-            <p className="mt-1 text-sm leading-6 text-slate-300">
+            <p className="muted mt-1 text-sm leading-6">
               العطر رقم 12 يقترب من حد النفاد، ومبيعات هذا الأسبوع أعلى من
               السابق.
             </p>
@@ -124,7 +124,7 @@ export default function LandingPage() {
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <article className="surface p-6" key={title}>
-              <Icon className="text-mint" />
+              <Icon className="text-mint" aria-hidden="true" />
               <h3 className="mt-5 text-xl font-black">{title}</h3>
               <p className="muted mt-2 leading-7">{text}</p>
             </article>
@@ -152,7 +152,7 @@ export default function LandingPage() {
                 <Link
                   href={app.href ?? "/retail/onboarding"}
                   key={app.name}
-                  className="surface-soft p-5 transition hover:border-emerald-300"
+                  className="retail-app-live surface-soft p-5"
                 >
                   <strong>{app.name}</strong>
                   <span className="text-mint mt-2 block text-sm">
@@ -162,7 +162,7 @@ export default function LandingPage() {
               ) : (
                 <div
                   key={app.name}
-                  className="surface-soft p-5 opacity-70"
+                  className="retail-app-disabled surface-soft p-5"
                   aria-disabled="true"
                 >
                   <strong>{app.name}</strong>
@@ -186,7 +186,7 @@ export default function LandingPage() {
         </Link>
       </section>
 
-      <footer className="container-shell flex flex-wrap items-center justify-between gap-4 border-t border-slate-800 py-8 text-sm text-slate-500">
+      <footer className="retail-footer container-shell flex flex-wrap items-center justify-between gap-4 py-8 text-sm">
         <Brand compact />
         <p>© 2026 MADAR Orbit. مساحة Retail متكاملة داخل منصة مَدار.</p>
       </footer>

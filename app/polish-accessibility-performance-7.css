@@ -30,6 +30,9 @@
 .md-store-media-status { gap: var(--md-space-1); border-color: color-mix(in srgb, var(--md-warning) 42%, transparent); background: color-mix(in srgb, var(--md-warning-subtle) 88%, var(--md-surface-overlay)); color: var(--md-warning-text); backdrop-filter: blur(10px); }
 .md-store-card-footer { border-top: 1px solid var(--md-border-subtle); }
 .md-store-price { color: var(--md-text-primary); }
+.md-store-filter-toggle { display: flex; min-height: var(--md-size-touch); align-items: center; gap: var(--md-space-2); align-self: end; border: 1px solid var(--md-border-default); border-radius: var(--md-radius-md); background: var(--md-surface-raised); padding: var(--md-space-3); color: var(--md-text-secondary); font-size: var(--md-type-label); cursor: pointer; transition: border-color var(--md-motion-fast) var(--md-ease-standard), background var(--md-motion-fast) var(--md-ease-standard); }
+.md-store-filter-toggle:hover { border-color: var(--md-border-strong); background: var(--md-surface-muted); }
+.md-store-filter-toggle:focus-within { border-color: var(--md-focus-ring); box-shadow: var(--md-shadow-focus); }
 
 /* ORBY: stable scrolling, clear offline composition and resilient narrow-screen feedback. */
 .md-orby-message-scroll { scrollbar-gutter: stable; }

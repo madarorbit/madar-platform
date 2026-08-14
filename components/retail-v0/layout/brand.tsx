@@ -7,7 +7,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       <Image src="/brand/madar-logo.svg" width={34} height={34} alt="" priority />
       <span className="font-black tracking-tight">
         MADAR <span className="text-mint">Retail</span>
-        {compact ? null : <small className="block text-[.62rem] font-semibold text-slate-400">من منظومة مَدار</small>}
+        {compact ? null : <small className="retail-brand-caption block text-[.62rem] font-semibold">من منظومة مَدار</small>}
       </span>
     </Link>
   );

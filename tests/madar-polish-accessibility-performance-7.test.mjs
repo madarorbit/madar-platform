@@ -62,6 +62,21 @@ test("store landing and cards use semantic theme roles instead of legacy raw uti
  assert.match(css,/\.md-store-card-media \{ background: var\(--md-surface-sunken\)/);
 });
 
+test("store catalog and Retail public surface avoid raw legacy palettes",async()=>{
+ const[catalog,retail,brand,retailCss]=await Promise.all([read("components/store/StoreCatalog.tsx"),read("app/retail/page.tsx"),read("components/retail-v0/layout/brand.tsx"),read("app/retail/retail.css")]);
+ assert.match(catalog,/md-search-field/);
+ assert.match(catalog,/md-select/);
+ assert.match(catalog,/md-store-filter-toggle/);
+ assert.doesNotMatch(catalog,/text-slate|bg-white|border-white|bg-red|text-red/);
+ assert.match(retail,/retail-hero-title/);
+ assert.match(retail,/retail-orby-insight/);
+ assert.match(retail,/retail-footer/);
+ assert.doesNotMatch(retail,/text-slate|bg-violet|border-slate|border-emerald|bg-emerald|text-emerald|hover:border-emerald/);
+ assert.doesNotMatch(brand,/text-slate/);
+ assert.match(retailCss,/\.retail-preview-metrics/);
+ assert.match(retailCss,/\.retail-orby-insight[\s\S]*var\(--md-mint-subtle\)/);
+});
+
 test("global error and not-found states are theme semantic",async()=>{
  const[error,notFound]=await Promise.all([read("app/error.tsx"),read("app/not-found.tsx")]);
  for(const source of [error,notFound]){
