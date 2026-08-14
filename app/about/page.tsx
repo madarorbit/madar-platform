@@ -75,14 +75,14 @@ export default function Page() {
           <Card className="relative overflow-hidden border-violet-300/20 bg-gradient-to-l from-violet-400/12 to-emerald-400/8 p-0">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(124,77,255,.2),transparent_36%),radial-gradient(circle_at_15%_80%,rgba(50,214,189,.15),transparent_34%)]" />
             <div className="relative grid items-center gap-8 p-6 sm:p-10 lg:grid-cols-[.78fr_1.22fr]">
-              <div className="mx-auto w-full max-w-md">
+              <div className="md-orby-master-frame mx-auto w-full max-w-md">
                 <Image
-                  src={siteConfig.assets.orby}
-                  alt="أوربي، مساعد مَدار الذكي"
-                  width={640}
-                  height={640}
-                  unoptimized
-                  className="aspect-square w-full rounded-[2rem] object-cover shadow-2xl shadow-violet-950/40"
+                  src={siteConfig.assets.orbyMaster}
+                  alt="ORBY — مساعد مَدار الذكي"
+                  width={1536}
+                  height={1536}
+                  sizes="(max-width: 1023px) calc(100vw - 3rem), 36vw"
+                  className="md-orby-master-image"
                 />
               </div>
               <div>
@@ -105,9 +105,7 @@ export default function Page() {
                   </div>
                   <div className="md-card md-card-subtle">
                     <Icon name="sparkles" className="text-violet-200" />
-                    <strong className="mt-3 block">
-                      اقتراح الخطوة التالية
-                    </strong>
+                    <strong className="mt-3 block">اقتراح الخطوة التالية</strong>
                     <p className="mt-2 text-sm leading-6 text-slate-400">
                       يربط البيانات بالسياق ليقترح إجراءً مفهومًا وقابلًا
                       للمراجعة.
@@ -117,8 +115,7 @@ export default function Page() {
                     <Icon name="shield" className="text-emerald-300" />
                     <strong className="mt-3 block">ضوابط وصلاحيات</strong>
                     <p className="mt-2 text-sm leading-6 text-slate-400">
-                      لا ينفذ إجراءً حساسًا دون تأكيد، ولا يتجاوز صلاحية
-                      المستخدم.
+                      لا ينفذ إجراءً حساسًا دون تأكيد، ولا يتجاوز صلاحية المستخدم.
                     </p>
                   </div>
                   <div className="md-card md-card-subtle">
@@ -130,33 +127,16 @@ export default function Page() {
                   </div>
                 </Grid>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/register"
-                    className="md-button md-button-primary"
-                  >
-                    ابدأ مع مَدار
-                  </Link>
-                  <Link href="/help" className="md-button md-button-secondary">
-                    تعرّف على طريقة الاستخدام
-                  </Link>
+                  <Link href="/register" className="md-button md-button-primary">ابدأ مع مَدار</Link>
+                  <Link href="/help" className="md-button md-button-secondary">تعرّف على طريقة الاستخدام</Link>
                 </div>
               </div>
             </div>
           </Card>
         </section>
         <div className="mt-12 flex flex-wrap gap-3">
-          <Link
-            href="/register"
-            className="md-button md-button-primary md-button-lg"
-          >
-            ابدأ مع مَدار
-          </Link>
-          <Link
-            href="/contact"
-            className="md-button md-button-secondary md-button-lg"
-          >
-            تواصل معنا
-          </Link>
+          <Link href="/register" className="md-button md-button-primary md-button-lg">ابدأ مع مَدار</Link>
+          <Link href="/contact" className="md-button md-button-secondary md-button-lg">تواصل معنا</Link>
         </div>
       </Section>
     </PageShell>

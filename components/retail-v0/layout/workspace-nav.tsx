@@ -2,36 +2,38 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BarChart3, Boxes, Building2, CircleDollarSign, HandCoins,
-  LayoutDashboard, PackagePlus, ReceiptText, Settings, ShoppingCart,
-  Sparkles, Truck, Users,
-} from "lucide-react";
+import { Icon, type IconName } from "@/components/ui/Icons";
 
-const ITEMS = [
-  ["/retail/workspace", "الرئيسية", LayoutDashboard], ["/retail/workspace/sales", "المبيعات", ShoppingCart],
-  ["/retail/workspace/products", "المنتجات", Boxes], ["/retail/workspace/purchases", "المشتريات", PackagePlus],
-  ["/retail/workspace/expenses", "المصروفات", ReceiptText], ["/retail/workspace/customers", "العملاء", Users],
-  ["/retail/workspace/suppliers", "الموردون", Truck], ["/retail/workspace/inventory", "المخزون", Building2],
-  ["/retail/workspace/debts", "الديون", HandCoins], ["/retail/workspace/cash", "الصندوق", CircleDollarSign],
-  ["/retail/workspace/reports", "التقارير", BarChart3], ["/retail/workspace/orby", "ORBY", Sparkles],
-  ["/retail/workspace/settings", "الإعدادات", Settings],
-] as const;
+const ITEMS: readonly [string, string, IconName][] = [
+  ["/retail/workspace", "الرئيسية", "home"],
+  ["/retail/workspace/sales", "المبيعات", "cart"],
+  ["/retail/workspace/products", "المنتجات", "layers"],
+  ["/retail/workspace/purchases", "المشتريات", "plus"],
+  ["/retail/workspace/expenses", "المصروفات", "document"],
+  ["/retail/workspace/customers", "العملاء", "community"],
+  ["/retail/workspace/suppliers", "الموردون", "briefcase"],
+  ["/retail/workspace/inventory", "المخزون", "store"],
+  ["/retail/workspace/debts", "الديون", "document"],
+  ["/retail/workspace/cash", "الصندوق", "briefcase"],
+  ["/retail/workspace/reports", "التقارير", "chart"],
+  ["/retail/workspace/orby", "ORBY", "sparkles"],
+  ["/retail/workspace/settings", "الإعدادات", "settings"],
+];
 
 export function WorkspaceNav() {
   const pathname = usePathname();
   return (
     <nav className="flex gap-1 overflow-x-auto lg:grid" aria-label="أقسام التجارة">
-      {ITEMS.map(([href, label, Icon]) => {
+      {ITEMS.map(([href, label, icon]) => {
         const active = href === "/retail/workspace" ? pathname === href : pathname.startsWith(href);
         return (
           <Link
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition ${active ? "bg-emerald-300 text-slate-950" : "text-slate-300 hover:bg-slate-800"}`}
+            className={`md-retail-workspace-nav-link${active ? " is-active" : ""}`}
           >
-            <Icon size={17} /><span>{label}</span>
+            <Icon name={icon} className="h-[17px] w-[17px]" /><span>{label}</span>
           </Link>
         );
       })}

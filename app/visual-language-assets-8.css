@@ -1,0 +1,88 @@
+/* MADAR Visual Language & Asset System 8.0 — asset presentation only. */
+
+/* Locked MADAR wordmark keeps its native 420:96 ratio; CSS owns presentation only. */
+.md-public-brand img,
+.md-brand-mark img {
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Service master artwork keeps its source composition instead of being cropped as a thumbnail. */
+.md-service-card-media,
+.md-service-grid.is-compact .md-service-card-media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--md-surface-sunken);
+}
+.md-service-master-image {
+  object-fit: contain;
+  object-position: center;
+}
+
+/* ORBY: the character master is reserved for prominent explanatory surfaces. */
+.md-orby-master-frame {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid var(--md-border-default);
+  border-radius: var(--md-radius-xl);
+  background: var(--md-surface-sunken);
+}
+.md-orby-master-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Retail legacy navigation now consumes the shared icon language and semantic roles. */
+.md-retail-workspace-nav-link {
+  display: flex;
+  min-height: var(--md-size-touch);
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--md-space-2);
+  border-radius: var(--md-radius-md);
+  padding: var(--md-space-2) var(--md-space-3);
+  color: var(--md-text-secondary);
+  font-size: var(--md-type-body-sm);
+  font-weight: var(--md-weight-bold);
+  transition: background var(--md-motion-fast) var(--md-ease-standard), color var(--md-motion-fast) var(--md-ease-standard);
+}
+.md-retail-workspace-nav-link:hover {
+  background: var(--md-surface-muted);
+  color: var(--md-text-primary);
+}
+.md-retail-workspace-nav-link.is-active {
+  background: var(--md-mint-subtle);
+  color: var(--md-success-text);
+}
+.md-retail-workspace-nav-link:focus-visible {
+  outline: none;
+  box-shadow: var(--md-shadow-focus);
+}
+
+/* Locked raster artwork is already dark-composed; keep a semantic frame in both themes. */
+[data-theme="light"] .md-service-card-media,
+[data-theme="light"] .md-orby-master-frame {
+  border-color: var(--md-border-default);
+}
+
+@media (max-width: 389px) {
+  .md-service-card-media,
+  .md-service-grid.is-compact .md-service-card-media,
+  .md-orby-master-frame { max-height: min(82vw, 22rem); }
+}
+
+@media (forced-colors: active) {
+  .md-service-card-media,
+  .md-orby-master-frame,
+  .md-retail-workspace-nav-link { border: 1px solid CanvasText; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-retail-workspace-nav-link { transition-duration: 0.01ms !important; }
+}
