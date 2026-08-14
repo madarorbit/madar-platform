@@ -35,7 +35,7 @@ export default function StoreCard({ item }: { item: StoreItem }) {
   const state = item.availability;
   return (
     <article className="md-card md-card-interactive group flex h-full flex-col overflow-hidden p-0">
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#0b1020]">
+      <div className="md-store-card-media relative aspect-[16/10] overflow-hidden">
         {item.thumbnailUrl ? (
           <Image
             src={item.thumbnailUrl}
@@ -45,8 +45,8 @@ export default function StoreCard({ item }: { item: StoreItem }) {
             className="object-cover transition duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_30%_25%,rgba(124,77,255,.48),transparent_34%),radial-gradient(circle_at_75%_70%,rgba(50,214,189,.35),transparent_38%)]">
-            <span className="grid h-24 w-24 place-items-center rounded-3xl border border-white/15 bg-white/10 text-white shadow-2xl backdrop-blur">
+          <div className="md-store-card-placeholder absolute inset-0 grid place-items-center">
+            <span className="md-store-card-placeholder-icon grid h-24 w-24 place-items-center rounded-3xl backdrop-blur">
               <Icon
                 name={
                   item.entityType === "service"
@@ -61,47 +61,48 @@ export default function StoreCard({ item }: { item: StoreItem }) {
           </div>
         )}
         <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
-          <span className="md-badge border-white/15 bg-black/60 text-white backdrop-blur">
+          <span className="md-badge md-store-media-badge">
             {labels[item.itemType] || labels[item.entityType] || "عنصر متجر"}
           </span>
           {state !== "available" && (
-            <span className="md-badge bg-amber-300/90 text-amber-950">
+            <span className="md-badge md-store-media-status">
+              <Icon name="warning" className="h-3.5 w-3.5" />
               {availability[state] || state}
             </span>
           )}
         </div>
       </div>
       <div className="flex flex-1 flex-col p-6">
-        <p className="text-sm font-black text-emerald-300">
+        <p className="md-eyebrow">
           {item.subcategory?.name ||
             item.category?.name ||
             "متجر مَدار | ORBIT"}
         </p>
-        <h2 className="mt-2 text-2xl font-black leading-8">
+        <h2 className="md-type-h2 mt-2">
           <Link href={href}>{item.name}</Link>
         </h2>
-        <p className="mt-3 line-clamp-3 flex-1 leading-7 text-slate-400">
+        <p className="md-type-body md-muted mt-3 line-clamp-3 flex-1">
           {item.shortDescription}
         </p>
-        <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
+        <div className="md-type-caption md-muted mt-4 flex flex-wrap items-center gap-3">
           <span aria-label={`التقييم ${item.ratingAverage} من خمسة`}>
             ★ {item.ratingAverage.toFixed(1)}
           </span>
           <span>{item.ratingCount} تقييم</span>
         </div>
-        <div className="mt-5 flex items-end justify-between gap-4 border-t border-white/10 pt-5">
+        <div className="md-store-card-footer mt-5 flex flex-wrap items-end justify-between gap-4 pt-5">
           <div>
-            <strong className="block text-xl text-emerald-300">
+            <strong className="md-store-price block text-xl">
               {item.isFree ? "مجاني" : arabicMoney(item.price, item.currency)}
             </strong>
             {item.compareAtPrice !== null &&
               item.compareAtPrice > item.price && (
-                <del className="text-sm text-slate-500">
+                <del className="md-help">
                   {arabicMoney(item.compareAtPrice, item.currency)}
                 </del>
               )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href={href}
               className="md-button md-button-ghost md-button-sm"

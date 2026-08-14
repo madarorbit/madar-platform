@@ -46,15 +46,20 @@ test("checkout uses semantic MADAR controls and explicit multi-currency feedback
  assert.doesNotMatch(checkout,/bg-white|text-slate|bg-red|text-red|bg-amber|text-amber/);
 });
 
-test("store landing uses semantic theme roles instead of legacy raw utility colors",async()=>{
- const[store,css]=await Promise.all([read("app/store/page.tsx"),read("app/polish-accessibility-performance-7.css")]);
+test("store landing and cards use semantic theme roles instead of legacy raw utility colors",async()=>{
+ const[store,card,css]=await Promise.all([read("app/store/page.tsx"),read("components/store/StoreCard.tsx"),read("app/polish-accessibility-performance-7.css")]);
  assert.match(store,/md-store-destination-icon/);
  assert.match(store,/md-store-section/);
  assert.match(store,/md-type-h2/);
  assert.match(store,/md-muted/);
  assert.doesNotMatch(store,/text-slate|bg-violet|text-violet|text-emerald|border-white/);
+ assert.match(card,/md-store-card-media/);
+ assert.match(card,/md-store-media-status/);
+ assert.match(card,/md-store-card-footer/);
+ assert.doesNotMatch(card,/text-slate|bg-violet|text-violet|text-emerald|bg-amber|text-amber|border-white|bg-\[#/);
  assert.match(css,/\.md-store-destination-icon[\s\S]*var\(--md-accent-subtle\)/);
  assert.match(css,/\.md-store-section \{ border-top: 1px solid var\(--md-border-subtle\)/);
+ assert.match(css,/\.md-store-card-media \{ background: var\(--md-surface-sunken\)/);
 });
 
 test("global error and not-found states are theme semantic",async()=>{
