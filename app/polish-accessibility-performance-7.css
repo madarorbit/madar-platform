@@ -1,0 +1,73 @@
+/* MADAR Polish, Accessibility & Performance 7.0 — bounded polish layer. */
+
+/* Touch targets: interactive controls remain usable at 320px and with zoom. */
+.md-menu-panel a,
+.md-menu-panel button,
+.md-dropdown-panel a,
+.md-dropdown-panel button { min-height: var(--md-size-touch); }
+.md-page-button { width: var(--md-size-touch); height: var(--md-size-touch); }
+
+/* Long mixed-direction identifiers, URLs and user content must not force viewport overflow. */
+.md-panel,
+.md-card,
+.md-notice,
+.md-error-state,
+.md-account-section { min-width: 0; }
+.md-help,
+.md-description,
+.md-state-description,
+.md-notice p { overflow-wrap: anywhere; }
+.md-ltr-data { unicode-bidi: isolate; }
+
+/* ORBY: stable scrolling, clear offline composition and resilient narrow-screen feedback. */
+.md-orby-message-scroll { scrollbar-gutter: stable; }
+.md-orby-message,
+.md-orby-message > div { min-width: 0; }
+.md-orby-citations a:hover { border-color: var(--md-info); background: color-mix(in srgb, var(--md-info-subtle) 78%, var(--md-surface)); }
+.md-orby-citations a:focus-visible { outline-offset: 2px; }
+.md-orby-composer textarea:disabled { cursor: not-allowed; }
+.md-orby-error > div:last-child { flex-wrap: wrap; }
+
+/* Checkout: reduce Card Hell and keep financial state explicit without changing payment logic. */
+.md-checkout-form { display: grid; gap: var(--md-space-5); }
+.md-checkout-heading { display: grid; gap: var(--md-space-2); border-bottom: 1px solid var(--md-border-subtle); padding-bottom: var(--md-space-4); }
+.md-checkout-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--md-space-4); }
+.md-checkout-summary { position: sticky; inset-block-start: calc(4.5rem + var(--md-space-4)); display: grid; gap: var(--md-space-5); }
+.md-checkout-totals { display: grid; gap: var(--md-space-3); }
+.md-checkout-totals > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--md-space-4); border-bottom: 1px solid var(--md-border-subtle); padding-bottom: var(--md-space-3); }
+.md-checkout-totals > div:last-child { border-bottom: 0; padding-bottom: 0; }
+
+/* Prefer stable layout over decorative movement on touch devices. */
+@media (hover: none) {
+ .md-card-interactive:hover,
+ .md-button:hover,
+ .md-orby-floating:hover { transform: none; }
+}
+
+@media (max-width: 767px) {
+ .md-checkout-fields { grid-template-columns: 1fr; }
+ .md-checkout-summary { position: static; }
+ .md-orby-context-bar { flex-wrap: wrap; }
+ .md-orby-error { width: 100%; }
+ .md-orby-error > div:last-child { width: 100%; }
+ .md-orby-error > div:last-child button { min-height: var(--md-size-touch); }
+}
+
+@media (max-width: 389px) {
+ .md-cluster:has(.md-button) { align-items: stretch; }
+ .md-cluster:has(.md-button) .md-button { flex: 1 1 100%; }
+ .md-orby-context-bar { align-items: flex-start; flex-direction: column; }
+}
+
+@media (forced-colors: active) {
+ .md-status-dot,
+ .md-orby-stream-status > span { border: 1px solid currentColor; }
+ .md-button,
+ .md-icon-button,
+ .md-icon-link,
+ .md-page-button { forced-color-adjust: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+ html.md-theme-transition * { transition-duration: 0.01ms !important; }
+}

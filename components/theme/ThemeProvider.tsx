@@ -14,7 +14,7 @@ type ThemeContextValue={
 
 const STORAGE_KEY='madar-theme';
 const TRANSITION_CLASS='md-theme-transition';
-const TRANSITION_DURATION=360;
+const TRANSITION_DURATION=320;
 const ThemeContext=createContext<ThemeContextValue|null>(null);
 
 function isTheme(value:string|null|undefined):value is MadarTheme{return value==='light'||value==='dark'||value==='system'}

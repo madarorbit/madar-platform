@@ -7,7 +7,8 @@ import {Icon,type IconName} from '@/components/ui/Icons';
 const focusableSelector='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 export function Menu({label,trigger,children,className=''}:{label:string;trigger:ReactNode;children:ReactNode;className?:string}){
- const[open,setOpen]=useState(false),rootRef=useRef<HTMLDivElement>(null),buttonRef=useRef<HTMLButtonElement>(null),panelRef=useRef<HTMLDivElement>(null);
+ const[open,setOpen]=useState(false),rootRef=useRef<HTMLDivElement>(null),buttonRef=useRef<HTMLButtonElement>(null),panelRef=useRef<HTMLDivElement>(null),panelId=useId();
+ const focusPanel=(edge:'first'|'last'='first')=>requestAnimationFrame(()=>{const elements=Array.from(panelRef.current?.querySelectorAll<HTMLElement>(focusableSelector)||[]);const target=edge==='last'?elements.at(-1):elements[0];target?.focus();});
  useEffect(()=>{
   if(!open)return;
   const closeOutside=(event:PointerEvent)=>{if(!rootRef.current?.contains(event.target as Node))setOpen(false)};
@@ -16,7 +17,7 @@ export function Menu({label,trigger,children,className=''}:{label:string;trigger
   document.addEventListener('keydown',keyboard);
   return()=>{document.removeEventListener('pointerdown',closeOutside);document.removeEventListener('keydown',keyboard)};
  },[open]);
- return <div ref={rootRef} className={cx('md-menu-root',className)}><button ref={buttonRef} type="button" className="md-menu-trigger" aria-label={label} aria-haspopup="true" aria-expanded={open} onClick={()=>setOpen(value=>!value)}>{trigger}</button>{open?<div ref={panelRef} className="md-menu-panel" aria-label={label} onClick={event=>{if((event.target as HTMLElement).closest('a,button'))setOpen(false)}}>{children}</div>:null}</div>;
+ return <div ref={rootRef} className={cx('md-menu-root',className)}><button ref={buttonRef} type="button" className="md-menu-trigger" aria-label={label} aria-haspopup="true" aria-expanded={open} aria-controls={panelId} onClick={()=>setOpen(value=>!value)} onKeyDown={event=>{if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();if(!open)setOpen(true);focusPanel(event.key==='ArrowUp'?'last':'first')}}}>{trigger}</button>{open?<div ref={panelRef} id={panelId} className="md-menu-panel" aria-label={label} onClick={event=>{if((event.target as HTMLElement).closest('a,button'))setOpen(false)}}>{children}</div>:null}</div>;
 }
 
 export function Sheet({open,title,description,children,onClose}:{open:boolean;title:string;description?:string;children:ReactNode;onClose:()=>void}){
