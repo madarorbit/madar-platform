@@ -1,6 +1,7 @@
 'use client';
 
 import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
+import {createPortal} from 'react-dom';
 import {Button,IconButton,cx} from '@/components/ui/Enterprise';
 import {Icon,type IconName} from '@/components/ui/Icons';
 
@@ -21,7 +22,8 @@ export function Menu({label,trigger,children,className=''}:{label:string;trigger
 }
 
 export function Sheet({open,title,description,children,onClose}:{open:boolean;title:string;description?:string;children:ReactNode;onClose:()=>void}){
- const titleId=useId(),descriptionId=useId(),panelRef=useRef<HTMLElement>(null),returnFocusRef=useRef<HTMLElement|null>(null);
+ const titleId=useId(),descriptionId=useId(),panelRef=useRef<HTMLElement>(null),returnFocusRef=useRef<HTMLElement|null>(null),[mounted,setMounted]=useState(false);
+ useEffect(()=>setMounted(true),[]);
  useEffect(()=>{
   if(!open)return;
   returnFocusRef.current=document.activeElement as HTMLElement|null;
@@ -41,8 +43,8 @@ export function Sheet({open,title,description,children,onClose}:{open:boolean;ti
   document.addEventListener('keydown',keyboard);
   return()=>{cancelAnimationFrame(frame);document.removeEventListener('keydown',keyboard);document.body.style.overflow=previousOverflow;returnFocusRef.current?.focus()};
  },[open,onClose]);
- if(!open)return null;
- return <><button type="button" className="md-sheet-backdrop" aria-label="إغلاق اللوحة" onClick={onClose}/><aside ref={panelRef} className="md-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined} tabIndex={-1}><header className="md-sheet-header"><div><h2 id={titleId} className="md-type-h3">{title}</h2>{description?<p id={descriptionId} className="md-type-caption md-muted">{description}</p>:null}</div><IconButton label="إغلاق" onClick={onClose}><Icon name="close"/></IconButton></header><div className="md-sheet-body">{children}</div></aside></>;
+ if(!open||!mounted)return null;
+ return createPortal(<><button type="button" className="md-sheet-backdrop" aria-label="إغلاق اللوحة" onClick={onClose}/><aside ref={panelRef} className="md-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description?descriptionId:undefined} tabIndex={-1}><header className="md-sheet-header"><div><h2 id={titleId} className="md-type-h3">{title}</h2>{description?<p id={descriptionId} className="md-type-caption md-muted">{description}</p>:null}</div><IconButton label="إغلاق" onClick={onClose}><Icon name="close"/></IconButton></header><div className="md-sheet-body">{children}</div></aside></>,document.body);
 }
 
 export function Modal({open,title,description,children,onClose,footer}:{open:boolean;title:string;description?:string;children:ReactNode;onClose:()=>void;footer?:ReactNode}){
