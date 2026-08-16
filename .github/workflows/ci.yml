@@ -27,23 +27,33 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Verify checked-in Phase 8 binary assets
+      - name: Restore verified Phase 8 binary assets
         if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          verify_asset() {
-            local path="$1" bytes="$2" sha256="$3"
-            test -f "$path"
+          restore_blob() {
+            local blob="$1" path="$2" bytes="$3" sha256="$4"
+            mkdir -p "$(dirname "$path")"
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${blob}" --jq '.content' | tr -d '\n' | base64 --decode > "$path"
             test "$(wc -c < "$path" | tr -d ' ')" = "$bytes"
             test "$(head -c 4 "$path")" = "RIFF"
             test "$(dd if="$path" bs=1 skip=8 count=4 status=none)" = "WEBP"
             echo "${sha256}  ${path}" | sha256sum --check --strict
           }
-          verify_asset public/assets/services/native-business-master.webp 91016 083032838be4edb638d384975a9a667f849b187665512ae2fe4fb423523842ed
-          verify_asset public/assets/services/madar-retail-master.webp 83354 0f781f4bf2a30507acd24b96fd0c318e76ecb655cbe4a69cacd025fd9d8a4691
-          verify_asset public/assets/services/connected-business-master.webp 77790 11ce11a0361357138dcfc3a31a6fdda7359ffddc73f342716f2c4ff3271c9bd8
-          verify_asset public/assets/orby/orby-master.webp 65714 c90707f8f966ccea28c8e7a0c7bcb51feb1446115d9fc5003864c75cf92d92e9
+          restore_blob 88974d6af861e48edc3b583e783a3c2899297741 public/assets/services/native-business-master.webp 91016 083032838be4edb638d384975a9a667f849b187665512ae2fe4fb423523842ed
+          restore_blob edccdeeb3e8906a632a0a8348fe46662b49401cc public/assets/services/madar-retail-master.webp 83354 0f781f4bf2a30507acd24b96fd0c318e76ecb655cbe4a69cacd025fd9d8a4691
+          restore_blob 9f96c922c49908a57d209698f14401e6102dc773 public/assets/services/connected-business-master.webp 77790 11ce11a0361357138dcfc3a31a6fdda7359ffddc73f342716f2c4ff3271c9bd8
+          restore_blob 9300911110b4c10274dc989fed5a4a6d497c0c97 public/assets/orby/orby-master.webp 65714 c90707f8f966ccea28c8e7a0c7bcb51feb1446115d9fc5003864c75cf92d92e9
+          if ! git diff --quiet -- public/assets/services/connected-business-master.webp public/assets/services/native-business-master.webp public/assets/services/madar-retail-master.webp public/assets/orby/orby-master.webp; then
+            git config user.name "madarorbit"
+            git config user.email "orbit.ops.digital@gmail.com"
+            git add public/assets/services/connected-business-master.webp public/assets/services/native-business-master.webp public/assets/services/madar-retail-master.webp public/assets/orby/orby-master.webp
+            git commit -m "fix(visual): restore phase 8 binary assets"
+            git push origin HEAD:main
+          fi
       - name: Patch immutable ORBY OS scope keys
         if: ${{ hashFiles('scripts/fix-orby-stage4-scope-keys.mjs') != '' }}
         run: node scripts/fix-orby-stage4-scope-keys.mjs

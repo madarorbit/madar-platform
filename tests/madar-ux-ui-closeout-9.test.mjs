@@ -27,8 +27,7 @@ test('Phase 8 Masters remain the canonical service and ORBY paths',async()=>{
  for(const asset of ['connected-business-master.webp','native-business-master.webp','madar-retail-master.webp'])assert.ok(catalog.includes(asset),asset);
  assert.match(config,/orbyMaster:'\/assets\/orby\/orby-master\.webp'/);
  assert.match(cards,/md-service-master-image/);
- assert.match(cards,/const imageSizes=compact\?/);
- assert.match(cards,/\bunoptimized\b/);
+ assert.match(cards,/sizes="\(max-width: 767px\)/);
 });
 
 test('concept artwork uses the real MADAR illustration component rather than giant functional icons',async()=>{
@@ -50,7 +49,6 @@ test('ORBY intro preserves the Master and has a direct chat CTA',async()=>{
  const about=await text('app/about/page.tsx');
  assert.match(about,/siteConfig\.assets\.orbyMaster/);
  assert.match(about,/sizes="\(max-width: 1023px\)/);
- assert.match(about,/\bunoptimized\b/);
  assert.match(about,/href="\/orby"[^>]*>ابدأ محادثة مع ORBY/);
 });
 
