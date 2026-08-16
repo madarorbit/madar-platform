@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -41,19 +41,6 @@ jobs:
           verify_asset public/assets/services/madar-retail-master.png 41dec7e503401f8a39c5d92e9f475feef9a66d78
           verify_asset public/assets/services/connected-business-master.png 34d43f28b9e23ed95e9940b552da55738408b16f
           verify_asset public/assets/orby/orby-master.png a213830b95960f5118596635ce5dd2328a853dbf
-      - name: Patch immutable ORBY OS scope keys
-        if: ${{ hashFiles('scripts/fix-orby-stage4-scope-keys.mjs') != '' }}
-        run: node scripts/fix-orby-stage4-scope-keys.mjs
-      - name: Commit generated migration correction
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'codex/orby-stage-4-orby-os' }}
-        shell: bash
-        run: |
-          if git diff --quiet; then exit 0; fi
-          git config user.name "madarorbit"
-          git config user.email "orbit.ops.digital@gmail.com"
-          git add supabase/migrations/20260729190000_orby_os_v1.sql
-          git commit -m "Use immutable ORBY OS scope keys"
-          git push origin HEAD:codex/orby-stage-4-orby-os
       - name: Install dependencies
         run: npm ci
       - name: Run tests
