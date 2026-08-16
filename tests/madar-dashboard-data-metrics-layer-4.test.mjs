@@ -6,12 +6,8 @@ const root=new URL('../',import.meta.url);
 const read=(file)=>readFile(new URL(file,root),'utf8');
 const core=await import(new URL('../src/lib/dashboard/metrics/core.ts',import.meta.url));
 
-const countDefinition={
- id:'example.count',version:'1',valueKind:'integer',unit:{kind:'count'},aggregation:'count',comparison:'supported'
-};
-const moneyDefinition={
- id:'example.money',version:'2',valueKind:'number',unit:{kind:'money',currency:'workspace'},aggregation:'sum',comparison:'supported'
-};
+const countDefinition={id:'example.count',version:'1',valueKind:'integer',unit:{kind:'count'},aggregation:'count',comparison:'supported'};
+const moneyDefinition={id:'example.money',version:'2',valueKind:'number',unit:{kind:'money',currency:'workspace'},aggregation:'sum',comparison:'supported'};
 
 test('metric registry is explicit, versioned, and rejects invalid or duplicate definitions',()=>{
  const registry=core.createMetricRegistry([countDefinition,moneyDefinition]);
@@ -27,7 +23,6 @@ test('user date selections become timezone-aware inclusive/exclusive periods',()
  assert.equal(aden.fromInclusive,'2026-08-16T21:00:00.000Z');
  assert.equal(aden.toExclusive,'2026-08-17T21:00:00.000Z');
  assert.equal(aden.timezone,'Asia/Aden');
-
  const dst=core.metricPeriodFromDateSelection({fromDate:'2026-03-08',toDateInclusive:'2026-03-08',timezone:'America/New_York'});
  assert.equal(dst.fromInclusive,'2026-03-08T05:00:00.000Z');
  assert.equal(dst.toExclusive,'2026-03-09T04:00:00.000Z');
@@ -36,12 +31,8 @@ test('user date selections become timezone-aware inclusive/exclusive periods',()
 });
 
 test('comparison handles zero and missing reference without inventing percentage change',async()=>{
- assert.deepEqual(core.calculateMetricComparison(25,0),{
-  referenceValue:0,absoluteDelta:25,percentageDelta:null,percentageDeltaReason:'zero_reference'
- });
- assert.deepEqual(core.calculateMetricComparison(25,null),{
-  referenceValue:null,absoluteDelta:null,percentageDelta:null,percentageDeltaReason:'missing_reference'
- });
+ assert.deepEqual(core.calculateMetricComparison(25,0),{referenceValue:0,absoluteDelta:25,percentageDelta:null,percentageDeltaReason:'zero_reference'});
+ assert.deepEqual(core.calculateMetricComparison(25,null),{referenceValue:null,absoluteDelta:null,percentageDelta:null,percentageDeltaReason:'missing_reference'});
  assert.equal(core.calculateMetricComparison(120,100).percentageDelta,20);
  const source=await read('src/lib/dashboard/metrics/core.ts');
  assert.equal(/favorable|unfavorable|success|danger/i.test(source),false,'math layer must not infer business outcome');
@@ -55,10 +46,7 @@ test('aggregation helpers preserve missing coverage and enforce ratio weighted a
  assert.deepEqual(core.calculateMetricRatio(null,5),{value:null,reason:'missing_numerator'});
  assert.equal(core.weightedMetricAverage([{value:10,weight:1},{value:20,weight:3}]).value,17.5);
  assert.throws(()=>core.weightedMetricAverage([{value:10,weight:-1}]),/METRIC_NEGATIVE_WEIGHT/);
- assert.deepEqual(core.latestMetricSnapshot([
-  {value:10,dataAsOf:'2026-08-01T00:00:00Z'},
-  {value:14,dataAsOf:'2026-08-02T00:00:00Z'},
- ]),{value:14,dataAsOf:'2026-08-02T00:00:00.000Z'});
+ assert.deepEqual(core.latestMetricSnapshot([{value:10,dataAsOf:'2026-08-01T00:00:00Z'},{value:14,dataAsOf:'2026-08-02T00:00:00Z'}]),{value:14,dataAsOf:'2026-08-02T00:00:00.000Z'});
 });
 
 test('money resolves concrete workspace currency and forbids implicit FX',()=>{
@@ -71,36 +59,25 @@ test('money resolves concrete workspace currency and forbids implicit FX',()=>{
 
 test('normalized results preserve true zero and keep missing as null',()=>{
  const period=core.metricPeriodFromDateSelection({fromDate:'2026-08-17',toDateInclusive:'2026-08-17',timezone:'Asia/Aden'});
+ const referencePeriod=core.metricPeriodFromDateSelection({fromDate:'2026-08-16',toDateInclusive:'2026-08-16',timezone:'Asia/Aden'});
  const calculatedAt='2026-08-17T09:00:00.000Z';
- const zero=core.normalizeMetricResult({
-  definition:countDefinition,
-  adapter:{value:0,coverage:{state:'complete'},dataAsOf:'2026-08-17T08:59:00.000Z',provenance:{category:'madar_native'},staleAfterSeconds:300,reference:{value:0}},
-  period,calculatedAt,comparisonRequested:true
- });
+ const zero=core.normalizeMetricResult({definition:countDefinition,adapter:{value:0,coverage:{state:'complete'},dataAsOf:'2026-08-17T08:59:00.000Z',provenance:{category:'madar_native'},staleAfterSeconds:300,reference:{value:0}},period,calculatedAt,comparison:{kind:'previous',period:referencePeriod}});
  assert.equal(zero.value,0);
  assert.equal(zero.availability.state,'available');
+ assert.equal(zero.comparison.kind,'previous');
+ assert.deepEqual(zero.comparison.period,referencePeriod);
  assert.equal(zero.comparison.percentageDelta,null);
  assert.equal(zero.comparison.percentageDeltaReason,'zero_reference');
-
- const missing=core.normalizeMetricResult({
-  definition:countDefinition,
-  adapter:{value:null,coverage:{state:'partial',ratio:0},dataAsOf:null,provenance:{category:'unknown'}},
-  period,calculatedAt,comparisonRequested:false
- });
+ const missing=core.normalizeMetricResult({definition:countDefinition,adapter:{value:null,coverage:{state:'partial',ratio:0},dataAsOf:null,provenance:{category:'unknown'}},period,calculatedAt,comparison:null});
  assert.equal(missing.value,null);
  assert.equal(missing.availability.state,'missing');
  assert.equal(missing.freshness.state,'unknown');
- assert.throws(()=>core.normalizeMetricResult({
-  definition:countDefinition,
-  adapter:{value:null,availability:{state:'available'},coverage:{state:'complete'},provenance:{category:'unknown'}},
-  period,calculatedAt,comparisonRequested:false
- }),/METRIC_AVAILABLE_WITHOUT_VALUE/);
+ assert.equal(missing.comparison,null);
+ assert.throws(()=>core.normalizeMetricResult({definition:countDefinition,adapter:{value:null,availability:{state:'available'},coverage:{state:'complete'},provenance:{category:'unknown'}},period,calculatedAt,comparison:null}),/METRIC_AVAILABLE_WITHOUT_VALUE/);
 });
 
 test('freshness uses dataAsOf rather than calculatedAt and can remain unknown',()=>{
- assert.deepEqual(core.evaluateMetricFreshness({calculatedAt:'2026-08-17T10:00:00Z',dataAsOf:null}),{
-  state:'unknown',reason:'missing_data_as_of'
- });
+ assert.deepEqual(core.evaluateMetricFreshness({calculatedAt:'2026-08-17T10:00:00Z',dataAsOf:null}),{state:'unknown',reason:'missing_data_as_of'});
  const stale=core.evaluateMetricFreshness({calculatedAt:'2026-08-17T10:00:00Z',dataAsOf:'2026-08-17T09:00:00Z',staleAfterSeconds:1800});
  assert.equal(stale.state,'stale');
  assert.equal(stale.ageSeconds,3600);
@@ -122,11 +99,7 @@ test('cache identity is deterministic and tenant scoped',()=>{
 });
 
 test('server boundary keeps authorization out of client query request and isolates metric failures',async()=>{
- const [contracts,server,index]=await Promise.all([
-  read('src/lib/dashboard/metrics/contracts.ts'),
-  read('src/lib/dashboard/metrics/server.ts'),
-  read('src/lib/dashboard/metrics/index.ts'),
- ]);
+ const [contracts,server,index]=await Promise.all([read('src/lib/dashboard/metrics/contracts.ts'),read('src/lib/dashboard/metrics/server.ts'),read('src/lib/dashboard/metrics/index.ts')]);
  const queryBlock=contracts.match(/export type MetricQueryRequest = \{[\s\S]*?\n\};/)?.[0]||'';
  assert.ok(queryBlock);
  assert.equal(/organizationId|workspaceId/.test(queryBlock),false);
@@ -140,15 +113,9 @@ test('server boundary keeps authorization out of client query request and isolat
 });
 
 test('shared metric layer is service neutral and has no fetching formula DSL or global KPI catalog',async()=>{
- const [contracts,coreSource,server]=await Promise.all([
-  read('src/lib/dashboard/metrics/contracts.ts'),
-  read('src/lib/dashboard/metrics/core.ts'),
-  read('src/lib/dashboard/metrics/server.ts'),
- ]);
+ const [contracts,coreSource,server]=await Promise.all([read('src/lib/dashboard/metrics/contracts.ts'),read('src/lib/dashboard/metrics/core.ts'),read('src/lib/dashboard/metrics/server.ts')]);
  const shared=`${contracts}\n${coreSource}\n${server}`;
- for(const forbidden of ['supabaseFetch','executeRetailRpc','fetch(','Revenue','Orders','Inventory','RetailSales','ConnectedSync','NativeOrders','SUM(x)','formula:']){
-  assert.equal(shared.includes(forbidden),false,forbidden);
- }
+ for(const forbidden of ['supabaseFetch','executeRetailRpc','fetch(','Revenue','Orders','Inventory','RetailSales','ConnectedSync','NativeOrders','SUM(x)','formula:']) assert.equal(shared.includes(forbidden),false,forbidden);
  assert.match(contracts,/"sum"/);
  assert.match(contracts,/"ratio"/);
  assert.match(contracts,/"snapshot"/);
@@ -156,9 +123,7 @@ test('shared metric layer is service neutral and has no fetching formula DSL or 
 });
 
 test('legacy compatibility risks are documented without silently rewriting existing analytics',async()=>{
- const [analytics,business,doc]=await Promise.all([
-  read('src/lib/analytics.ts'),read('src/lib/business.ts'),read('docs/MADAR_DASHBOARD_DATA_METRICS_LAYER_4.md')
- ]);
+ const [analytics,business,doc]=await Promise.all([read('src/lib/analytics.ts'),read('src/lib/business.ts'),read('docs/MADAR_DASHBOARD_DATA_METRICS_LAYER_4.md')]);
  assert.match(analytics,/Number\(value\|\|0\)/);
  assert.match(business,/Number\(value \|\| 0\)/);
  assert.match(doc,/Missing يتحول إلى Zero/);
@@ -169,18 +134,7 @@ test('legacy compatibility risks are documented without silently rewriting exist
 
 test('phase 4 documentation preserves the service and infrastructure boundaries',async()=>{
  const doc=await read('docs/MADAR_DASHBOARD_DATA_METRICS_LAYER_4.md');
- for(const phrase of [
-  'Metric Definition ≠ Metric Calculation ≠ Metric Presentation',
-  'No implicit FX',
-  'Zero ≠ Missing',
-  'dataAsOf',
-  'calculatedAt',
-  'Partial failure',
-  'Tenant isolation',
-  'Definition versioning',
-  'لا يوجد Generic `calculate(formula)` engine',
-  'لا يبدأ Retail تلقائيًا',
- ]) assert.ok(doc.includes(phrase),phrase);
+ for(const phrase of ['Metric Definition ≠ Metric Calculation ≠ Metric Presentation','No implicit FX','Zero ≠ Missing','dataAsOf','calculatedAt','Partial failure','Tenant isolation','Definition versioning','لا يوجد Generic `calculate(formula)` engine','لا يبدأ Retail تلقائيًا']) assert.ok(doc.includes(phrase),phrase);
  assert.match(doc,/persistent metrics cache/);
  assert.match(doc,/Global KPI catalog/);
  assert.match(doc,/Data Warehouse|warehouse/);
