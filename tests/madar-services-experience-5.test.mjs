@@ -12,18 +12,23 @@ test("Connected navigation is connection-first and never exposes Native mutation
   assert.match(navigation, /const enabled = enabledKeys \? new Set/);
 });
 
-test("Connected dashboard uses live integration health, sync and UDM records", async () => {
-  const [dashboard, server, data] = await Promise.all([
+test("Connected dashboard uses live integration health, exact facts and UDM presence", async () => {
+  const [dashboard, component, server, migration, data] = await Promise.all([
     read("app/workspace/page.tsx"),
-    read("src/lib/services/experience.ts"),
+    read("components/connected/ConnectedDecisionOverview.tsx"),
+    read("src/lib/connected/dashboard/server.ts"),
+    read("supabase/migrations/20260816224500_connected_dashboard_facts.sql"),
     read("app/workspace/data/page.tsx"),
   ]);
-  for (const contract of ["حالة الربط", "آخر مزامنة ناجحة", "البيانات الواصلة", "تنبيهات مفتوحة"])
-    assert.ok(dashboard.includes(contract), contract);
-  for (const table of ["integration_connections", "integration_health_snapshots", "integration_sync_runs", "integration_health_incidents", "integration_udm_records"])
-    assert.ok(server.includes(table), table);
+  assert.match(dashboard, /ConnectedDecisionOverview/);
+  for (const contract of ["المصادر الجاهزة", "المشكلات المفتوحة", "منذ آخر مزامنة ناجحة", "المصادر المتصلة"])
+    assert.ok(component.includes(contract), contract);
+  assert.match(server, /connected_dashboard_facts/);
+  for (const table of ["integration_connections", "integration_health_snapshots", "integration_sync_runs", "integration_health_incidents"])
+    assert.ok(migration.includes(table), table);
+  assert.match(server, /integration_udm_records/);
   assert.match(data, /duplicate_of=is\.null/);
-  assert.doesNotMatch(`${dashboard}\n${data}`, /const (demo|mock)|demoRecords|mockRecords/i);
+  assert.doesNotMatch(`${dashboard}\n${component}\n${data}`, /const (demo|mock)|demoRecords|mockRecords/i);
 });
 
 test("external source of truth cannot mutate Native business operations", async () => {
