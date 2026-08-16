@@ -143,12 +143,8 @@ function errorMetricResult(input: {
   definition: MetricDefinition;
   context: MetricQueryContext;
   calculatedAt: string;
-  error: unknown;
 }): NormalizedMetricResult {
   const unit = resolveMetricUnit(input.definition, input.context.scope.currency);
-  const reason = input.error instanceof Error && input.error.message
-    ? input.error.message.slice(0, 160)
-    : "METRIC_CALCULATION_ERROR";
   return Object.freeze({
     metricId: input.definition.id,
     definitionVersion: input.definition.version,
@@ -161,7 +157,8 @@ function errorMetricResult(input: {
     provenance: Object.freeze({ category: "unknown" as const }),
     coverage: Object.freeze({ state: "partial" as const, ratio: 0, reason: "metric_error" }),
     freshness: evaluateMetricFreshness({ dataAsOf: null, calculatedAt: input.calculatedAt }),
-    availability: Object.freeze({ state: "error" as const, reason }),
+    // Never return raw adapter/DB exception text through a normalized UI contract.
+    availability: Object.freeze({ state: "error" as const, reason: "metric_error" }),
   });
 }
 
@@ -197,12 +194,11 @@ export async function executeMetricBatch(input: {
           workspaceCurrency: input.context.scope.currency,
           comparisonRequested: Boolean(input.context.comparison),
         });
-      } catch (error) {
+      } catch {
         return errorMetricResult({
           definition,
           context: input.context,
           calculatedAt,
-          error,
         });
       }
     }),
