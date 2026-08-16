@@ -1,0 +1,29 @@
+/* MADAR Data Visualization System — Phase 3.0
+ * Series tokens identify data series only. They never encode numeric good/bad direction.
+ */
+:root,
+:root[data-theme="dark"] {
+  --md-chart-4: #d99a4e;
+  --md-chart-5: #cc78d3;
+  --md-viz-series-1: var(--md-chart-1);
+  --md-viz-series-2: var(--md-chart-2);
+  --md-viz-series-3: var(--md-chart-3);
+  --md-viz-series-4: var(--md-chart-4);
+  --md-viz-series-5: var(--md-chart-5);
+  --md-viz-reference: var(--md-text-muted);
+  --md-viz-target: var(--md-accent-text);
+  --md-viz-partial-fill: var(--md-warning-subtle);
+}
+
+:root[data-theme="light"] {
+  --md-chart-4: #9d5c12;
+  --md-chart-5: #8d4b96;
+  --md-viz-series-1: var(--md-chart-1);
+  --md-viz-series-2: var(--md-chart-2);
+  --md-viz-series-3: var(--md-chart-3);
+  --md-viz-series-4: var(--md-chart-4);
+  --md-viz-series-5: var(--md-chart-5);
+  --md-viz-reference: var(--md-text-muted);
+  --md-viz-target: var(--md-accent-text);
+  --md-viz-partial-fill: var(--md-warning-subtle);
+}
