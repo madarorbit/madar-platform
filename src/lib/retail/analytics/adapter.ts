@@ -46,9 +46,11 @@ function array(value: unknown, path: string) {
 }
 
 function stableMetric(raw: UnknownRecord, stableKey: string, rpcKey = stableKey) {
-  // Prefer the authoritative RPC key. The stable key fallback keeps older fixtures
-  // and compatible deployments readable without teaching presentation code both shapes.
-  const value = raw[rpcKey] ?? raw[stableKey];
+  // The authoritative RPC key wins whenever it exists, even when its value is
+  // null/undefined/invalid. Legacy fallback is compatibility for an absent key,
+  // never a way to hide a contract failure returned by the authoritative shape.
+  const hasAuthoritativeKey = Object.prototype.hasOwnProperty.call(raw, rpcKey);
+  const value = hasAuthoritativeKey ? raw[rpcKey] : raw[stableKey];
   return finiteNumber(value, `metrics.${rpcKey}`);
 }
 
