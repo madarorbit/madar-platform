@@ -8,8 +8,9 @@ test('dashboard shared layer loads after base design system and before service c
  const globals=await read('app/globals.css');
  const base=globals.indexOf('design-system-2-surfaces.css');
  const dashboard=globals.indexOf('dashboard-design-system-2.css');
+ const accessibility=globals.indexOf('dashboard-design-system-2-accessibility.css');
  const services=globals.indexOf('services-experience-5.css');
- assert.ok(base>=0&&dashboard>base&&services>dashboard);
+ assert.ok(base>=0&&dashboard>base&&accessibility>dashboard&&services>accessibility);
 });
 
 test('shared dashboard contracts stay service neutral and UI only',async()=>{
@@ -85,6 +86,14 @@ test('dashboard CSS uses existing semantic tokens and preserves mobile priority'
  assert.match(css,/\.md-dashboard-critical \{/);
  assert.equal(/\.md-dashboard-critical[^}]*display:\s*none/s.test(css),false);
  assert.match(css,/prefers-reduced-motion: reduce/);
+});
+
+test('mobile dashboard compact actions preserve the shared touch target',async()=>{
+ const css=await read('app/dashboard-design-system-2-accessibility.css');
+ assert.match(css,/@media \(max-width: 639px\)/);
+ assert.match(css,/\.md-dashboard-active-filter > a[\s\S]*width: var\(--md-size-touch\);[\s\S]*height: var\(--md-size-touch\);/);
+ assert.match(css,/\.md-dashboard-drilldown[\s\S]*min-height: var\(--md-size-touch\);/);
+ assert.match(css,/\.md-dashboard-filter-heading > \.md-button/);
 });
 
 test('visualization shell is chart type neutral and supports structural states',async()=>{
