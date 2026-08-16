@@ -52,6 +52,19 @@ test('status insight alert and critical exception are separate semantic componen
  assert.match(components,/aria-live="assertive"/);
 });
 
+test('non critical dashboard alerts never become assertive live regions',async()=>{
+ const components=await read('components/dashboard/Dashboard.tsx');
+ const start=components.indexOf('export function DashboardAlertBlock');
+ const end=components.indexOf('export function DashboardCriticalException');
+ assert.ok(start>=0&&end>start);
+ const alertBlock=components.slice(start,end);
+ assert.match(alertBlock,/const isCritical = severity === "critical";/);
+ assert.match(alertBlock,/role=\{isCritical \? "alert" : undefined\}/);
+ assert.match(alertBlock,/aria-live=\{isCritical \? "assertive" : undefined\}/);
+ assert.equal(/role="alert"/.test(alertBlock),false);
+ assert.equal(/aria-live="assertive"/.test(alertBlock),false);
+});
+
 test('first class dashboard states separate no meaningful data from true zero',async()=>{
  const components=await read('components/dashboard/Dashboard.tsx');
  for(const name of ['DataTrustIndicator','DashboardDataState','DashboardEmptyState','DashboardLoadingState','DashboardErrorState']){
@@ -73,6 +86,12 @@ test('global local filters active state and date range have explicit accessible 
  assert.match(components,/type="date"/);
  assert.match(components,/dir="ltr"/);
  assert.match(components,/aria-current=\{preset\.active \? "page" : undefined\}/);
+ const start=components.indexOf('export function DateRangeControl');
+ const end=components.indexOf('export function DashboardDrillDownLink');
+ assert.ok(start>=0&&end>start);
+ const dateRange=components.slice(start,end);
+ assert.match(dateRange,/className=\{cx\("md-dashboard-date-range", className\)\} role="group" aria-label=\{label\}/);
+ assert.equal(/className=\{cx\("md-dashboard-date-range", className\)\} aria-label=\{label\}/.test(dateRange),false);
 });
 
 test('dashboard CSS uses existing semantic tokens and preserves mobile priority',async()=>{
@@ -103,7 +122,7 @@ test('visualization shell is chart type neutral and supports structural states',
  for(const forbidden of ['LineChart','BarChart','PieChart','DonutChart','XAxis','YAxis'])assert.equal(components.includes(forbidden),false,forbidden);
 });
 
-test('protected catalog proves Arabic RTL-oriented dashboard states with UI fixtures only',async()=>{
+test('protected catalog proves Arabic first RTL oriented dashboard states with UI fixtures only',async()=>{
  const [page,showcase,adminLayout]=await Promise.all([read('app/admin/design-system/page.tsx'),read('components/admin/DashboardDesignSystemShowcase.tsx'),read('app/admin/layout.tsx')]);
  assert.match(page,/DashboardDesignSystemShowcase/);
  assert.match(adminLayout,/requireAdmin/);
@@ -111,6 +130,8 @@ test('protected catalog proves Arabic RTL-oriented dashboard states with UI fixt
  assert.match(showcase,/DashboardCriticalException/);
  assert.match(showcase,/DashboardFilterBar/);
  assert.match(showcase,/DashboardVisualizationShell/);
+ for(const heading of ['التسلسل الهرمي والمؤشرات','الحالة والملاحظة والتنبيه والاستثناء الحرج','حالات البيانات والثقة','المرشحات والفترة الزمنية','حاوية التصور والمعلومات المساندة'])assert.ok(showcase.includes(`title="${heading}`),heading);
+ for(const oldHeading of ['Hierarchy & metrics','Status, insight, alert & critical exception','Data states & trust','Filters & date range','Visualization shell & supporting information'])assert.equal(showcase.includes(`title="${oldHeading}"`),false,oldHeading);
  assert.equal(/getAnalyticsSnapshot|supabaseFetch|business_analytics|retail_analytics/i.test(showcase),false);
 });
 
