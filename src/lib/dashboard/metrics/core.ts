@@ -1,9 +1,11 @@
 import type {
   MetricAdapterResult,
-  MetricComparison,
+  MetricComparisonRequest,
+  MetricComparisonValues,
   MetricCoverage,
   MetricDefinition,
   MetricFilter,
+  MetricFilterValue,
   MetricPeriod,
   MetricRatioResult,
   MetricSnapshotPoint,
@@ -179,7 +181,7 @@ export function validateMetricPeriod(period: MetricPeriod): MetricPeriod {
 export function calculateMetricComparison(
   current: number | null | undefined,
   reference: number | null | undefined,
-): MetricComparison {
+): MetricComparisonValues {
   if (!finite(current)) {
     return {
       referenceValue: finite(reference) ? reference : null,
@@ -345,13 +347,27 @@ export function evaluateMetricFreshness(input: {
   };
 }
 
+function normalizedComparison(input: {
+  definition: MetricDefinition;
+  request?: MetricComparisonRequest | null;
+  current: number | null;
+  reference: number | null | undefined;
+}) {
+  if (!input.request || input.definition.comparison !== "supported") return null;
+  return Object.freeze({
+    kind: input.request.kind,
+    period: validateMetricPeriod(input.request.period),
+    ...calculateMetricComparison(input.current, input.reference),
+  });
+}
+
 export function normalizeMetricResult(input: {
   definition: MetricDefinition;
   adapter: MetricAdapterResult;
   period: MetricPeriod;
   calculatedAt: string;
   workspaceCurrency?: string | null;
-  comparisonRequested: boolean;
+  comparison?: MetricComparisonRequest | null;
 }): NormalizedMetricResult {
   const definition = validateMetricDefinition(input.definition);
   const period = validateMetricPeriod(input.period);
@@ -377,21 +393,22 @@ export function normalizeMetricResult(input: {
 
   const calculatedAt = new Date(input.calculatedAt);
   if (!Number.isFinite(calculatedAt.getTime())) throw new Error("METRIC_INVALID_CALCULATED_AT");
-  const dataAsOf = input.adapter.dataAsOf
-    ? new Date(input.adapter.dataAsOf)
-    : null;
+  const dataAsOf = input.adapter.dataAsOf ? new Date(input.adapter.dataAsOf) : null;
   if (dataAsOf && !Number.isFinite(dataAsOf.getTime())) throw new Error(`METRIC_INVALID_DATA_AS_OF:${definition.id}`);
 
-  const shouldCompare = input.comparisonRequested && definition.comparison === "supported";
+  const normalizedValue = hasValue ? rawValue : null;
   return Object.freeze({
     metricId: definition.id,
     definitionVersion: definition.version,
-    value: hasValue ? rawValue : null,
+    value: normalizedValue,
     unit,
     period,
-    comparison: shouldCompare
-      ? calculateMetricComparison(hasValue ? rawValue : null, input.adapter.reference?.value)
-      : null,
+    comparison: normalizedComparison({
+      definition,
+      request: input.comparison,
+      current: normalizedValue,
+      reference: input.adapter.reference?.value,
+    }),
     dataAsOf: dataAsOf ? dataAsOf.toISOString() : null,
     calculatedAt: calculatedAt.toISOString(),
     provenance: Object.freeze({ ...input.adapter.provenance }),
@@ -405,10 +422,25 @@ export function normalizeMetricResult(input: {
   });
 }
 
+type CanonicalFilterScalar = Readonly<{
+  type: "string" | "number" | "boolean";
+  value: MetricFilterValue;
+}>;
+
+function canonicalFilterScalar(value: MetricFilterValue): CanonicalFilterScalar {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error("METRIC_INVALID_FILTER_NUMBER");
+    return Object.freeze({ type: "number", value });
+  }
+  if (typeof value === "boolean") return Object.freeze({ type: "boolean", value });
+  return Object.freeze({ type: "string", value });
+}
+
 function canonicalFilterValue(value: MetricFilter["value"]) {
-  return Array.isArray(value)
-    ? [...value].map(String).sort()
-    : String(value);
+  if (!Array.isArray(value)) return canonicalFilterScalar(value as MetricFilterValue);
+  return value
+    .map((item) => canonicalFilterScalar(item))
+    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 }
 
 export function canonicalizeMetricFilters(filters: readonly MetricFilter[] = []) {
@@ -422,7 +454,8 @@ export function canonicalizeMetricFilters(filters: readonly MetricFilter[] = [])
 
 /**
  * Canonical cache identity only. This does not install cache infrastructure.
- * Tenant identity and definition versions are mandatory to prevent cross-tenant reuse.
+ * Tenant identity, request metric order, definition versions, and comparison
+ * semantics are mandatory so distinct batch outputs cannot share one key.
  */
 export function buildMetricCacheIdentity(input: {
   organizationId: string;
@@ -431,22 +464,26 @@ export function buildMetricCacheIdentity(input: {
   definitions: readonly Pick<MetricDefinition, "id" | "version">[];
   period: MetricPeriod;
   filters?: readonly MetricFilter[];
-  comparisonPeriod?: MetricPeriod;
+  comparison?: MetricComparisonRequest | null;
   sourceContext?: string;
 }) {
   if (!input.organizationId || !input.workspaceId || !input.service) throw new Error("METRIC_CACHE_TENANT_REQUIRED");
-  const definitions = [...input.definitions]
-    .map((definition) => `${definition.id}@${definition.version}`)
-    .sort();
+  // Intentionally preserve request order: MetricBatchResult.results preserves it too.
+  const definitions = input.definitions.map((definition) => `${definition.id}@${definition.version}`);
   return JSON.stringify({
-    v: 1,
+    v: 2,
     organizationId: input.organizationId,
     workspaceId: input.workspaceId,
     service: input.service,
     definitions,
     period: validateMetricPeriod(input.period),
     filters: canonicalizeMetricFilters(input.filters),
-    comparisonPeriod: input.comparisonPeriod ? validateMetricPeriod(input.comparisonPeriod) : null,
+    comparison: input.comparison
+      ? {
+          kind: input.comparison.kind,
+          period: validateMetricPeriod(input.comparison.period),
+        }
+      : null,
     sourceContext: input.sourceContext ?? null,
   });
 }
