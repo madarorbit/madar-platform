@@ -116,6 +116,10 @@ Default هو Line. يدعم:
 
 العقد المشترك يركز على أجزاء غير سالبة ذات معنى داخل إجمالي. إذا وصلت قيم سالبة، يعرض النظام Guidance بدل فرض stack قد يكون مضللًا.
 
+كل segment داخل كل فئة يجب أن يكون حاضرًا بقيمة finite. `null` و`undefined` ليست صفرًا؛ إذا كانت بيانات الـstack جزئية، لا يعرض مَدار بقية الأجزاء كأنها إجمالي كامل.
+
+في الرسوم المملوءة متعددة الأجزاء لا تكفي الألوان وحدها: كل segment يحصل على **لون لهوية السلسلة + fill pattern** مستقلة (`solid / diagonal / crosshatch / dots / horizontal`). الـLegend تعرض نفس encoding المستخدمة داخل الأعمدة.
+
 لا يستخدم لعشرات القطع الصغيرة أو للمقارنة الدقيقة بين كل segment.
 
 ---
@@ -131,9 +135,11 @@ Default هو Line. يدعم:
 - إجمالي أكبر من صفر.
 - الحد المشترك الافتراضي `MAX_DONUT_SLICES = 5`.
 
+`CompositionDatum.value` يسمح صراحةً بـ`number | null | undefined` حتى تستطيع طبقة البيانات تمثيل Missing بأمان. إذا كان أي جزء مفقودًا أو غير صالح، لا يحذفه المكوّن ولا يعيد حساب الإجمالي بدونه؛ يعرض Guidance توضح أن التركيب غير مكتمل.
+
 إذا تجاوزت البيانات الحد، لا يجمع النظام الشرائح ولا يخفيها ولا ينشئ `Other` من تلقاء نفسه؛ يعرض Guidance لاستخدام Bar أو تصميم أنسب.
 
-المركز اختياري ويُملأ فقط عندما يزوّده الـcomposition بسياق مفيد.
+كل شريحة تستخدم color + fill pattern، والـLegend تعكس نفس النمط المرئي. المركز اختياري ويُملأ فقط عندما يزوّده الـcomposition بسياق مفيد.
 
 ---
 
@@ -141,13 +147,17 @@ Default هو Line. يدعم:
 
 **السؤال:** أين نحن بالنسبة إلى هدف أو حد معروف؟
 
+- `value` و`target` يقبلان `null/undefined` كـMissing صريح دون تحويله إلى صفر.
 - يحتاج Target موجبًا وصالحًا.
 - يعرض current وtarget بوضوح.
 - يستخدم `role="progressbar"` وARIA values.
+- `aria-valuenow` دائمًا محصور داخل `aria-valuemin=0` و`aria-valuemax=target`، حتى لو كانت القيمة الفعلية سالبة أو تجاوزت الهدف.
+- `aria-valuetext` يذكر القيمة الفعلية والهدف ويشرح السالب أو تجاوز الهدف عندما يحدث ذلك؛ لذلك لا تضيع الحقيقة بسبب حصر موضع شريط التقدم بصريًا.
 - لا يستخدم Gauge أو Speedometer.
 - `outcome` اختياري وصريح؛ المكوّن لا يستنتجه من ارتفاع الرقم أو إشارته.
+- عند إعطاء `outcome` يظهر **نص دلالي + علامة مرئية** إلى جانب اللون؛ favorable/unfavorable/neutral/unknown لا تُفهم من اللون وحده.
 
-النسبة المحسوبة داخل المكوّن هي نسبة presentation للـprogress فقط، وليست Business metric definition.
+النسبة المحسوبة داخل المكوّن هي نسبة presentation للـprogress فقط، وليست Business metric definition. الشريط نفسه يحصر التعبئة بين 0% و100% بينما يمكن للنص أن يوضح نسبة فعلية سالبة أو أكبر من 100%.
 
 ---
 
@@ -179,6 +189,8 @@ Default هو Line. يدعم:
 
 ولا تعني نجاحًا أو فشلًا أو صعودًا أو هبوطًا.
 
+للـfilled multi-part visualizations تستخدم Phase 3 أيضًا `VisualizationFillPattern` كترميز ثانوي لهوية الجزء. الـpattern مثل اللون لا تحمل معنى good/bad؛ وظيفتها منع الاعتماد على اللون وحده وتحسين التمييز في Light/Dark وحالات ضعف إدراك اللون.
+
 ### Business Outcome
 
 العقد يسمح فقط بقيمة صريحة:
@@ -188,7 +200,7 @@ Default هو Line. يدعم:
 - `neutral`
 - `unknown`
 
-هذه القيمة يجب أن تأتي مستقبلًا من Domain/Composition. Visualization لا تحسبها من الرقم.
+هذه القيمة يجب أن تأتي مستقبلًا من Domain/Composition. Visualization لا تحسبها من الرقم. وعندما تُعرض، يجب أن تمتلك label/mark مفهومة ولا تعتمد على color-only semantics.
 
 ### Numeric direction
 
@@ -265,7 +277,7 @@ Legend ليست إجبارية للسلسلة الواحدة.
 - reference series لها dash مختلف ونص `مرجع`.
 - لا يعتمد التفريق على اللون وحده في Trends.
 
-Donut/stacked تستخدم labels نصية ثابتة مع markers، إضافة إلى البديل النصي.
+`StackedBarChart` و`CompositionDonut` تستخدمان Legend مملوءة ترسم **نفس color + SVG fill pattern** المستخدمة فعليًا داخل الجزء أو الشريحة. الـlabel النصية تبقى المرجع المقروء، واللون ليس قناة التعريف الوحيدة.
 
 ---
 
@@ -304,9 +316,12 @@ Donut/stacked تستخدم labels نصية ثابتة مع markers، إضافة 
 
 **Missing ≠ Zero.**
 
-- `null` تبقى missing.
+- `null` و`undefined` يمكن أن تمثلا Missing صراحةً في عقود العرض المناسبة.
 - Trend وSparkline تستخدم `connectNulls={false}`.
 - لا توجد `?? 0` لتحويل نقاط series المفقودة.
+- `CompositionDatum.value` لا تُسقط إذا كانت missing؛ يفشل تمثيل الـpart-to-whole بأمان بدل إعادة حساب إجمالي ناقص.
+- `TargetProgress` لا يحول `value` أو `target` المفقودة إلى صفر.
+- Stacked composition لا تعرض إجماليًا ناقصًا عندما تكون إحدى قيم segments مفقودة.
 - إذا لم توجد أي قيمة ذات معنى، تستخدم مكونات Phase 2 `DashboardEmptyState` بدل axes فارغة.
 
 ---
@@ -337,7 +352,9 @@ Stale لا تعيد Charts بناء Trust system؛ تستخدم Phase 2 `DataTru
 - Legends نصية.
 - `bdi` للقيم الرقمية.
 - color-independent dash للـTrend/reference.
-- Progress ARIA semantics.
+- color + fill-pattern encoding للـStacked/Donut والـLegend نفسها تعرض encoding المطابقة.
+- Progress يضمن بقاء `aria-valuenow` داخل min/max، ويستخدم `aria-valuetext` للحفاظ على القيمة الفعلية والهدف عند السالب أو تجاوز الهدف.
+- Business outcome الصريحة تظهر كنص + علامة، لا لون فقط.
 - لا اعتماد على hover وحده.
 
 Sparkline تعتمد على سياق KPI ولديها `role="img"` و`aria-label` بدل جدول مستقل.
@@ -364,7 +381,7 @@ Mobile ليست Desktop chart مصغرة:
 - labels الطويلة تلف إلى عدة أسطر دون ellipsis متعمد.
 - Legend تتحول إلى قائمة عمودية.
 - Tooltip تضبط عرضها ضمن viewport.
-- Progress يعيد header إلى Grid.
+- Progress يعيد header/meta إلى Grid.
 - لا يوجد horizontal scrolling لفهم Core visualization.
 - لا يتم حذف series أساسية تلقائيًا أو sampling البيانات بصمت.
 
@@ -402,6 +419,7 @@ CSS progress transition تتوقف كذلك في reduced-motion.
 
 - grid/labels/surfaces من semantic tokens الحالية.
 - series palette معرفة في `dashboard-visualization-tokens-3.css` لكل theme.
+- fill patterns تستخدم لون السلسلة مع pattern marks مبنية على semantic `--md-text-primary` وبشفافية هادئة، لذلك تبقى قابلة للتمييز في Light/Dark دون palette موازية.
 - tooltip تستخدم surface overlay وsemantic borders/text.
 - target/reference/partial لها tokens مستقلة عن good/bad metric direction.
 
