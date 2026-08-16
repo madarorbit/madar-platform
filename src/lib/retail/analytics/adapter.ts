@@ -162,11 +162,11 @@ export function normalizeRetailAnalyticsSnapshot(input: unknown): AnalyticsSnaps
     }),
     metrics: Object.freeze(metrics),
     comparison: Object.freeze(comparison),
-    top_products: Object.freeze(top_products),
-    low_stock: Object.freeze(low_stock),
-    slow_moving: Object.freeze(slow_moving),
-    daily_sales: Object.freeze(daily_sales),
-    recent_activity: Object.freeze(recent_activity),
+    top_products,
+    low_stock,
+    slow_moving,
+    daily_sales,
+    recent_activity,
     definitions: Object.freeze(definitions),
   });
 }
