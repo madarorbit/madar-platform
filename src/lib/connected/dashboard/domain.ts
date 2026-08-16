@@ -1,5 +1,5 @@
-import type { MetricDefinition, NormalizedMetricResult } from "../../dashboard/metrics/contracts";
-import { createMetricRegistry, metricPeriodFromDateSelection, normalizeMetricResult } from "../../dashboard/metrics/core";
+import type { MetricDefinition, NormalizedMetricResult } from "../../dashboard/metrics/contracts.ts";
+import { createMetricRegistry, metricPeriodFromDateSelection, normalizeMetricResult } from "../../dashboard/metrics/core.ts";
 
 export type ConnectedSection<T> = Readonly<{ data: T; failed: boolean }>;
 
