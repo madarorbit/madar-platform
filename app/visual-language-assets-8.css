@@ -21,6 +21,46 @@
   object-position: center;
 }
 
+/* Keep the locked service artwork untouched while giving copy, price and actions their own column. */
+.md-service-card {
+  display: grid;
+  grid-template-columns: minmax(10rem, 34%) minmax(0, 1fr);
+  align-items: start;
+}
+.md-service-card-media {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  align-self: start;
+}
+.md-service-card-body {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 100%;
+}
+.md-service-card-meta {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.md-service-card-title,
+.md-service-card-description,
+.md-service-card-facts,
+.md-service-card-actions {
+  min-width: 0;
+}
+.md-service-card-title,
+.md-service-card-description {
+  overflow-wrap: anywhere;
+}
+.md-service-card-actions .md-button {
+  max-width: 100%;
+  white-space: normal;
+}
+.md-service-grid.is-compact .md-service-card {
+  grid-template-columns: minmax(6.5rem, 30%) minmax(0, 1fr);
+}
+
 /* ORBY: the character master is reserved for prominent explanatory surfaces. */
 .md-orby-master-frame {
   position: relative;
@@ -71,7 +111,26 @@
   border-color: var(--md-border-default);
 }
 
+@media (max-width: 767px) {
+  .md-service-card {
+    grid-template-columns: minmax(7.25rem, 34%) minmax(0, 1fr);
+  }
+  .md-service-grid.is-compact .md-service-card {
+    grid-template-columns: minmax(6rem, 30%) minmax(0, 1fr);
+  }
+  .md-service-card-actions .md-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 389px) {
+  .md-service-card {
+    grid-template-columns: minmax(6.5rem, 32%) minmax(0, 1fr);
+  }
+  .md-service-grid.is-compact .md-service-card {
+    grid-template-columns: minmax(5.75rem, 29%) minmax(0, 1fr);
+  }
   .md-service-card-media,
   .md-service-grid.is-compact .md-service-card-media,
   .md-orby-master-frame { max-height: min(82vw, 22rem); }
