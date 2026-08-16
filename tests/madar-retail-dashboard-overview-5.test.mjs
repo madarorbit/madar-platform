@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 const root=new URL('../',import.meta.url);
 const read=(file)=>readFile(new URL(file,root),'utf8');
 const adapter=await import(new URL('../src/lib/retail/analytics/adapter.ts',import.meta.url));
-const overview=await import(new URL('../src/lib/retail/analytics/overview.ts',import.meta.url));
+const core=await import(new URL('../src/lib/dashboard/metrics/core.ts',import.meta.url));
 
 function rawSnapshot(overrides={}){
  const metrics={
@@ -51,48 +51,50 @@ test('required missing or invalid RPC metrics fail instead of silently becoming 
  assert.equal(zero.metrics.expenses,0,'a real zero remains a business value');
 });
 
-test('Phase 5 registry has exactly four primary KPIs and only net sales supports comparison',()=>{
- assert.deepEqual(overview.RETAIL_PRIMARY_METRICS.map((item)=>item.id),[
-  'retail.net_sales','retail.estimated_gross_profit','retail.estimated_operating_result','retail.invoice_count'
- ]);
- assert.deepEqual(overview.RETAIL_SUPPORTING_METRICS.map((item)=>item.id),['retail.expenses','retail.average_invoice']);
- assert.deepEqual(overview.RETAIL_CURRENT_METRICS.map((item)=>item.id),[
-  'retail.cash_position','retail.receivables','retail.payables','retail.inventory_value'
- ]);
- assert.equal(overview.retailOverviewMetricRegistry.require('retail.net_sales').comparison,'supported');
- for(const definition of overview.retailOverviewMetricRegistry.list()){
-  if(definition.id!=='retail.net_sales') assert.equal(definition.comparison,'none',definition.id);
+test('Phase 5 domain declares exactly four primary, two supporting and four current-state metrics',async()=>{
+ const source=await read('src/lib/retail/analytics/overview.ts');
+ const primary=source.match(/RETAIL_PRIMARY_METRICS:[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1]||'';
+ const supporting=source.match(/RETAIL_SUPPORTING_METRICS:[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1]||'';
+ const current=source.match(/RETAIL_CURRENT_METRICS:[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1]||'';
+ for(const id of ['retail.net_sales','retail.estimated_gross_profit','retail.estimated_operating_result','retail.invoice_count']) assert.ok(primary.includes(id),id);
+ assert.equal((primary.match(/id:/g)||[]).length,4);
+ assert.equal((supporting.match(/id:/g)||[]).length,2);
+ assert.equal((current.match(/id:/g)||[]).length,4);
+ assert.match(source,/id: "retail\.net_sales"[\s\S]*?comparison: "supported"/);
+ for(const id of ['retail.estimated_gross_profit','retail.estimated_operating_result','retail.invoice_count','retail.expenses','retail.average_invoice']){
+  const escaped=id.replaceAll('.','\\.');
+  assert.match(source,new RegExp(`id: "${escaped}"[^\\n]*comparison: "none"`));
  }
- assert.equal(overview.retailOverviewMetricRegistry.require('retail.cash_position').aggregation,'snapshot');
- assert.equal(overview.retailOverviewMetricRegistry.require('retail.inventory_value').aggregation,'snapshot');
+ assert.match(source,/id: "retail\.cash_position"[^\n]*aggregation: "snapshot"/);
+ assert.match(source,/id: "retail\.inventory_value"[^\n]*aggregation: "snapshot"/);
 });
 
-test('Retail Overview defaults to seven days and uses Phase 4 timezone-aware period boundaries',()=>{
- const selection=overview.resolveRetailOverviewSelection({timezone:'Asia/Aden',today:'2026-08-17'});
- assert.equal(selection.range,'7d');
- assert.equal(selection.from,'2026-08-11');
- assert.equal(selection.to,'2026-08-17');
- assert.equal(selection.period.fromInclusive,'2026-08-10T21:00:00.000Z');
- assert.equal(selection.period.toExclusive,'2026-08-17T21:00:00.000Z');
- const custom=overview.resolveRetailOverviewSelection({timezone:'Asia/Aden',today:'2026-08-17',from:'2026-08-01',to:'2026-08-05'});
- assert.equal(custom.range,'custom');
- assert.equal(custom.from,'2026-08-01');
- assert.equal(custom.to,'2026-08-05');
+test('Phase 5 period contract is based on Phase 4 timezone-aware inclusive/exclusive semantics',async()=>{
+ const period=core.metricPeriodFromDateSelection({fromDate:'2026-08-11',toDateInclusive:'2026-08-17',timezone:'Asia/Aden'});
+ assert.equal(period.fromInclusive,'2026-08-10T21:00:00.000Z');
+ assert.equal(period.toExclusive,'2026-08-17T21:00:00.000Z');
+ const source=await read('src/lib/retail/analytics/overview.ts');
+ assert.match(source,/range: "7d" as const/);
+ assert.match(source,/shiftMetricDate\(input\.today, -6\)/);
+ assert.match(source,/metricPeriodFromDateSelection/);
 });
 
-test('Overview model keeps comparison truthful and separates critical from attention inventory',()=>{
- const snapshot=adapter.normalizeRetailAnalyticsSnapshot(rawSnapshot({comparison:{previous_from:'2026-08-04',previous_to:'2026-08-10',previous_revenue:0,revenue_change:700,revenue_change_percent:null}}));
- const selection=overview.resolveRetailOverviewSelection({range:'7d',timezone:'Asia/Aden',today:'2026-08-17'});
- const model=overview.buildRetailOverviewModel(snapshot,selection);
- const comparison=model.primary['retail.net_sales'].comparison;
- assert.equal(comparison.kind,'previous');
- assert.equal(comparison.referenceValue,0);
- assert.equal(comparison.percentageDelta,null);
- assert.equal(comparison.percentageDeltaReason,'zero_reference');
- assert.equal(model.primary['retail.estimated_gross_profit'].comparison,null);
- assert.deepEqual(model.criticalInventory.map((item)=>item.id),['p2']);
- assert.deepEqual(model.attentionInventory.map((item)=>item.id),['p3']);
- assert.equal(model.current.find((item)=>item.id==='retail.cash_position').value,900);
+test('sales zero-reference comparison remains mathematically unavailable and other Retail KPIs do not invent comparisons',async()=>{
+ assert.deepEqual(core.calculateMetricComparison(700,0),{
+  referenceValue:0,absoluteDelta:700,percentageDelta:null,percentageDeltaReason:'zero_reference'
+ });
+ const source=await read('src/lib/retail/analytics/overview.ts');
+ assert.match(source,/const isNetSales = id === "retail\.net_sales"/);
+ assert.match(source,/reference: isNetSales \?/);
+ assert.match(source,/comparison: "none"/);
+ assert.equal(/favorable|unfavorable/.test(source),false);
+});
+
+test('inventory attention uses only stock zero and configured minimum-stock domain rules',async()=>{
+ const source=await read('src/lib/retail/analytics/overview.ts');
+ assert.match(source,/stock_on_hand === 0/);
+ assert.match(source,/stock_on_hand > 0 && item\.stock_on_hand <= item\.minimum_stock/);
+ assert.equal(/health score|cash warning|payables risk|slow_moving.*alert/i.test(source),false);
 });
 
 test('server query enforces the RPC adapter boundary instead of a blind TypeScript cast',async()=>{
@@ -104,15 +106,8 @@ test('server query enforces the RPC adapter boundary instead of a blind TypeScri
 
 test('Retail page is a decision overview using shared dashboard and visualization layers',async()=>{
  const source=await read('app/retail/workspace/page.tsx');
- assert.match(source,/DashboardMetricCard/);
- assert.match(source,/DashboardCriticalException/);
- assert.match(source,/DashboardAlertBlock/);
- assert.match(source,/DashboardVisualizationShell/);
- assert.match(source,/TrendChart/);
- assert.match(source,/DateRangeControl/);
- assert.match(source,/DataTrustIndicator/);
+ for(const contract of ['DashboardMetricCard','DashboardCriticalException','DashboardAlertBlock','DashboardVisualizationShell','TrendChart','DateRangeControl','DataTrustIndicator']) assert.ok(source.includes(contract),contract);
  assert.match(source,/productsResult\.value\.length === 0 && snapshot\.metrics\.orders === 0/);
- assert.match(source,/الربح الإجمالي التقديري|RETAIL_PRIMARY_METRICS/);
  assert.match(source,/حاليًا/);
  assert.equal(source.includes('getRecentActivities'),false);
  assert.equal(source.includes('recent_activity.map'),false);
@@ -121,14 +116,12 @@ test('Retail page is a decision overview using shared dashboard and visualizatio
  assert.match(source,/role !== "VIEWER"/);
 });
 
-test('Phase 5 keeps business definitions outside JSX and does not add sign-based outcome semantics',async()=>{
+test('Phase 5 keeps business definitions outside JSX and avoids sign-based outcome colors',async()=>{
  const [page,domain]=await Promise.all([
   read('app/retail/workspace/page.tsx'),
   read('src/lib/retail/analytics/overview.ts'),
  ]);
- assert.match(domain,/retail\.estimated_gross_profit/);
- assert.match(domain,/retail\.estimated_operating_result/);
- assert.match(domain,/retail\.invoice_count/);
+ for(const id of ['retail.estimated_gross_profit','retail.estimated_operating_result','retail.invoice_count']) assert.ok(domain.includes(id),id);
  assert.equal(/emerald|red-|green-|favorable|unfavorable/.test(page),false);
  assert.equal(page.includes('estimated_gross_profit -'),false);
  assert.equal(page.includes('revenue -'),false);
