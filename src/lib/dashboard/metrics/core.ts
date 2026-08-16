@@ -312,6 +312,9 @@ export function normalizeMetricCoverage(coverage: MetricCoverage): MetricCoverag
   if (coverage.ratio !== undefined && (!finite(coverage.ratio) || coverage.ratio < 0 || coverage.ratio > 1)) {
     throw new Error("METRIC_INVALID_COVERAGE_RATIO");
   }
+  if (coverage.state === "complete" && coverage.ratio !== undefined && coverage.ratio !== 1) {
+    throw new Error("METRIC_COMPLETE_COVERAGE_RATIO_MISMATCH");
+  }
   return Object.freeze({ ...coverage });
 }
 
@@ -328,10 +331,10 @@ export function evaluateMetricFreshness(input: {
     return { state: "unknown" as const, reason: "missing_data_as_of" as const };
   }
   const dataAsOf = Date.parse(input.dataAsOf);
-  if (!Number.isFinite(dataAsOf)) {
+  if (!Number.isFinite(dataAsOf) || dataAsOf > calculated) {
     return { state: "unknown" as const, reason: "invalid_timestamp" as const };
   }
-  const ageSeconds = Math.max(0, (calculated - dataAsOf) / 1000);
+  const ageSeconds = (calculated - dataAsOf) / 1000;
   if (!finite(input.staleAfterSeconds) || input.staleAfterSeconds <= 0) {
     return { state: "unknown" as const, ageSeconds, reason: "missing_policy" as const };
   }
@@ -356,7 +359,8 @@ export function normalizeMetricResult(input: {
   assertMetricCurrency(unit, input.adapter.currency);
   if (input.adapter.reference?.currency) assertMetricCurrency(unit, input.adapter.reference.currency);
 
-  const hasValue = finite(input.adapter.value);
+  const rawValue = input.adapter.value;
+  const hasValue = finite(rawValue);
   const inferredAvailability = input.adapter.availability ?? {
     state: hasValue ? "available" as const : "missing" as const,
     ...(!hasValue ? { reason: "missing_value" } : {}),
@@ -364,10 +368,10 @@ export function normalizeMetricResult(input: {
   if (inferredAvailability.state === "available" && !hasValue) {
     throw new Error(`METRIC_AVAILABLE_WITHOUT_VALUE:${definition.id}`);
   }
-  if (inferredAvailability.state !== "available" && input.adapter.value !== null && input.adapter.value !== undefined) {
+  if (inferredAvailability.state !== "available" && rawValue !== null && rawValue !== undefined) {
     throw new Error(`METRIC_UNAVAILABLE_WITH_VALUE:${definition.id}`);
   }
-  if (definition.valueKind === "integer" && hasValue && !Number.isInteger(input.adapter.value)) {
+  if (definition.valueKind === "integer" && hasValue && !Number.isInteger(rawValue)) {
     throw new Error(`METRIC_INTEGER_REQUIRED:${definition.id}`);
   }
 
@@ -382,11 +386,11 @@ export function normalizeMetricResult(input: {
   return Object.freeze({
     metricId: definition.id,
     definitionVersion: definition.version,
-    value: hasValue ? input.adapter.value : null,
+    value: hasValue ? rawValue : null,
     unit,
     period,
     comparison: shouldCompare
-      ? calculateMetricComparison(hasValue ? input.adapter.value : null, input.adapter.reference?.value)
+      ? calculateMetricComparison(hasValue ? rawValue : null, input.adapter.reference?.value)
       : null,
     dataAsOf: dataAsOf ? dataAsOf.toISOString() : null,
     calculatedAt: calculatedAt.toISOString(),
