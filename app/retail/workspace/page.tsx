@@ -256,12 +256,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           >
             <DashboardMetricGrid>
               {RETAIL_CURRENT_METRICS.map((descriptor) => {
-                const current = overview.current.find((item) => item.id === descriptor.id);
+                const result = overview.current[descriptor.id];
                 return (
                   <DashboardMetricCard
                     key={descriptor.id}
                     label={descriptor.label}
-                    value={current ? formatMoney(current.value, current.currency) : "—"}
+                    value={metricValue(result, workspace.currency)}
                     supportingContext={<MetricContext label="السياق" value="حاليًا" kind="reference" />}
                     action={<DashboardDrillDownLink href={descriptor.href}>فتح التفاصيل</DashboardDrillDownLink>}
                     valueDirection="ltr"
