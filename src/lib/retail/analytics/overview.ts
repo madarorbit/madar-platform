@@ -174,9 +174,9 @@ export type RetailOverviewModel = Readonly<{
   supporting: Readonly<Record<(typeof RETAIL_SUPPORTING_METRICS)[number]["id"], NormalizedMetricResult>>;
   current: ReadonlyArray<RetailMetricDescriptor & { value: number; currency: string }>;
   trend: ReadonlyArray<{ label: string; netSales: number }>;
-  criticalInventory: AnalyticsSnapshot["low_stock"];
-  attentionInventory: AnalyticsSnapshot["low_stock"];
-  topProducts: AnalyticsSnapshot["top_products"];
+  criticalInventory: ReadonlyArray<AnalyticsSnapshot["low_stock"][number]>;
+  attentionInventory: ReadonlyArray<AnalyticsSnapshot["low_stock"][number]>;
+  topProducts: ReadonlyArray<AnalyticsSnapshot["top_products"][number]>;
   calculatedAt: string;
 }>;
 
