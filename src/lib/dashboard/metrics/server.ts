@@ -11,6 +11,7 @@ import type {
 } from "./contracts";
 import {
   buildMetricCacheIdentity,
+  calculateMetricComparison,
   canonicalizeMetricFilters,
   createMetricRegistry,
   evaluateMetricFreshness,
@@ -123,7 +124,7 @@ export function metricQueryCacheKey(context: MetricQueryContext) {
     definitions: context.definitions,
     period: context.period,
     filters: context.filters,
-    comparisonPeriod: context.comparison?.period,
+    comparison: context.comparison,
     sourceContext: context.sourceContext ?? undefined,
   });
 }
@@ -145,13 +146,20 @@ function errorMetricResult(input: {
   calculatedAt: string;
 }): NormalizedMetricResult {
   const unit = resolveMetricUnit(input.definition, input.context.scope.currency);
+  const comparison = input.context.comparison && input.definition.comparison === "supported"
+    ? Object.freeze({
+        kind: input.context.comparison.kind,
+        period: input.context.comparison.period,
+        ...calculateMetricComparison(null, null),
+      })
+    : null;
   return Object.freeze({
     metricId: input.definition.id,
     definitionVersion: input.definition.version,
     value: null,
     unit,
     period: input.context.period,
-    comparison: null,
+    comparison,
     dataAsOf: null,
     calculatedAt: input.calculatedAt,
     provenance: Object.freeze({ category: "unknown" as const }),
@@ -165,7 +173,7 @@ function errorMetricResult(input: {
 /**
  * Metrics fail independently by default. A service with a real shared critical
  * dependency may fail before invoking this executor; Phase 4 does not invent
- * service-specific criticality rules.
+ * service-specific criticality rules. Results intentionally preserve request order.
  */
 export async function executeMetricBatch(input: {
   context: MetricQueryContext;
@@ -192,7 +200,7 @@ export async function executeMetricBatch(input: {
           period: input.context.period,
           calculatedAt,
           workspaceCurrency: input.context.scope.currency,
-          comparisonRequested: Boolean(input.context.comparison),
+          comparison: input.context.comparison,
         });
       } catch {
         return errorMetricResult({
