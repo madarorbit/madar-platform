@@ -1,10 +1,11 @@
 'use client';
 
 import type { CSSProperties, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { formatVisualizationValue, visualizationOutcomeLabels } from "./formatters";
 import type {
   VisualizationDatum,
+  VisualizationFillPattern,
   VisualizationOutcome,
   VisualizationSeriesDefinition,
   VisualizationSeriesRole,
@@ -18,6 +19,14 @@ export const VISUALIZATION_SERIES_TOKENS: VisualizationSeriesToken[] = [
   "series-3",
   "series-4",
   "series-5",
+];
+
+export const VISUALIZATION_FILL_PATTERNS: VisualizationFillPattern[] = [
+  "solid",
+  "diagonal",
+  "crosshatch",
+  "dots",
+  "horizontal",
 ];
 
 const seriesColorMap: Record<VisualizationSeriesToken, string> = {
@@ -37,6 +46,79 @@ export function resolveSeriesColor(token: VisualizationSeriesToken | undefined, 
 export function getSeriesStrokeDasharray(index: number, role: VisualizationSeriesRole = "actual") {
   if (role === "reference") return "7 4";
   return dashPatterns[index % dashPatterns.length];
+}
+
+export function resolveFillPattern(pattern: VisualizationFillPattern | undefined, index = 0): VisualizationFillPattern {
+  return pattern ?? VISUALIZATION_FILL_PATTERNS[index % VISUALIZATION_FILL_PATTERNS.length];
+}
+
+export function useVisualizationPatternPrefix(scope: string) {
+  const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  return `md-viz-${scope}-${id}`;
+}
+
+function visualizationPatternId(prefix: string, index: number) {
+  return `${prefix}-pattern-${index}`;
+}
+
+export function getVisualizationPatternFill(
+  prefix: string,
+  index: number,
+  pattern: VisualizationFillPattern,
+  color: string,
+) {
+  return pattern === "solid" ? color : `url(#${visualizationPatternId(prefix, index)})`;
+}
+
+function renderPatternMarks(pattern: VisualizationFillPattern) {
+  const contrast = "var(--md-text-primary)";
+  if (pattern === "diagonal") {
+    return <path d="M-2 2 L2 -2 M0 8 L8 0 M6 10 L10 6" stroke={contrast} strokeOpacity={0.32} strokeWidth={1.5} />;
+  }
+  if (pattern === "crosshatch") {
+    return (
+      <>
+        <path d="M-2 2 L2 -2 M0 8 L8 0 M6 10 L10 6" stroke={contrast} strokeOpacity={0.3} strokeWidth={1.2} />
+        <path d="M-2 6 L2 10 M0 0 L8 8 M6 -2 L10 2" stroke={contrast} strokeOpacity={0.3} strokeWidth={1.2} />
+      </>
+    );
+  }
+  if (pattern === "dots") {
+    return (
+      <>
+        <circle cx={2} cy={2} r={1.15} fill={contrast} fillOpacity={0.34} />
+        <circle cx={6} cy={6} r={1.15} fill={contrast} fillOpacity={0.34} />
+      </>
+    );
+  }
+  if (pattern === "horizontal") {
+    return <path d="M0 2 H8 M0 6 H8" stroke={contrast} strokeOpacity={0.3} strokeWidth={1.25} />;
+  }
+  return null;
+}
+
+export function renderVisualizationFillPatternDefs(
+  prefix: string,
+  entries: Array<{ color: string; pattern: VisualizationFillPattern }>,
+) {
+  return (
+    <defs>
+      {entries.map((entry, index) =>
+        entry.pattern === "solid" ? null : (
+          <pattern
+            id={visualizationPatternId(prefix, index)}
+            key={visualizationPatternId(prefix, index)}
+            width={8}
+            height={8}
+            patternUnits="userSpaceOnUse"
+          >
+            <rect width={8} height={8} fill={entry.color} />
+            {renderPatternMarks(entry.pattern)}
+          </pattern>
+        ),
+      )}
+    </defs>
+  );
 }
 
 export function useReducedVisualizationMotion() {
@@ -174,21 +256,64 @@ export function VisualizationLegend({
   );
 }
 
+function VisualizationPatternSwatch({
+  color,
+  pattern,
+}: {
+  color: string;
+  pattern: VisualizationFillPattern;
+}) {
+  const prefix = useVisualizationPatternPrefix("legend");
+  return (
+    <svg className="md-viz-legend-swatch-svg" viewBox="0 0 14 14" aria-hidden="true">
+      {renderVisualizationFillPatternDefs(prefix, [{ color, pattern }])}
+      <rect
+        x={1}
+        y={1}
+        width={12}
+        height={12}
+        rx={2}
+        fill={getVisualizationPatternFill(prefix, 0, pattern, color)}
+        stroke="var(--md-border-strong)"
+      />
+    </svg>
+  );
+}
+
 export function VisualizationCategoryLegend({
   entries,
 }: {
-  entries: Array<{ key: string; label: string; color: string }>;
+  entries: Array<{ key: string; label: string; color: string; pattern?: VisualizationFillPattern }>;
 }) {
   if (entries.length <= 1) return null;
   return (
     <ul className="md-viz-legend md-viz-legend-categories" aria-label="مفتاح فئات الرسم" dir="rtl">
-      {entries.map((entry) => (
-        <li key={entry.key}>
-          <span className="md-viz-legend-swatch" style={{ background: entry.color }} aria-hidden="true" />
-          <span>{entry.label}</span>
-        </li>
-      ))}
+      {entries.map((entry, index) => {
+        const pattern = resolveFillPattern(entry.pattern, index);
+        return (
+          <li key={entry.key}>
+            <VisualizationPatternSwatch color={entry.color} pattern={pattern} />
+            <span>{entry.label}</span>
+          </li>
+        );
+      })}
     </ul>
+  );
+}
+
+const visualizationOutcomeMarks: Record<VisualizationOutcome, string> = {
+  favorable: "✓",
+  unfavorable: "!",
+  neutral: "=",
+  unknown: "?",
+};
+
+export function VisualizationOutcomeIndicator({ outcome }: { outcome: VisualizationOutcome }) {
+  return (
+    <span className="md-viz-outcome-indicator" data-outcome={outcome}>
+      <span className="md-viz-outcome-indicator-mark" aria-hidden="true">{visualizationOutcomeMarks[outcome]}</span>
+      <span>{visualizationOutcomeLabels[outcome]}</span>
+    </span>
   );
 }
 
