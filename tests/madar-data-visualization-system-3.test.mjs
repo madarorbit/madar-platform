@@ -83,6 +83,8 @@ test('missing data remains missing and partial stale integrate with phase 2',asy
  assert.match(charts,/connectNulls: false/);
  assert.match(charts,/connectNulls=\{false\}/);
  assert.equal(/\?\?\s*0/.test(charts),false,'missing points must not be silently coerced with nullish zero fallbacks');
+ assert.match(charts,/if \(!Number\.isFinite\(value\)\)/);
+ assert.equal(/const safeValue = Number\.isFinite\(value\) \? value : 0/.test(charts),false);
  assert.match(charts,/partialRange/);
  assert.match(charts,/DashboardEmptyState/);
  assert.match(showcase,/state="partial"/);
@@ -90,9 +92,12 @@ test('missing data remains missing and partial stale integrate with phase 2',asy
  assert.match(doc,/Missing ≠ Zero/);
 });
 
-test('donut has an encoded small-category limit and recommends bar when exceeded',async()=>{
+test('donut has an encoded small-category limit and never drops invalid parts silently',async()=>{
  const [charts,doc]=await Promise.all([read('components/dashboard/visualization/charts.tsx'),read('docs/MADAR_DATA_VISUALIZATION_SYSTEM_3.md')]);
  assert.match(charts,/MAX_DONUT_SLICES = 5/);
+ assert.match(charts,/const hasInvalidPart = data\.some/);
+ assert.match(charts,/لا يسقط مَدار الفئة بصمت/);
+ assert.equal(/const valid = data\.filter/.test(charts),false);
  assert.match(charts,/استخدم Bar/);
  assert.match(doc,/MAX_DONUT_SLICES = 5/);
 });
