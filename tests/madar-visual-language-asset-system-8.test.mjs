@@ -5,30 +5,27 @@ import { readFile } from "node:fs/promises";
 
 const file = (path) => readFile(new URL(`../${path}`, import.meta.url));
 const text = async (path) => (await file(path)).toString("utf8");
-const sha256 = (buffer) => createHash("sha256").update(buffer).digest("hex");
 const gitBlobSha = (buffer) => createHash("sha1").update(Buffer.concat([Buffer.from(`blob ${buffer.length}\0`), buffer])).digest("hex");
-const u24le = (buffer, offset) => buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16);
-function webpDimensions(buffer) {
-  assert.equal(buffer.toString("ascii", 0, 4), "RIFF");
-  assert.equal(buffer.toString("ascii", 8, 12), "WEBP");
-  let offset = 12;
-  while (offset + 8 <= buffer.length) {
-    const type = buffer.toString("ascii", offset, offset + 4);
-    const size = buffer.readUInt32LE(offset + 4);
-    const data = offset + 8;
-    if (type === "VP8X") return [u24le(buffer, data + 4) + 1, u24le(buffer, data + 7) + 1];
-    if (type === "VP8L") {
-      assert.equal(buffer[data], 0x2f, "invalid VP8L signature");
-      const b1 = buffer[data + 1], b2 = buffer[data + 2], b3 = buffer[data + 3], b4 = buffer[data + 4];
-      return [1 + (((b2 & 0x3f) << 8) | b1), 1 + (((b4 & 0x0f) << 10) | (b3 << 2) | ((b2 & 0xc0) >> 6))];
-    }
-    if (type === "VP8 ") {
-      assert.deepEqual([...buffer.subarray(data + 3, data + 6)], [0x9d, 0x01, 0x2a], "invalid VP8 keyframe signature");
-      return [buffer.readUInt16LE(data + 6) & 0x3fff, buffer.readUInt16LE(data + 8) & 0x3fff];
-    }
-    offset = data + size + (size % 2);
+const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const sofMarkers = new Set([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]);
+
+function imageDimensions(buffer) {
+  if (buffer.subarray(0, 8).equals(pngSignature)) return [buffer.readUInt32BE(16), buffer.readUInt32BE(20)];
+  assert.equal(buffer[0], 0xff, "image must be PNG or JPEG");
+  assert.equal(buffer[1], 0xd8, "invalid JPEG SOI");
+  let offset = 2;
+  while (offset < buffer.length) {
+    if (buffer[offset] !== 0xff) { offset += 1; continue; }
+    while (offset < buffer.length && buffer[offset] === 0xff) offset += 1;
+    const marker = buffer[offset++];
+    if (marker === 0xd8 || marker === 0xd9 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+    if (offset + 2 > buffer.length) break;
+    const length = buffer.readUInt16BE(offset);
+    if (length < 2 || offset + length > buffer.length) break;
+    if (sofMarkers.has(marker)) return [buffer.readUInt16BE(offset + 5), buffer.readUInt16BE(offset + 3)];
+    offset += length;
   }
-  assert.fail("WebP dimension chunk missing");
+  assert.fail("JPEG dimension marker missing");
 }
 
 test("phase 8 visual asset layer is imported after phase 7", async () => {
@@ -41,40 +38,51 @@ test("MADAR locked logo is byte-identical to the pre-phase baseline", async () =
   assert.equal(gitBlobSha(logo), "2e87bf5ec0df8f919880da1e317f074a4830179f");
 });
 
-test("four official production derivatives keep full master dimensions and known hashes", async () => {
+test("four authoritative masters are checked in at full dimensions and locked repository blobs", async () => {
   const expected = [
-    ["public/assets/services/native-business-master.webp", 1254, 1254, "083032838be4edb638d384975a9a667f849b187665512ae2fe4fb423523842ed"],
-    ["public/assets/services/madar-retail-master.webp", 1254, 1254, "0f781f4bf2a30507acd24b96fd0c318e76ecb655cbe4a69cacd025fd9d8a4691"],
-    ["public/assets/services/connected-business-master.webp", 1254, 1254, "11ce11a0361357138dcfc3a31a6fdda7359ffddc73f342716f2c4ff3271c9bd8"],
-    ["public/assets/orby/orby-master.webp", 1536, 1536, "c90707f8f966ccea28c8e7a0c7bcb51feb1446115d9fc5003864c75cf92d92e9"],
+    ["public/assets/services/native-business-master.png", 1254, 1254, "5b23af11150f65fe8c79ebce1626468780284984"],
+    ["public/assets/services/madar-retail-master.png", 1254, 1254, "41dec7e503401f8a39c5d92e9f475feef9a66d78"],
+    ["public/assets/services/connected-business-master.png", 1254, 1254, "34d43f28b9e23ed95e9940b552da55738408b16f"],
+    ["public/assets/orby/orby-master.png", 1536, 1536, "a213830b95960f5118596635ce5dd2328a853dbf"],
   ];
-  for (const [path, width, height, hash] of expected) {
+  for (const [path, width, height, blob] of expected) {
     const buffer = await file(path);
-    assert.deepEqual(webpDimensions(buffer), [width, height], path);
-    assert.equal(sha256(buffer), hash, path);
+    assert.deepEqual(imageDimensions(buffer), [width, height], path);
+    assert.equal(gitBlobSha(buffer), blob, path);
   }
 });
 
-test("service catalog uses master derivatives and cards do not request thumbnail renditions", async () => {
+test("obsolete generated master derivatives are no longer shipped", async () => {
+  for (const path of [
+    "public/assets/services/native-business-master.webp",
+    "public/assets/services/madar-retail-master.webp",
+    "public/assets/services/connected-business-master.webp",
+    "public/assets/orby/orby-master.webp",
+  ]) await assert.rejects(file(path), { code: "ENOENT" }, path);
+});
+
+test("service catalog uses authoritative masters and cards preserve their composition", async () => {
   const [catalog, cards, css] = await Promise.all([text("src/lib/services/catalog.ts"), text("components/account/ServiceCards.tsx"), text("app/visual-language-assets-8.css")]);
-  for (const path of ["connected-business-master.webp", "native-business-master.webp", "madar-retail-master.webp"]) assert.ok(catalog.includes(path), path);
-  assert.doesNotMatch(catalog, /\/services\/(connect-existing|build-on-madar|madar-retail)\.webp/);
-  assert.match(cards, /sizes="\(max-width: 767px\)/);
-  assert.doesNotMatch(cards, /96px/);
+  for (const path of ["connected-business-master.png", "native-business-master.png", "madar-retail-master.png"]) assert.ok(catalog.includes(path), path);
+  assert.doesNotMatch(catalog, /master\.webp/);
+  for (const size of ["92px", "104px", "120px", "calc(100vw - 2rem)", "50vw", "33vw"]) assert.ok(cards.includes(size), size);
+  assert.match(cards, /\bunoptimized\b/);
   assert.doesNotMatch(cards, /object-cover/);
   assert.match(cards, /md-service-master-image/);
   assert.match(css, /aspect-ratio: 1 \/ 1/);
   assert.match(css, /object-fit: contain/);
+  assert.match(css, /object-position: center/);
 });
 
 test("ORBY has explicit master and compact contracts and About uses the master responsively", async () => {
   const [config, about] = await Promise.all([text("src/config/site.ts"), text("app/about/page.tsx")]);
   assert.match(config, /orbyCompact:'\/brand\/orby-assistant\.svg'/);
-  assert.match(config, /orbyMaster:'\/assets\/orby\/orby-master\.webp'/);
+  assert.match(config, /orbyMaster:'\/assets\/orby\/orby-master\.png'/);
   assert.match(about, /siteConfig\.assets\.orbyMaster/);
   assert.match(about, /width=\{1536\}/);
+  assert.match(about, /height=\{1536\}/);
   assert.match(about, /sizes="\(max-width: 1023px\)/);
-  assert.doesNotMatch(about, /unoptimized/);
+  assert.match(about, /\bunoptimized\b/);
 });
 
 test("targeted Retail surfaces use the shared functional icon system", async () => {

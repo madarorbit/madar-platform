@@ -33,16 +33,16 @@
 | Connected Business | 1254×1254 PNG | 2,212,239 | `ea6bec6a7f763a0a3039efca523074070ba466964dc1f32c77600c99355b5247` |
 | ORBY Master | 1536×1536 JPEG payload supplied with `.png` filename | 137,218 | `1460c30f8514bed9df2bc3ee280ad3927e315b15112faafbad1e3226d61c238e` |
 
-لم تُعد رسم أي صورة. تم إنشاء production delivery derivatives WebP من نفس الـMasters، بنفس الأبعاد الكاملة وبدون crop، لتجنب تحميل PNGs متعددة الميغابايت في الويب.
+لم تُعد رسم أي صورة. في إصلاح التكامل النهائي أصبحت مسارات الإنتاج تشير مباشرة إلى ملفات الـMasters التي رُفعت للمستودع، وأزيلت ملفات `*-master.webp` المشتقة القديمة حتى لا يعود أي consumer إلى نسخة منخفضة الجودة أو مولدة.
 
-| Production derivative | Dimensions | Bytes | SHA-256 |
+| Runtime master | Dimensions | Repository bytes | Git blob |
 |---|---:|---:|---|
-| `public/assets/services/native-business-master.webp` | 1254×1254 | 91,016 | `083032838be4edb638d384975a9a667f849b187665512ae2fe4fb423523842ed` |
-| `public/assets/services/madar-retail-master.webp` | 1254×1254 | 83,354 | `0f781f4bf2a30507acd24b96fd0c318e76ecb655cbe4a69cacd025fd9d8a4691` |
-| `public/assets/services/connected-business-master.webp` | 1254×1254 | 77,790 | `11ce11a0361357138dcfc3a31a6fdda7359ffddc73f342716f2c4ff3271c9bd8` |
-| `public/assets/orby/orby-master.webp` | 1536×1536 | 65,714 | `c90707f8f966ccea28c8e7a0c7bcb51feb1446115d9fc5003864c75cf92d92e9` |
+| `public/assets/services/native-business-master.png` | 1254×1254 | 1,438,489 | `5b23af11150f65fe8c79ebce1626468780284984` |
+| `public/assets/services/madar-retail-master.png` | 1254×1254 | 1,346,662 | `41dec7e503401f8a39c5d92e9f475feef9a66d78` |
+| `public/assets/services/connected-business-master.png` | 1254×1254 | 1,349,614 | `34d43f28b9e23ed95e9940b552da55738408b16f` |
+| `public/assets/orby/orby-master.png` | 1536×1536 | 137,218 | `a213830b95960f5118596635ce5dd2328a853dbf` |
 
-هذه الملفات derivatives للتسليم وليست مصادر تصميم جديدة. Source of Truth يبقى الصور الأربع المقدمة للمهمة، والـhashes أعلاه توثقها.
+Source of Truth يبقى الصور الأربع المقدمة للمهمة. لم يتم توليد أو رسم أو تحسين صورة بديلة داخل المستودع.
 
 ## 3. MADAR Visual Language
 
@@ -61,23 +61,23 @@
 
 ## 4. Service Masters Integration
 
-`src/lib/services/catalog.ts` أصبح يشير إلى derivatives عالية الدقة. `ServiceCards` لم يعد يطلب `96px` في compact ولم يعد يستخدم `object-cover`. الصورة تحفظ التكوين المربع عبر `object-fit: contain` و`aspect-ratio: 1/1` مع `sizes` responsive مناسب للبطاقات.
+`src/lib/services/catalog.ts` يشير الآن مباشرة إلى ملفات PNG المعتمدة. `ServiceCards` لا يطلب `96px` ثابتة، ولا يستخدم `object-cover`. الصورة تحفظ التكوين المربع عبر `object-fit: contain` و`object-position: center` و`aspect-ratio: 1/1`، مع `sizes` يطابق فعلًا 92px/104px/120px للبطاقات compact ويتدرج مع عرض البطاقات الكاملة.
 
-هذا يمنع stretching/cropping ويعطي Next Image معلومات أقرب إلى الحجم الحقيقي على الهاتف والكمبيوتر والشاشات عالية الكثافة.
+`next/image` يستخدم `unoptimized` لهذه الأصول لمنع إعادة ضغط أو إعادة ترميز الـMaster أثناء التسليم. لا stretching ولا cropping على الهاتف أو الكمبيوتر.
 
 ## 5. ORBY Visual Identity
 
 تم التفريق صراحة بين:
 
-- `orbyMaster`: `public/assets/orby/orby-master.webp` للاستخدامات التعريفية البارزة.
+- `orbyMaster`: `public/assets/orby/orby-master.png` للاستخدامات التعريفية البارزة.
 - `orbyCompact`: `public/brand/orby-assistant.svg` للاستخدامات الصغيرة القائمة مثل navigation/avatar.
 - `orby` بقي alias متوافقًا مع compact حتى لا تنكسر consumers القديمة.
 
-قسم ORBY البارز في `/about` أصبح يستخدم Master 1536×1536 مع `next/image` و`sizes` بدل تكبير compact asset 256×256 إلى 640px مع `unoptimized`.
+قسم ORBY البارز في `/about` يستخدم Master 1536×1536 مع `width`/`height` و`sizes` واضحة و`unoptimized`، بدل تكبير compact asset أو إعادة ضغط الـMaster.
 
 ## 6. Logo, marks, favicon
 
-تم التحقق من أن المنتج يستخدم `public/brand/logo.svg` كالشعار الرئيسي. توجد أصول/نسخ تاريخية مكررة في `public` و`public/brand`; لم تُحذف تلقائيًا لأن هذه المرحلة لا تحذف أصلًا قبل إثبات عدم وجود consumers. تنظيف duplicates المتبقية يؤجل لتدقيق المرحلة التاسعة.
+تم التحقق من أن المنتج يستخدم `public/brand/logo.svg` كالشعار الرئيسي. توجد أصول/نسخ تاريخية مكررة في `public` و`public/brand`; لم تُحذف تلقائيًا لأن هذه المرحلة لا تحذف أصلًا قبل إثبات عدم وجود consumers. تنظيف duplicates المتبقية يؤجل لتدقيق مستقل.
 
 ## 7. Home identity video
 
@@ -89,7 +89,7 @@
 
 ## 9. Responsive assets
 
-العقود المضافة تمنع خروج الصور من البطاقة وتحافظ على 1:1، وتضع حدًا بصريًا معقولًا على الشاشات دون 390px. `sizes` لخدمات الحساب وORBY التعريفي يصف العرض المتوقع بدل thumbnail ثابت. هذا contract-level responsive validation؛ لم يُنفذ فحص pixel-perfect على أجهزة 320/360/390/430 فعلية داخل هذه البيئة.
+العقود المضافة تمنع خروج الصور من البطاقة وتحافظ على 1:1، وتضع حدًا بصريًا معقولًا على الشاشات دون 390px. `sizes` لخدمات الحساب وORBY التعريفي يصف العرض المتوقع بدل thumbnail ثابت. هذا contract-level responsive validation؛ لم يتم ادعاء pixel-perfect على جهاز فعلي إذا لم تتوفر أداة browser screenshot مناسبة.
 
 ## 10. Accessibility
 
@@ -101,28 +101,29 @@
 
 ## 11. Performance impact
 
-الـMasters الأصلية الثلاثة للخدمات كانت أكثر من 2MB لكل PNG. derivatives الجديدة تحت 100KB لكل خدمة مع الحفاظ على 1254×1254، وORBY derivative ~65.7KB عند 1536×1536. لم تضف المرحلة dependency أو 3D runtime أو Base64 داخل JS، ولم تحول Server Components إلى Client Components من أجل الصور.
+اختيار هذا الإصلاح يعطي الأولوية لدقة الـMaster وعدم إعادة ضغطه وفق المطلوب. لذلك ملفات الخدمات أكبر من derivatives القديمة، لكن لا تُضمّن داخل JavaScript ولا Base64، ولا تغيّر حدود Server/Client Components. يمكن لاحقًا دراسة pipeline delivery منفصل إذا طُلب صراحة، بشرط ألا يستبدل Source of Truth أو يغيّر الجودة المعتمدة.
 
 ## 12. Visual regression gate
 
 `tests/madar-visual-language-asset-system-8.test.mjs` يفحص:
 - ترتيب استيراد CSS للمرحلة.
 - hash الشعار المقفل.
-- hashes وأبعاد derivatives الأربعة.
+- أبعاد وGit blob hashes للـMasters الأربعة الموجودة في المستودع.
+- غياب ملفات `*-master.webp` المشتقة القديمة.
 - مسارات الخدمات الصحيحة.
 - `sizes` وعدم العودة إلى `96px`/`object-cover`.
+- استخدام `unoptimized` لحفظ الـMaster.
 - Master/Compact ORBY contracts.
 - عدم وجود direct `lucide-react` في Retail المستهدف.
 - semantic colors في طبقة المرحلة.
 - بقاء عقد الفيديو المقفل.
 
-## 13. Boundaries / Known gaps for Phase 9
+## 13. Boundaries / Known gaps
 
-- توجد duplicates/legacy assets في `public` و`public/brand` تحتاج consumer-by-consumer cleanup قبل حذفها.
-- `manifest.ts` يصف `/brand/symbol.png` كـ192×192 بينما اسم/الأصل التاريخي يستحق تدقيقًا مستقلًا بدل تعديل branding في هذه المرحلة.
-- بعض الصفحات القديمة، ومنها أجزاء من About، ما زالت تحمل legacy utility colors؛ لم تُعاد هيكلة Layout/Theme لأن المطلوب هنا Visual Assets فقط.
-- أي مشاكل Admin/Foundation، currencies، RPC/RLS، navigation العامة أو Retail DB ليست ضمن هذه المرحلة.
+- توجد duplicates/legacy assets أخرى في `public` و`public/brand` تحتاج consumer-by-consumer cleanup قبل حذفها.
+- `manifest.ts` يصف `/brand/symbol.png` كـ192×192 بينما اسم/الأصل التاريخي يستحق تدقيقًا مستقلًا بدل تعديل branding هنا.
+- أي مشاكل Admin/Foundation، currencies، RPC/RLS، navigation العامة أو Retail DB ليست ضمن هذه المهمة.
 
 ## 14. Validation honesty
 
-لم يتم ادعاء pixel-perfect أو Safari/Firefox أو physical-device testing إذا لم تتوفر أدوات المتصفح المناسبة. الـQA المرئي النهائي يجب أن يميّز بوضوح بين source/static contracts وProduction HTTP smoke وبين فحص screenshot حقيقي إن توفر لاحقًا.
+لم يتم ادعاء pixel-perfect أو Safari/Firefox أو physical-device testing إذا لم تتوفر أدوات المتصفح المناسبة. الـQA النهائي يميّز بين source/static contracts وProduction HTTP/build smoke وبين فحص screenshot حقيقي إن توفر لاحقًا.

@@ -24,10 +24,11 @@ test('Sheet escapes transformed and backdrop-filter ancestors through a body por
 
 test('Phase 8 Masters remain the canonical service and ORBY paths',async()=>{
  const [catalog,config,cards]=await Promise.all([text('src/lib/services/catalog.ts'),text('src/config/site.ts'),text('components/account/ServiceCards.tsx')]);
- for(const asset of ['connected-business-master.webp','native-business-master.webp','madar-retail-master.webp'])assert.ok(catalog.includes(asset),asset);
- assert.match(config,/orbyMaster:'\/assets\/orby\/orby-master\.webp'/);
+ for(const asset of ['connected-business-master.png','native-business-master.png','madar-retail-master.png'])assert.ok(catalog.includes(asset),asset);
+ assert.match(config,/orbyMaster:'\/assets\/orby\/orby-master\.png'/);
  assert.match(cards,/md-service-master-image/);
- assert.match(cards,/sizes="\(max-width: 767px\)/);
+ assert.match(cards,/sizes=\{imageSizes\}/);
+ assert.match(cards,/\bunoptimized\b/);
 });
 
 test('concept artwork uses the real MADAR illustration component rather than giant functional icons',async()=>{
@@ -49,6 +50,7 @@ test('ORBY intro preserves the Master and has a direct chat CTA',async()=>{
  const about=await text('app/about/page.tsx');
  assert.match(about,/siteConfig\.assets\.orbyMaster/);
  assert.match(about,/sizes="\(max-width: 1023px\)/);
+ assert.match(about,/\bunoptimized\b/);
  assert.match(about,/href="\/orby"[^>]*>ابدأ محادثة مع ORBY/);
 });
 
