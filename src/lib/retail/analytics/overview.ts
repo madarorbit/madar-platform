@@ -1,4 +1,4 @@
-import type { MetricDefinition, NormalizedMetricResult } from "@/src/lib/dashboard/metrics";
+import type { MetricDefinition, MetricPeriod, NormalizedMetricResult } from "@/src/lib/dashboard/metrics";
 import {
   createMetricRegistry,
   metricPeriodFromDateSelection,
@@ -50,24 +50,24 @@ const definitions = [
 
 export const retailOverviewMetricRegistry = createMetricRegistry(definitions);
 
-export const RETAIL_PRIMARY_METRICS: readonly RetailMetricDescriptor[] = Object.freeze([
+export const RETAIL_PRIMARY_METRICS = Object.freeze([
   { id: "retail.net_sales", label: "صافي المبيعات", description: "بعد المرتجعات خلال الفترة", href: "/retail/workspace/reports" },
   { id: "retail.estimated_gross_profit", label: "الربح الإجمالي التقديري", description: "بعد تكلفة البضاعة التقديرية بمتوسط التكلفة", href: "/retail/workspace/reports" },
   { id: "retail.estimated_operating_result", label: "النتيجة التشغيلية التقديرية", description: "الربح الإجمالي التقديري ناقص المصروفات", href: "/retail/workspace/reports" },
   { id: "retail.invoice_count", label: "عدد الفواتير", description: "فواتير البيع المكتملة خلال الفترة", href: "/retail/workspace/reports" },
-]);
+] as const satisfies readonly RetailMetricDescriptor[]);
 
-export const RETAIL_SUPPORTING_METRICS: readonly RetailMetricDescriptor[] = Object.freeze([
+export const RETAIL_SUPPORTING_METRICS = Object.freeze([
   { id: "retail.expenses", label: "المصروفات", description: "مصروفات التشغيل خلال الفترة", href: "/retail/workspace/expenses" },
   { id: "retail.average_invoice", label: "متوسط الفاتورة", description: "صافي المبيعات لكل فاتورة مكتملة", href: "/retail/workspace/reports" },
-]);
+] as const satisfies readonly RetailMetricDescriptor[]);
 
-export const RETAIL_CURRENT_METRICS: readonly RetailMetricDescriptor[] = Object.freeze([
+export const RETAIL_CURRENT_METRICS = Object.freeze([
   { id: "retail.cash_position", label: "الصندوق", description: "الرصيد النقدي الحالي", href: "/retail/workspace/cash" },
   { id: "retail.receivables", label: "ديون العملاء", description: "الرصيد المفتوح لدى العملاء", href: "/retail/workspace/debts" },
   { id: "retail.payables", label: "مستحقات الموردين", description: "الرصيد المفتوح للموردين", href: "/retail/workspace/debts" },
   { id: "retail.inventory_value", label: "قيمة المخزون", description: "القيمة الحالية بمتوسط التكلفة", href: "/retail/workspace/inventory" },
-]);
+] as const satisfies readonly RetailMetricDescriptor[]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -134,14 +134,40 @@ function metricValue(snapshot: AnalyticsSnapshot, id: RetailMetricId) {
   return values[id];
 }
 
+function normalizedRetailMetric(
+  snapshot: AnalyticsSnapshot,
+  id: RetailMetricId,
+  period: MetricPeriod,
+  comparison: Parameters<typeof normalizeMetricResult>[0]["comparison"] = null,
+): NormalizedMetricResult {
+  const definition = retailOverviewMetricRegistry.require(id);
+  const hasRevenueReference = id === "retail.net_sales" && comparison !== null;
+  return normalizeMetricResult({
+    definition,
+    adapter: {
+      value: metricValue(snapshot, id),
+      coverage: { state: "complete" },
+      // `as_of` is calculation/read time, not business-level source freshness.
+      dataAsOf: null,
+      provenance: { category: "rpc", source: "retail_analytics_snapshot" },
+      reference: hasRevenueReference
+        ? { value: snapshot.comparison.previous_revenue, currency: snapshot.currency }
+        : undefined,
+      currency: definition.unit.kind === "money" ? snapshot.currency : undefined,
+    },
+    period,
+    calculatedAt: snapshot.as_of,
+    workspaceCurrency: snapshot.currency,
+    comparison,
+  });
+}
+
 function normalizedPerformanceMetric(
   snapshot: AnalyticsSnapshot,
   selection: RetailOverviewSelection,
   id: RetailMetricId,
 ): NormalizedMetricResult {
-  const definition = retailOverviewMetricRegistry.require(id);
-  const isNetSales = id === "retail.net_sales";
-  const comparison = isNetSales
+  const comparison = id === "retail.net_sales"
     ? {
         kind: "previous" as const,
         period: metricPeriodFromDateSelection({
@@ -151,28 +177,48 @@ function normalizedPerformanceMetric(
         }),
       }
     : null;
-  return normalizeMetricResult({
-    definition,
-    adapter: {
-      value: metricValue(snapshot, id),
-      coverage: { state: "complete" },
-      // `as_of` is calculation/read time, not business-level source freshness.
-      dataAsOf: null,
-      provenance: { category: "rpc", source: "retail_analytics_snapshot" },
-      reference: isNetSales ? { value: snapshot.comparison.previous_revenue, currency: snapshot.currency } : undefined,
-      currency: definition.unit.kind === "money" ? snapshot.currency : undefined,
-    },
-    period: selection.period,
-    calculatedAt: snapshot.as_of,
-    workspaceCurrency: snapshot.currency,
-    comparison,
+  return normalizedRetailMetric(snapshot, id, selection.period, comparison);
+}
+
+function localDateForInstant(value: string, timezone: string) {
+  const instant = new Date(value);
+  if (!Number.isFinite(instant.getTime())) throw new Error("RETAIL_ANALYTICS_INVALID_AS_OF");
+  const parts = new Intl.DateTimeFormat("en-US-u-ca-gregory", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(instant);
+  const pick = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value;
+  const year = pick("year");
+  const month = pick("month");
+  const day = pick("day");
+  if (!year || !month || !day) throw new Error("RETAIL_ANALYTICS_INVALID_AS_OF");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Snapshot metrics receive a Phase 4 period contract for the local day of the
+ * read itself. The selected performance period never changes their business
+ * meaning; it remains only a structural query context required by Phase 4.
+ */
+function currentStateMetricPeriod(snapshot: AnalyticsSnapshot) {
+  const date = localDateForInstant(snapshot.as_of, snapshot.timezone);
+  return metricPeriodFromDateSelection({
+    fromDate: date,
+    toDateInclusive: date,
+    timezone: snapshot.timezone,
   });
+}
+
+function normalizedCurrentStateMetric(snapshot: AnalyticsSnapshot, id: RetailMetricId) {
+  return normalizedRetailMetric(snapshot, id, currentStateMetricPeriod(snapshot));
 }
 
 export type RetailOverviewModel = Readonly<{
   primary: Readonly<Record<(typeof RETAIL_PRIMARY_METRICS)[number]["id"], NormalizedMetricResult>>;
   supporting: Readonly<Record<(typeof RETAIL_SUPPORTING_METRICS)[number]["id"], NormalizedMetricResult>>;
-  current: ReadonlyArray<RetailMetricDescriptor & { value: number; currency: string }>;
+  current: Readonly<Record<(typeof RETAIL_CURRENT_METRICS)[number]["id"], NormalizedMetricResult>>;
   trend: ReadonlyArray<{ label: string; netSales: number }>;
   criticalInventory: ReadonlyArray<AnalyticsSnapshot["low_stock"][number]>;
   attentionInventory: ReadonlyArray<AnalyticsSnapshot["low_stock"][number]>;
@@ -190,15 +236,14 @@ export function buildRetailOverviewModel(
   const supporting = Object.fromEntries(
     RETAIL_SUPPORTING_METRICS.map((item) => [item.id, normalizedPerformanceMetric(snapshot, selection, item.id)]),
   ) as RetailOverviewModel["supporting"];
+  const current = Object.fromEntries(
+    RETAIL_CURRENT_METRICS.map((item) => [item.id, normalizedCurrentStateMetric(snapshot, item.id)]),
+  ) as RetailOverviewModel["current"];
 
   return Object.freeze({
     primary: Object.freeze(primary),
     supporting: Object.freeze(supporting),
-    current: Object.freeze(RETAIL_CURRENT_METRICS.map((item) => ({
-      ...item,
-      value: metricValue(snapshot, item.id),
-      currency: snapshot.currency,
-    }))),
+    current: Object.freeze(current),
     trend: Object.freeze(snapshot.daily_sales.map((item) => ({ label: item.day, netSales: item.revenue }))),
     criticalInventory: Object.freeze(snapshot.low_stock.filter((item) => item.stock_on_hand === 0)),
     attentionInventory: Object.freeze(snapshot.low_stock.filter((item) => item.stock_on_hand > 0 && item.stock_on_hand <= item.minimum_stock)),
