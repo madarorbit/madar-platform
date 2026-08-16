@@ -42,6 +42,10 @@
 
 هذه الأربع معرفة كـ`aggregation: snapshot` وموسومة في الواجهة بـ **حاليًا**. فحص RPC الفعلي أكد أن CTE `balances` يقرأها كأرصدة حالية مستقلة عن الفترة المختارة.
 
+في **Phase 5 Closure Patch** أصبحت الأربع تمر أيضًا عبر عقد Phase 4 الرسمي `normalizeMetricResult()` بدل إخراج `{ value, currency }` موازٍ. لذلك تحتفظ كل Current-state metric بعقد `NormalizedMetricResult` كامل، بما في ذلك `availability`, `coverage`, `freshness`, `provenance`, `definitionVersion`, `calculatedAt`, `unit` و`period`.
+
+الـ`period` لهذه Snapshot metrics هو سياق بنيوي ليوم تنفيذ القراءة وفق timezone مساحة Retail، وليس فترة أداء يختارها المستخدم. تغيير فلتر الأداء إلى 30 يومًا أو Custom لا يغيّر المعنى التجاري للصندوق أو الديون أو قيمة المخزون. كما أن `as_of` يبقى `calculatedAt` ولا يتحول إلى Business `dataAsOf`؛ لذلك freshness تظل `unknown` ما لم يتوفر مصدر حداثة حقيقي.
+
 ## Data boundary وإصلاح Contract drift
 
 العقد الفعلي لـ`retail_analytics_snapshot` يعيد:
@@ -61,6 +65,8 @@
 `src/lib/retail/analytics/adapter.ts`
 
 `getAnalyticsSnapshot()` لم يعد يعمل blind cast إلى `AnalyticsSnapshot`. أصبح يجلب `unknown` ثم يمرر النتيجة إلى `normalizeRetailAnalyticsSnapshot()` التي تتحقق من القيم المطلوبة وتطبع أسماء المفاتيح.
+
+الـauthoritative RPC key له الأولوية عندما يكون **موجودًا** في payload، حتى إذا كانت قيمته `null` أو invalid؛ عندها يفشل العقد بوضوح. fallback إلى الاسم stable/legacy مسموح فقط عندما يكون المفتاح authoritative غائبًا أصلًا، ولا يمكن استخدام legacy value لإخفاء `null` أو قيمة تالفة من المصدر authoritative.
 
 **Missing ≠ Zero:** أي قيمة مطلوبة مفقودة أو غير finite تؤدي إلى Contract error؛ لا تستبدل بصفر. بقي `formatMoney()` القديم دون Big Rewrite لحماية Consumers خارج Phase 5، والـOverview لا تمرر إليه Missing على أنها قيمة مالية حقيقية.
 
