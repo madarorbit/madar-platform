@@ -56,8 +56,8 @@ export default function DashboardDesignSystemShowcase() {
       </div>
 
       <ShowcaseGroup
-        title="Hierarchy & metrics"
-        description="بطاقة المؤشر مرنة: القيمة فقط ممكنة، والسياق والمقارنة والثقة والحالة والإجراء كلها اختيارية."
+        title="التسلسل الهرمي والمؤشرات (Hierarchy & Metrics)"
+        description="بطاقة المؤشر مرنة: يمكن عرض القيمة وحدها، بينما السياق والمقارنة والثقة والحالة والإجراء كلها اختيارية."
       >
         <DashboardSection
           eyebrow="مثال مشترك"
@@ -92,8 +92,8 @@ export default function DashboardDesignSystemShowcase() {
       </ShowcaseGroup>
 
       <ShowcaseGroup
-        title="Status, insight, alert & critical exception"
-        description="أربع عقود دلالية مستقلة؛ الاختلاف ليس مجرد تغيير لون Notice واحدة."
+        title="الحالة والملاحظة والتنبيه والاستثناء الحرج (Status / Insight / Alert / Critical Exception)"
+        description="أربع عقود دلالية مستقلة؛ الاختلاف ليس مجرد تغيير لون رسالة عامة واحدة."
       >
         <div className="grid gap-3">
           <DashboardStatusBlock
@@ -123,11 +123,11 @@ export default function DashboardDesignSystemShowcase() {
       </ShowcaseGroup>
 
       <ShowcaseGroup
-        title="Data states & trust"
-        description="التحميل والفراغ والخطأ والجزئي والقديم حالات من الدرجة الأولى، ولا تتحول تلقائيًا إلى أصفار."
+        title="حالات البيانات والثقة (Data States & Trust)"
+        description="التحميل والفراغ والخطأ والبيانات الجزئية والقديمة حالات من الدرجة الأولى، ولا تتحول تلقائيًا إلى أصفار."
       >
         <div className="grid gap-4 lg:grid-cols-2">
-          <DashboardSummaryBlock title="حالة بيانات جزئية" description="مثال section-level trust state.">
+          <DashboardSummaryBlock title="حالة بيانات جزئية" description="مثال لحالة ثقة على مستوى القسم.">
             <DashboardDataState
               state="partial"
               title="التغطية غير مكتملة"
@@ -144,7 +144,7 @@ export default function DashboardDesignSystemShowcase() {
             compact
             title="لا توجد بيانات ذات معنى بعد"
             description="يشرح النظام سبب الفراغ والخطوة التالية بدل عرض 0 — 0 — 0%."
-            context="الصفر التجاري الصحيح يظل قيمة صحيحة داخل MetricCard؛ هذه الحالة مخصصة لغياب البيانات ذات المعنى."
+            context="الصفر التجاري الصحيح يظل قيمة صحيحة داخل بطاقة المؤشر (MetricCard)؛ هذه الحالة مخصصة لغياب البيانات ذات المعنى."
             action={<Button size="sm">الخطوة التالية</Button>}
           />
           <DashboardLoadingState label="جارٍ تحميل المثال" cards={2} />
@@ -152,8 +152,8 @@ export default function DashboardDesignSystemShowcase() {
       </ShowcaseGroup>
 
       <ShowcaseGroup
-        title="Filters & date range"
-        description="الـGlobal والـLocal لهما scope ظاهر، والفلاتر النشطة لا تختفي عن المستخدم."
+        title="المرشحات والفترة الزمنية (Filters & Date Range)"
+        description="المرشحات العامة والمحلية (Global / Local) لها نطاق ظاهر، والمرشحات النشطة لا تختفي عن المستخدم."
       >
         <div className="grid gap-4">
           <DashboardFilterBar
@@ -190,7 +190,7 @@ export default function DashboardDesignSystemShowcase() {
       </ShowcaseGroup>
 
       <ShowcaseGroup
-        title="Visualization shell & supporting information"
+        title="حاوية التصور والمعلومات المساندة (Visualization Shell & Supporting Information)"
         description="الحاوية تنظم العنوان والحالة والثقة فقط؛ نوع الرسم وقواعده مؤجلة إلى Phase 3.0."
       >
         <div className="grid gap-4 lg:grid-cols-[1.35fr_.65fr]">
@@ -204,7 +204,7 @@ export default function DashboardDesignSystemShowcase() {
             title="سياق مساند"
             description="أقل وزنًا من الإشارة الأساسية ولا ينافسها بصريًا."
           >
-            <p>محتوى تشغيلي أو تفسيري قصير يمكن تركيبه حسب حاجة الـOverview.</p>
+            <p>محتوى تشغيلي أو تفسيري قصير يمكن تركيبه حسب حاجة النظرة العامة (Overview).</p>
           </DashboardSupportingInfo>
         </div>
       </ShowcaseGroup>
