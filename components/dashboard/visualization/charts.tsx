@@ -25,16 +25,21 @@ import {
   ArabicCategoryTick,
   getDatumTooltipContext,
   getSeriesStrokeDasharray,
+  getVisualizationPatternFill,
   hasMeaningfulSeriesData,
   numericTooltipValue,
+  renderVisualizationFillPatternDefs,
+  resolveFillPattern,
   resolveSeriesColor,
   useMobileVisualization,
   useReducedVisualizationMotion,
+  useVisualizationPatternPrefix,
   VISUALIZATION_SERIES_TOKENS,
   VisualizationCategoryLegend,
   VisualizationFrame,
   VisualizationGuidance,
   VisualizationLegend,
+  VisualizationOutcomeIndicator,
   VisualizationTooltip,
   wrapArabicLabel,
 } from "./shared";
@@ -309,8 +314,18 @@ export function StackedBarChart({
 }) {
   const mobile = useMobileVisualization();
   const reducedMotion = useReducedVisualizationMotion();
+  const patternPrefix = useVisualizationPatternPrefix("stacked");
   if (!data.length || !segments.length || !hasMeaningfulSeriesData(data, segments)) {
     return noMeaningfulChartData("لا توجد بيانات تركيبية كافية", "يظهر الرسم المكدس فقط عندما توجد أجزاء ذات معنى داخل إجمالي.");
+  }
+  const hasMissingSegment = data.some((datum) =>
+    segments.some((segment) => {
+      const value = datum[segment.key];
+      return typeof value !== "number" || !Number.isFinite(value);
+    }),
+  );
+  if (hasMissingSegment) {
+    return <VisualizationGuidance>بيانات الرسم المكدس جزئية أو تحتوي قيمة مفقودة. لا يعرض مَدار الأجزاء المتبقية كأنها إجمالي كامل.</VisualizationGuidance>;
   }
   const containsNegative = data.some((datum) =>
     segments.some((segment) => typeof datum[segment.key] === "number" && (datum[segment.key] as number) < 0),
@@ -319,11 +334,19 @@ export function StackedBarChart({
     return <VisualizationGuidance>الرسم المكدس المشترك مخصص هنا لأجزاء غير سالبة من إجمالي. استخدم تمثيل مقارنة آخر للقيم الموجبة والسالبة.</VisualizationGuidance>;
   }
 
+  const filledEntries = segments.map((segment, index) => ({
+    key: segment.key,
+    label: segment.label,
+    color: resolveSeriesColor(segment.color, index),
+    pattern: resolveFillPattern(segment.pattern, index),
+  }));
+
   return (
     <VisualizationFrame ariaLabel={ariaLabel} summary={summary}>
-      <VisualizationLegend series={segments} />
+      <VisualizationCategoryLegend entries={filledEntries} />
       <ResponsiveContainer width="100%" height={mobile ? 245 : 295}>
         <BarChart data={data} margin={{ top: 8, right: 4, bottom: 4, left: 4 }} accessibilityLayer>
+          {renderVisualizationFillPatternDefs(patternPrefix, filledEntries)}
           <CartesianGrid stroke={gridStroke} vertical={false} />
           <XAxis dataKey="label" axisLine={false} tickLine={false} tick={axisTick} interval="preserveStartEnd" minTickGap={mobile ? 30 : 20} />
           <YAxis axisLine={false} tickLine={false} tick={axisTick} width={mobile ? 44 : 56} domain={[0, "auto"]} />
@@ -338,17 +361,20 @@ export function StackedBarChart({
               />
             )}
           />
-          {segments.map((segment, index) => (
-            <Bar
-              key={segment.key}
-              dataKey={segment.key}
-              name={segment.label}
-              stackId="total"
-              fill={resolveSeriesColor(segment.color, index)}
-              isAnimationActive={!reducedMotion}
-              radius={index === segments.length - 1 ? [5, 5, 0, 0] : undefined}
-            />
-          ))}
+          {segments.map((segment, index) => {
+            const encoding = filledEntries[index];
+            return (
+              <Bar
+                key={segment.key}
+                dataKey={segment.key}
+                name={segment.label}
+                stackId="total"
+                fill={getVisualizationPatternFill(patternPrefix, index, encoding.pattern, encoding.color)}
+                isAnimationActive={!reducedMotion}
+                radius={index === segments.length - 1 ? [5, 5, 0, 0] : undefined}
+              />
+            );
+          })}
         </BarChart>
       </ResponsiveContainer>
     </VisualizationFrame>
@@ -356,6 +382,17 @@ export function StackedBarChart({
 }
 
 export const MAX_DONUT_SLICES = 5;
+
+type ResolvedCompositionDatum = Omit<CompositionDatum, "value"> & { value: number };
+
+function resolveCompositionData(data: CompositionDatum[]): ResolvedCompositionDatum[] | null {
+  const resolved: ResolvedCompositionDatum[] = [];
+  for (const item of data) {
+    if (typeof item.value !== "number" || !Number.isFinite(item.value) || item.value < 0) return null;
+    resolved.push({ ...item, value: item.value });
+  }
+  return resolved;
+}
 
 export function CompositionDonut({
   data,
@@ -372,22 +409,24 @@ export function CompositionDonut({
 }) {
   const mobile = useMobileVisualization();
   const reducedMotion = useReducedVisualizationMotion();
-  const hasInvalidPart = data.some((item) => !Number.isFinite(item.value) || item.value < 0);
-  if (hasInvalidPart) {
+  const patternPrefix = useVisualizationPatternPrefix("donut");
+  const resolvedData = resolveCompositionData(data);
+  if (!resolvedData) {
     return <VisualizationGuidance>تحتوي بيانات التركيب على جزء مفقود أو غير صالح. لا يسقط مَدار الفئة بصمت ولا يعيد حساب الإجمالي دونها.</VisualizationGuidance>;
   }
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  if (!data.length || total <= 0) {
+  const total = resolvedData.reduce((sum, item) => sum + item.value, 0);
+  if (!resolvedData.length || total <= 0) {
     return noMeaningfulChartData("لا توجد تركيبة ذات معنى", "يحتاج Donut إلى أجزاء صحيحة من إجمالي حقيقي، لا إلى قيم مفقودة أو أصفار مصطنعة.");
   }
-  if (data.length > MAX_DONUT_SLICES) {
+  if (resolvedData.length > MAX_DONUT_SLICES) {
     return <VisualizationGuidance>عدد الفئات أكبر من النطاق المناسب للـDonut. استخدم Bar عندما تصبح مقارنة الفئات أهم من قراءة إجمالي بسيط.</VisualizationGuidance>;
   }
 
-  const entries = data.map((item, index) => ({
+  const entries = resolvedData.map((item, index) => ({
     key: `${item.label}-${index}`,
     label: item.label,
     color: resolveSeriesColor(item.color, index),
+    pattern: resolveFillPattern(item.pattern, index),
   }));
   return (
     <VisualizationFrame ariaLabel={ariaLabel} summary={summary}>
@@ -395,12 +434,13 @@ export function CompositionDonut({
       <div className="md-viz-donut-wrap">
         <ResponsiveContainer width="100%" height={mobile ? 230 : 270}>
           <PieChart accessibilityLayer>
+            {renderVisualizationFillPatternDefs(patternPrefix, entries)}
             <Tooltip
               content={({ active, payload }) => {
                 const entry = payload?.[0];
-                const payloadDatum = entry?.payload as CompositionDatum | undefined;
+                const payloadDatum = entry?.payload as ResolvedCompositionDatum | undefined;
                 if (!payloadDatum) return null;
-                const index = data.findIndex((item) => item === payloadDatum || item.label === payloadDatum.label);
+                const index = resolvedData.findIndex((item) => item === payloadDatum || item.label === payloadDatum.label);
                 return (
                   <VisualizationTooltip
                     active={active}
@@ -417,7 +457,7 @@ export function CompositionDonut({
               }}
             />
             <Pie
-              data={data}
+              data={resolvedData}
               dataKey="value"
               nameKey="label"
               innerRadius={mobile ? 56 : 68}
@@ -427,9 +467,15 @@ export function CompositionDonut({
               strokeWidth={2}
               isAnimationActive={!reducedMotion}
             >
-              {data.map((item, index) => (
-                <Cell key={`${item.label}-${index}`} fill={resolveSeriesColor(item.color, index)} />
-              ))}
+              {resolvedData.map((item, index) => {
+                const encoding = entries[index];
+                return (
+                  <Cell
+                    key={`${item.label}-${index}`}
+                    fill={getVisualizationPatternFill(patternPrefix, index, encoding.pattern, encoding.color)}
+                  />
+                );
+              })}
             </Pie>
           </PieChart>
         </ResponsiveContainer>
@@ -451,33 +497,45 @@ export function TargetProgress({
   ariaLabel,
   summary,
   format,
-  outcome = "unknown",
+  outcome,
 }: {
   label: string;
-  value: number;
-  target: number;
+  value: number | null | undefined;
+  target: number | null | undefined;
   ariaLabel: string;
   summary: string;
   format?: VisualizationValueFormat;
   outcome?: VisualizationOutcome;
 }) {
-  if (!Number.isFinite(value)) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
     return noMeaningfulChartData("لا توجد قيمة تقدم صالحة", "لا يحول مَدار القيمة المفقودة أو غير الصالحة إلى صفر.");
   }
-  if (!Number.isFinite(target) || target <= 0) {
+  if (typeof target !== "number" || !Number.isFinite(target) || target <= 0) {
     return <VisualizationGuidance>لا يمكن عرض التقدم دون هدف أو حد مرجعي صالح ومعلن.</VisualizationGuidance>;
   }
-  const percentage = Math.max(0, Math.min(100, (value / target) * 100));
+
+  const boundedValue = Math.max(0, Math.min(target, value));
+  const fillPercentage = (boundedValue / target) * 100;
+  const actualRatio = value / target;
+  const boundaryContext = value < 0
+    ? "القيمة الفعلية أقل من الحد الأدنى لشريط التقدم"
+    : value > target
+      ? "القيمة الفعلية تجاوزت الهدف"
+      : undefined;
+  const formattedValue = formatVisualizationValue(value, format);
+  const formattedTarget = formatVisualizationValue(target, format);
+  const ariaValueText = `القيمة الفعلية ${formattedValue} من هدف ${formattedTarget}${boundaryContext ? `، ${boundaryContext}` : ""}`;
+
   return (
     <VisualizationFrame ariaLabel={ariaLabel} summary={summary}>
       <div className="md-viz-target" data-outcome={outcome}>
         <div className="md-viz-target-header">
           <strong>{label}</strong>
           <span>
-            <bdi dir="ltr">{formatVisualizationValue(value, format)}</bdi>
+            <bdi dir="ltr">{formattedValue}</bdi>
             <span aria-hidden="true"> / </span>
             <span className="md-viz-sr-only">من هدف قدره</span>
-            <bdi dir="ltr">{formatVisualizationValue(target, format)}</bdi>
+            <bdi dir="ltr">{formattedTarget}</bdi>
           </span>
         </div>
         <div
@@ -485,13 +543,20 @@ export function TargetProgress({
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={target}
-          aria-valuenow={value}
+          aria-valuenow={boundedValue}
+          aria-valuetext={ariaValueText}
           aria-label={label}
         >
-          <span className="md-viz-target-fill" style={{ width: `${percentage}%` }} />
+          <span className="md-viz-target-fill" style={{ width: `${fillPercentage}%` }} />
           <span className="md-viz-target-marker" aria-hidden="true" />
         </div>
-        <small className="md-viz-target-context">{formatVisualizationValue(percentage / 100, { style: "percent", maximumFractionDigits: 0 })} من المرجع</small>
+        <div className="md-viz-target-meta">
+          <small className="md-viz-target-context">
+            {formatVisualizationValue(actualRatio, { style: "percent", maximumFractionDigits: 0 })} من المرجع
+            {boundaryContext ? ` — ${boundaryContext}` : ""}
+          </small>
+          {outcome ? <VisualizationOutcomeIndicator outcome={outcome} /> : null}
+        </div>
       </div>
     </VisualizationFrame>
   );
