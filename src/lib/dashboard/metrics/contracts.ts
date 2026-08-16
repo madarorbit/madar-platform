@@ -58,8 +58,10 @@ export type MetricPeriod = {
   timezone: string;
 };
 
+export type MetricComparisonKind = "previous" | "reference" | "benchmark";
+
 export type MetricComparisonRequest = {
-  kind: "previous" | "reference" | "benchmark";
+  kind: MetricComparisonKind;
   period: MetricPeriod;
 };
 
@@ -116,11 +118,17 @@ export type MetricPercentageDeltaReason =
   | "missing_current"
   | "missing_reference";
 
-export type MetricComparison = {
+export type MetricComparisonValues = {
   referenceValue: number | null;
   absoluteDelta: number | null;
   percentageDelta: number | null;
   percentageDeltaReason: MetricPercentageDeltaReason | null;
+};
+
+/** A normalized comparison is self-describing; presentation never reconstructs request context. */
+export type MetricComparison = MetricComparisonValues & {
+  kind: MetricComparisonKind;
+  period: MetricPeriod;
 };
 
 export type NormalizedMetricResult = {
@@ -162,6 +170,7 @@ export type MetricAdapterResult = {
 
 export type MetricBatchResult = {
   calculatedAt: string;
+  /** Results preserve MetricQueryRequest.metricIds order. */
   results: readonly NormalizedMetricResult[];
   partialFailure: boolean;
 };
