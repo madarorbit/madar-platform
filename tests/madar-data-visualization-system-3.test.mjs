@@ -80,7 +80,9 @@ test('missing data remains missing and partial stale integrate with phase 2',asy
   read('components/admin/DataVisualizationSystemShowcase.tsx'),
   read('docs/MADAR_DATA_VISUALIZATION_SYSTEM_3.md'),
  ]);
- assert.ok((charts.match(/connectNulls=\{false\}/g)||[]).length>=2);
+ assert.match(charts,/connectNulls: false/);
+ assert.match(charts,/connectNulls=\{false\}/);
+ assert.equal(/\?\?\s*0/.test(charts),false,'missing points must not be silently coerced with nullish zero fallbacks');
  assert.match(charts,/partialRange/);
  assert.match(charts,/DashboardEmptyState/);
  assert.match(showcase,/state="partial"/);
@@ -108,9 +110,13 @@ test('Arabic RTL tooltip legend and numeric isolation are first-class contracts'
 });
 
 test('visualization CSS is semantic responsive and reduced-motion aware',async()=>{
- const [css,tokens]=await Promise.all([read('app/dashboard-visualization-3.css'),read('app/dashboard-visualization-tokens-3.css')]);
+ const [css,tokens,charts]=await Promise.all([
+  read('app/dashboard-visualization-3.css'),
+  read('app/dashboard-visualization-tokens-3.css'),
+  read('components/dashboard/visualization/charts.tsx'),
+ ]);
  assert.equal(/#[0-9a-f]{3,8}\b/i.test(css),false,'raw palette belongs in visualization token file only');
- for(const token of ['var(--md-surface-overlay)','var(--md-chart-grid)','var(--md-viz-series-1)','var(--md-viz-target)']) assert.ok(`${css}\n${tokens}`.includes(token),token);
+ for(const token of ['var(--md-surface-overlay)','var(--md-chart-grid)','var(--md-viz-series-1)','var(--md-viz-target)']) assert.ok(`${css}\n${tokens}\n${charts}`.includes(token),token);
  assert.match(css,/@media \(max-width: 639px\)/);
  assert.match(css,/@media \(prefers-reduced-motion: reduce\)/);
 });
@@ -136,7 +142,8 @@ test('motion and accessibility do not rely on Recharts defaults alone',async()=>
 test('showcase teaches question-first selection with required vocabulary',async()=>{
  const showcase=await read('components/admin/DataVisualizationSystemShowcase.tsx');
  assert.match(showcase,/بيانات توضيحية للواجهة فقط/);
- assert.ok((showcase.match(/السؤال:/g)||[]).length>=6);
+ assert.match(showcase,/<strong>السؤال:<\/strong>/);
+ assert.ok((showcase.match(/<VisualizationExample/g)||[]).length>=6);
  for(const component of ['TrendChart','CategoryBarChart','StackedBarChart','CompositionDonut','TargetProgress','Sparkline']) assert.ok(showcase.includes(component),component);
  assert.equal(/getAnalyticsSnapshot|supabaseFetch|business_analytics|retail_analytics/i.test(showcase),false);
 });

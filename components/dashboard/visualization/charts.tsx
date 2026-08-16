@@ -54,14 +54,16 @@ const axisTick = { fill: "var(--md-chart-label)", fontSize: 11 };
 const gridStroke = "var(--md-chart-grid)";
 
 function tooltipItemsFromPayload(
-  payload: readonly { dataKey?: string | number; value?: unknown; payload?: unknown }[] | undefined,
+  payload: readonly { dataKey?: unknown; value?: unknown; payload?: unknown }[] | undefined,
   series: VisualizationSeriesDefinition[],
 ) {
   if (!payload?.length) return [];
   const byKey = new Map(series.map((item) => [item.key, item]));
   return payload
     .map((entry, index) => {
-      const key = String(entry.dataKey ?? "");
+      const rawKey = entry.dataKey;
+      if (typeof rawKey !== "string" && typeof rawKey !== "number") return null;
+      const key = String(rawKey);
       const config = byKey.get(key);
       if (!config) return null;
       return {
