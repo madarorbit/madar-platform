@@ -303,10 +303,12 @@ export function DashboardAlertBlock({
   action?: ReactNode;
   className?: string;
 }) {
+  const isCritical = severity === "critical";
   return (
     <div
       className={cx("md-dashboard-alert", `is-${severity}`, className)}
-      role="alert"
+      role={isCritical ? "alert" : undefined}
+      aria-live={isCritical ? "assertive" : undefined}
       data-severity={severity}
     >
       <span className="md-dashboard-message-icon" aria-hidden="true">
@@ -530,7 +532,7 @@ export function DateRangeControl({
   className?: string;
 }) {
   return (
-    <div className={cx("md-dashboard-date-range", className)} aria-label={label}>
+    <div className={cx("md-dashboard-date-range", className)} role="group" aria-label={label}>
       {presets.length ? (
         <nav className="md-dashboard-date-presets" aria-label="فترات جاهزة">
           {presets.map((preset) => (
