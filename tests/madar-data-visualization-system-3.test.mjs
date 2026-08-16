@@ -57,6 +57,7 @@ test('series identity is separate from business outcome and numeric direction',a
  ]);
  assert.match(types,/VisualizationOutcome = "favorable" \| "unfavorable" \| "neutral" \| "unknown"/);
  assert.match(types,/VisualizationSeriesToken/);
+ assert.match(types,/VisualizationFillPattern/);
  assert.match(shared,/--md-viz-series-1/);
  assert.equal(/chart-positive|chart-negative|positiveMetric|negativeMetric/i.test(`${shared}\n${charts}\n${css}`),false);
  assert.equal(/value\s*[><]=?\s*0[\s\S]{0,40}(favorable|unfavorable)/i.test(charts),false);
@@ -75,16 +76,20 @@ test('legacy positive negative tokens remain compatibility only and are document
 });
 
 test('missing data remains missing and partial stale integrate with phase 2',async()=>{
- const [charts,showcase,doc]=await Promise.all([
+ const [charts,types,showcase,doc]=await Promise.all([
   read('components/dashboard/visualization/charts.tsx'),
+  read('components/dashboard/visualization/types.ts'),
   read('components/admin/DataVisualizationSystemShowcase.tsx'),
   read('docs/MADAR_DATA_VISUALIZATION_SYSTEM_3.md'),
  ]);
  assert.match(charts,/connectNulls: false/);
  assert.match(charts,/connectNulls=\{false\}/);
  assert.equal(/\?\?\s*0/.test(charts),false,'missing points must not be silently coerced with nullish zero fallbacks');
- assert.match(charts,/if \(!Number\.isFinite\(value\)\)/);
- assert.equal(/const safeValue = Number\.isFinite\(value\) \? value : 0/.test(charts),false);
+ assert.match(charts,/typeof value !== "number" \|\| !Number\.isFinite\(value\)/);
+ assert.match(types,/value: number \| null \| undefined/);
+ assert.match(charts,/value: number \| null \| undefined/);
+ assert.match(charts,/target: number \| null \| undefined/);
+ assert.match(charts,/hasMissingSegment/);
  assert.match(charts,/partialRange/);
  assert.match(charts,/DashboardEmptyState/);
  assert.match(showcase,/state="partial"/);
@@ -95,11 +100,65 @@ test('missing data remains missing and partial stale integrate with phase 2',asy
 test('donut has an encoded small-category limit and never drops invalid parts silently',async()=>{
  const [charts,doc]=await Promise.all([read('components/dashboard/visualization/charts.tsx'),read('docs/MADAR_DATA_VISUALIZATION_SYSTEM_3.md')]);
  assert.match(charts,/MAX_DONUT_SLICES = 5/);
- assert.match(charts,/const hasInvalidPart = data\.some/);
+ assert.match(charts,/resolveCompositionData/);
+ assert.match(charts,/typeof item\.value !== "number"/);
  assert.match(charts,/لا يسقط مَدار الفئة بصمت/);
  assert.equal(/const valid = data\.filter/.test(charts),false);
  assert.match(charts,/استخدم Bar/);
  assert.match(doc,/MAX_DONUT_SLICES = 5/);
+});
+
+test('filled multi-part visualizations pair series color with matching pattern encoding',async()=>{
+ const [types,shared,charts,doc]=await Promise.all([
+  read('components/dashboard/visualization/types.ts'),
+  read('components/dashboard/visualization/shared.tsx'),
+  read('components/dashboard/visualization/charts.tsx'),
+  read('docs/MADAR_DATA_VISUALIZATION_SYSTEM_3.md'),
+ ]);
+ assert.match(types,/"solid"[\s\S]*"diagonal"[\s\S]*"crosshatch"[\s\S]*"dots"[\s\S]*"horizontal"/);
+ assert.match(shared,/VISUALIZATION_FILL_PATTERNS/);
+ assert.match(shared,/renderVisualizationFillPatternDefs/);
+ assert.match(shared,/VisualizationPatternSwatch/);
+ assert.match(charts,/useVisualizationPatternPrefix\("stacked"\)/);
+ assert.match(charts,/useVisualizationPatternPrefix\("donut"\)/);
+ assert.ok((charts.match(/<VisualizationCategoryLegend entries=/g)||[]).length>=2);
+ assert.ok((charts.match(/renderVisualizationFillPatternDefs\(/g)||[]).length>=2);
+ assert.ok((charts.match(/getVisualizationPatternFill\(/g)||[]).length>=2);
+ assert.equal(/fill=\{resolveSeriesColor\(segment\.color/.test(charts),false);
+ assert.equal(/<Cell[^>]*fill=\{resolveSeriesColor/s.test(charts),false);
+ assert.match(doc,/نفس color \+ SVG fill pattern/);
+});
+
+test('TargetProgress keeps ARIA value bounded while exposing actual value and target',async()=>{
+ const [charts,doc]=await Promise.all([
+  read('components/dashboard/visualization/charts.tsx'),
+  read('docs/MADAR_DATA_VISUALIZATION_SYSTEM_3.md'),
+ ]);
+ assert.match(charts,/const boundedValue = Math\.max\(0, Math\.min\(target, value\)\)/);
+ assert.match(charts,/aria-valuemin=\{0\}/);
+ assert.match(charts,/aria-valuemax=\{target\}/);
+ assert.match(charts,/aria-valuenow=\{boundedValue\}/);
+ assert.match(charts,/aria-valuetext=\{ariaValueText\}/);
+ assert.match(charts,/value < 0/);
+ assert.match(charts,/value > target/);
+ assert.equal(/aria-valuenow=\{value\}/.test(charts),false);
+ assert.match(doc,/`aria-valuenow` دائمًا محصور/);
+ assert.match(doc,/`aria-valuetext` يذكر القيمة الفعلية والهدف/);
+});
+
+test('explicit progress outcome is text and mark semantics, not color only',async()=>{
+ const [shared,charts,css,doc]=await Promise.all([
+  read('components/dashboard/visualization/shared.tsx'),
+  read('components/dashboard/visualization/charts.tsx'),
+  read('app/dashboard-visualization-3.css'),
+  read('docs/MADAR_DATA_VISUALIZATION_SYSTEM_3.md'),
+ ]);
+ assert.match(shared,/VisualizationOutcomeIndicator/);
+ assert.match(shared,/visualizationOutcomeMarks/);
+ assert.match(shared,/visualizationOutcomeLabels\[outcome\]/);
+ assert.match(charts,/outcome \? <VisualizationOutcomeIndicator outcome=\{outcome\} \/> : null/);
+ assert.match(css,/\.md-viz-outcome-indicator-mark/);
+ assert.match(doc,/نص دلالي \+ علامة مرئية/);
 });
 
 test('Arabic RTL tooltip legend and numeric isolation are first-class contracts',async()=>{
