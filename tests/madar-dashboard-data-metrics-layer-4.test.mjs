@@ -35,7 +35,7 @@ test('user date selections become timezone-aware inclusive/exclusive periods',()
  assert.throws(()=>core.metricPeriodFromDateSelection({fromDate:'2026-08-18',toDateInclusive:'2026-08-17',timezone:'Asia/Aden'}),/METRIC_INVALID_PERIOD_ORDER/);
 });
 
-test('comparison handles zero and missing reference without inventing percentage change',()=>{
+test('comparison handles zero and missing reference without inventing percentage change',async()=>{
  assert.deepEqual(core.calculateMetricComparison(25,0),{
   referenceValue:0,absoluteDelta:25,percentageDelta:null,percentageDeltaReason:'zero_reference'
  });
@@ -140,12 +140,12 @@ test('server boundary keeps authorization out of client query request and isolat
 });
 
 test('shared metric layer is service neutral and has no fetching formula DSL or global KPI catalog',async()=>{
- const [contracts,core,server]=await Promise.all([
+ const [contracts,coreSource,server]=await Promise.all([
   read('src/lib/dashboard/metrics/contracts.ts'),
   read('src/lib/dashboard/metrics/core.ts'),
   read('src/lib/dashboard/metrics/server.ts'),
  ]);
- const shared=`${contracts}\n${core}\n${server}`;
+ const shared=`${contracts}\n${coreSource}\n${server}`;
  for(const forbidden of ['supabaseFetch','executeRetailRpc','fetch(','Revenue','Orders','Inventory','RetailSales','ConnectedSync','NativeOrders','SUM(x)','formula:']){
   assert.equal(shared.includes(forbidden),false,forbidden);
  }
