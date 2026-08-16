@@ -55,7 +55,7 @@ test("Retail uses prioritized dashboard, role-aware actions and mobile lists", a
     read("app/retail/workspace/sales/page.tsx"),
     read("app/retail/retail.css"),
   ]);
-  for (const contract of ["primaryMetrics", "md-service-summary-strip", "بيع جديد", "تسجيل مصروف"])
+  for (const contract of ["DashboardMetricCard", "DashboardMetricGrid", "DashboardCriticalException", "بيع جديد", "تسجيل مصروف"])
     assert.ok(dashboard.includes(contract), contract);
   assert.match(dashboard, /role !== "VIEWER"/);
   assert.match(products, /data-mobile="list"/);
