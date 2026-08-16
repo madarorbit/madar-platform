@@ -55,16 +55,17 @@ test("four official production derivatives keep full master dimensions and known
   }
 });
 
-test("service catalog uses master derivatives and cards do not request thumbnail renditions", async () => {
+test("service catalog uses full master derivatives without a second optimization pass", async () => {
   const [catalog, cards, css] = await Promise.all([text("src/lib/services/catalog.ts"), text("components/account/ServiceCards.tsx"), text("app/visual-language-assets-8.css")]);
   for (const path of ["connected-business-master.webp", "native-business-master.webp", "madar-retail-master.webp"]) assert.ok(catalog.includes(path), path);
   assert.doesNotMatch(catalog, /\/services\/(connect-existing|build-on-madar|madar-retail)\.webp/);
-  assert.match(cards, /sizes="\(max-width: 767px\)/);
-  assert.doesNotMatch(cards, /96px/);
+  for (const size of ["92px", "104px", "120px", "calc(100vw - 2rem)", "50vw", "33vw"]) assert.ok(cards.includes(size), size);
+  assert.match(cards, /\bunoptimized\b/);
   assert.doesNotMatch(cards, /object-cover/);
   assert.match(cards, /md-service-master-image/);
   assert.match(css, /aspect-ratio: 1 \/ 1/);
   assert.match(css, /object-fit: contain/);
+  assert.match(css, /object-position: center/);
 });
 
 test("ORBY has explicit master and compact contracts and About uses the master responsively", async () => {
@@ -74,7 +75,7 @@ test("ORBY has explicit master and compact contracts and About uses the master r
   assert.match(about, /siteConfig\.assets\.orbyMaster/);
   assert.match(about, /width=\{1536\}/);
   assert.match(about, /sizes="\(max-width: 1023px\)/);
-  assert.doesNotMatch(about, /unoptimized/);
+  assert.match(about, /\bunoptimized\b/);
 });
 
 test("targeted Retail surfaces use the shared functional icon system", async () => {

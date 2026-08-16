@@ -66,6 +66,7 @@ export default function Page() {
                   width={1536}
                   height={1536}
                   sizes="(max-width: 1023px) calc(100vw - 3rem), 34vw"
+                  unoptimized
                   className="md-orby-master-image"
                 />
               </div>

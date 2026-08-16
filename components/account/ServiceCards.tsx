@@ -18,9 +18,10 @@ const statusTone:Record<ServiceState,StatusTone>={
 
 export default function ServiceCards({services,compact=false,emptyTitle='لا توجد خدمات في الحساب',emptyDescription='استعرض خدمات مَدار المتاحة وابدأ بالخدمة المناسبة.',emptyHref='/services',emptyAction='استعراض الخدمات'}:{services:AccountService[];compact?:boolean;emptyTitle?:string;emptyDescription?:string;emptyHref?:string;emptyAction?:string}){
  if(!services.length)return <EmptyState title={emptyTitle} description={emptyDescription} compact={compact} action={<ButtonLink href={emptyHref}>{emptyAction}</ButtonLink>}/>;
+ const imageSizes=compact?'(max-width: 430px) 92px, (max-width: 767px) 104px, 120px':'(max-width: 767px) calc(100vw - 2rem), (max-width: 1200px) 50vw, 33vw';
  return <div className={compact?'md-service-grid is-compact':'md-service-grid'}>
   {services.map(service=><Card as="article" key={service.definition.code} className={`md-service-card is-${service.state.toLowerCase()}`}>
-   <div className="md-service-card-media"><Image src={service.definition.coverImage} alt={`الصورة الرسمية لخدمة ${service.definition.name}`} fill sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1200px) 50vw, 33vw" className="md-service-master-image"/></div>
+   <div className="md-service-card-media"><Image src={service.definition.coverImage} alt={`الصورة الرسمية لخدمة ${service.definition.name}`} fill sizes={imageSizes} unoptimized className="md-service-master-image"/></div>
    <div className="md-service-card-body">
     <div className="md-service-card-meta"><span className="md-service-card-icon"><Icon name={service.definition.icon}/></span><StatusBadge status={statusTone[service.state]}>{serviceStateLabels[service.state]}</StatusBadge></div>
     <div><h2 className="md-service-card-title">{compact?service.definition.shortName:service.definition.name}</h2><p className="md-service-card-description">{compact?service.definition.description:service.definition.detail}</p></div>
