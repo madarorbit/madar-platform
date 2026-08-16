@@ -19,7 +19,7 @@ import {
   TrendChart,
 } from "@/components/dashboard";
 import { FlashMessage } from "@/components/retail-v0/ui/flash-message";
-import { ButtonLink, Panel } from "@/components/ui/Enterprise";
+import { ButtonLink, Card, Panel } from "@/components/ui/Enterprise";
 import { Icon } from "@/components/ui/Icons";
 import { WorkspaceModule, WorkspaceModuleHeader } from "@/components/workspace/WorkspaceModule";
 import {
@@ -327,13 +327,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               description="إجراءات تشغيلية أقل أولوية من قرار البيع الرئيسي الموجود في رأس الصفحة."
               priority="supporting"
             >
-              <DashboardSupportingInfo>
-                <div className="md-service-quick-actions"><div>
-                  <Link href="/retail/workspace/products"><span><Icon name="layers" /></span><strong>إضافة منتج</strong><Icon name="arrow" className="md-icon-directional" /></Link>
-                  <Link href="/retail/workspace/expenses"><span><Icon name="note" /></span><strong>تسجيل مصروف</strong><Icon name="arrow" className="md-icon-directional" /></Link>
-                  <Link href="/retail/workspace/inventory"><span><Icon name="chart" /></span><strong>تسوية المخزون</strong><Icon name="arrow" className="md-icon-directional" /></Link>
-                </div></div>
-              </DashboardSupportingInfo>
+              <Card as="div">
+                <DashboardSupportingInfo>
+                  <div className="md-service-quick-actions"><div>
+                    <Link href="/retail/workspace/products"><span><Icon name="layers" /></span><strong>إضافة منتج</strong><Icon name="arrow" className="md-icon-directional" /></Link>
+                    <Link href="/retail/workspace/expenses"><span><Icon name="note" /></span><strong>تسجيل مصروف</strong><Icon name="arrow" className="md-icon-directional" /></Link>
+                    <Link href="/retail/workspace/inventory"><span><Icon name="chart" /></span><strong>تسوية المخزون</strong><Icon name="arrow" className="md-icon-directional" /></Link>
+                  </div></div>
+                </DashboardSupportingInfo>
+              </Card>
             </DashboardSection>
           ) : null}
         </>;
