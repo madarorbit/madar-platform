@@ -119,6 +119,18 @@ test('latest-health and exact incident semantics are enforced by the surgical re
  assert.match(migration,/grant execute[\s\S]*authenticated/i);
 });
 
+test('Connected dashboard facts ACL closure denies anon/public execute and preserves SECURITY INVOKER',async()=>{
+ const [baseMigration,closureMigration]=await Promise.all([
+  read('supabase/migrations/20260816224500_connected_dashboard_facts.sql'),
+  read('supabase/migrations/20260816232300_connected_dashboard_acl_hardening.sql'),
+ ]);
+ assert.match(baseMigration,/security invoker/i);
+ assert.match(closureMigration,/revoke execute on function public\.connected_dashboard_facts\(uuid\) from anon;/i);
+ assert.match(closureMigration,/revoke execute on function public\.connected_dashboard_facts\(uuid\) from public;/i);
+ assert.match(closureMigration,/grant execute on function public\.connected_dashboard_facts\(uuid\) to authenticated,\s*service_role;/i);
+ assert.doesNotMatch(closureMigration,/grant execute on function public\.connected_dashboard_facts\(uuid\) to [^;]*(?:anon|public)[^;]*;/i);
+});
+
 test('limited records probe is existence/latest only and no limited incident list is used as a global total',async()=>{
  const [server,component,migration]=await Promise.all([
   read('src/lib/connected/dashboard/server.ts'),
