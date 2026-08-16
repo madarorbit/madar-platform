@@ -69,12 +69,15 @@ jobs:
         shell: bash
         run: set -o pipefail; npm run orby:os-load 2>&1 | tee orby-os-load.log
       - name: Lint
+        if: ${{ !cancelled() }}
         shell: bash
         run: set -o pipefail; npm run lint 2>&1 | tee lint.log
       - name: Typecheck
+        if: ${{ !cancelled() }}
         shell: bash
         run: set -o pipefail; npm run typecheck 2>&1 | tee typecheck.log
       - name: Build
+        if: ${{ !cancelled() }}
         shell: bash
         run: set -o pipefail; npm run build 2>&1 | tee build.log
       - name: Upload failure diagnostics
