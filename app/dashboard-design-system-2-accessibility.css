@@ -1,0 +1,16 @@
+/* Phase 2.0 accessibility reinforcement for dashboard-only compact actions. */
+
+@media (max-width: 639px) {
+  .md-dashboard-active-filter > a {
+    width: var(--md-size-touch);
+    height: var(--md-size-touch);
+  }
+
+  .md-dashboard-drilldown,
+  .md-dashboard-filter-heading > .md-button,
+  .md-dashboard-message-action .md-button,
+  .md-dashboard-data-state-action .md-button,
+  .md-dashboard-critical-action .md-button {
+    min-height: var(--md-size-touch);
+  }
+}
