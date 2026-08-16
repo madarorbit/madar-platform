@@ -90,6 +90,14 @@ Migration:
 
 هذه الإضافة لا تعيد تصميم Integration schema ولا تغيّر الجداول أو عقود الكتابة.
 
+### Phase 6.0 Security Closure
+
+أضيفت migration لاحقة مستقلة بدل تعديل التاريخ المطبق:
+
+`supabase/migrations/20260816232300_connected_dashboard_acl_hardening.sql`
+
+وتغلق EXECUTE صراحةً أمام `anon` و`PUBLIC`، ثم تمنحه فقط إلى `authenticated` و`service_role`. تبقى الدالة `SECURITY INVOKER` ولا تتغير semantics أو UI أو domain الخاصة بـConnected.
+
 ## Records
 
 لا تستخدم `integration_udm_records` المحدودة كإجمالي بيانات.
