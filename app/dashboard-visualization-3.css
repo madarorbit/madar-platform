@@ -82,6 +82,13 @@
   border-radius: var(--md-radius-sm);
 }
 
+.md-viz-legend-swatch-svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+  overflow: visible;
+}
+
 .md-viz-tooltip {
   min-width: 11rem;
   max-width: min(20rem, calc(100vw - 2rem));
@@ -157,6 +164,35 @@
 .md-viz-outcome[data-outcome="unfavorable"] { color: var(--md-danger-text); }
 .md-viz-outcome[data-outcome="neutral"],
 .md-viz-outcome[data-outcome="unknown"] { color: var(--md-text-muted); }
+
+.md-viz-outcome-indicator {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--md-space-1);
+  border: 1px solid var(--md-border-default);
+  border-radius: var(--md-radius-pill);
+  background: var(--md-surface-muted);
+  padding: var(--md-space-1) var(--md-space-2);
+  color: var(--md-text-secondary);
+  font-size: var(--md-type-caption);
+  font-weight: var(--md-weight-bold);
+}
+
+.md-viz-outcome-indicator-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1px solid currentColor;
+  border-radius: var(--md-radius-pill);
+  line-height: 1;
+}
+
+.md-viz-outcome-indicator[data-outcome="favorable"] { color: var(--md-success-text); }
+.md-viz-outcome-indicator[data-outcome="unfavorable"] { color: var(--md-danger-text); }
+.md-viz-outcome-indicator[data-outcome="neutral"],
+.md-viz-outcome-indicator[data-outcome="unknown"] { color: var(--md-text-secondary); }
 
 .md-viz-axis-text {
   fill: var(--md-chart-label);
@@ -251,9 +287,18 @@
 .md-viz-target[data-outcome="neutral"] .md-viz-target-fill { background: var(--md-viz-series-1); }
 .md-viz-target[data-outcome="unknown"] .md-viz-target-fill { background: var(--md-viz-reference); }
 
+.md-viz-target-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-space-2) var(--md-space-3);
+}
+
 .md-viz-target-context {
   color: var(--md-text-muted);
   font-size: var(--md-type-caption);
+  line-height: var(--md-leading-body);
 }
 
 .md-viz-sparkline {
@@ -310,6 +355,10 @@
     padding: var(--md-space-2);
   }
   .md-viz-target-header {
+    display: grid;
+    justify-content: stretch;
+  }
+  .md-viz-target-meta {
     display: grid;
     justify-content: stretch;
   }
