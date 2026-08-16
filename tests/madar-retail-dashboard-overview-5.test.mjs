@@ -41,6 +41,17 @@ test('Retail analytics adapter maps authoritative RPC keys to one stable typed c
  assert.equal('retail_payables' in normalized.metrics,false);
 });
 
+test('authoritative RPC presence wins over legacy fallback even when the authoritative value is null',()=>{
+ const authoritativeNull=rawSnapshot({metrics:{retail_expenses:null,expenses:999}});
+ assert.throws(
+  ()=>adapter.normalizeRetailAnalyticsSnapshot(authoritativeNull),
+  /RETAIL_ANALYTICS_INVALID_NUMBER:metrics\.retail_expenses/
+ );
+ const legacyOnly=rawSnapshot({metrics:{expenses:81}});
+ delete legacyOnly.metrics.retail_expenses;
+ assert.equal(adapter.normalizeRetailAnalyticsSnapshot(legacyOnly).metrics.expenses,81);
+});
+
 test('required missing or invalid RPC metrics fail instead of silently becoming zero',()=>{
  const missing=rawSnapshot();
  delete missing.metrics.retail_expenses;
@@ -53,9 +64,9 @@ test('required missing or invalid RPC metrics fail instead of silently becoming 
 
 test('Phase 5 domain declares exactly four primary, two supporting and four current-state metrics',async()=>{
  const source=await read('src/lib/retail/analytics/overview.ts');
- const primary=source.match(/RETAIL_PRIMARY_METRICS:[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1]||'';
- const supporting=source.match(/RETAIL_SUPPORTING_METRICS:[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1]||'';
- const current=source.match(/RETAIL_CURRENT_METRICS:[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1]||'';
+ const primary=source.match(/RETAIL_PRIMARY_METRICS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\] as const/)?.[1]||'';
+ const supporting=source.match(/RETAIL_SUPPORTING_METRICS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\] as const/)?.[1]||'';
+ const current=source.match(/RETAIL_CURRENT_METRICS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\] as const/)?.[1]||'';
  for(const id of ['retail.net_sales','retail.estimated_gross_profit','retail.estimated_operating_result','retail.invoice_count']) assert.ok(primary.includes(id),id);
  assert.equal((primary.match(/id:/g)||[]).length,4);
  assert.equal((supporting.match(/id:/g)||[]).length,2);
@@ -66,7 +77,35 @@ test('Phase 5 domain declares exactly four primary, two supporting and four curr
   assert.match(source,new RegExp(`id: "${escaped}"[^\\n]*comparison: "none"`));
  }
  assert.match(source,/id: "retail\.cash_position"[^\n]*aggregation: "snapshot"/);
+ assert.match(source,/id: "retail\.receivables"[^\n]*aggregation: "snapshot"/);
+ assert.match(source,/id: "retail\.payables"[^\n]*aggregation: "snapshot"/);
  assert.match(source,/id: "retail\.inventory_value"[^\n]*aggregation: "snapshot"/);
+});
+
+test('current-state metrics are Phase 4 NormalizedMetricResult contracts, not raw value objects',async()=>{
+ const [domain,page]=await Promise.all([
+  read('src/lib/retail/analytics/overview.ts'),
+  read('app/retail/workspace/page.tsx'),
+ ]);
+ assert.match(domain,/current: Readonly<Record<[\s\S]*?NormalizedMetricResult>>/);
+ assert.match(domain,/function normalizedCurrentStateMetric/);
+ assert.match(domain,/return normalizedRetailMetric\(snapshot, id, currentStateMetricPeriod\(snapshot\)\)/);
+ assert.match(domain,/RETAIL_CURRENT_METRICS\.map\(\(item\) => \[item\.id, normalizedCurrentStateMetric\(snapshot, item\.id\)\]\)/);
+ for(const contract of ['coverage: { state: "complete" }','dataAsOf: null','provenance: { category: "rpc", source: "retail_analytics_snapshot" }','calculatedAt: snapshot.as_of']) assert.ok(domain.includes(contract),contract);
+ assert.match(page,/const result = overview\.current\[descriptor\.id\]/);
+ assert.match(page,/value=\{metricValue\(result, workspace\.currency\)\}/);
+ assert.doesNotMatch(page,/overview\.current\.find/);
+ assert.doesNotMatch(page,/current\.currency/);
+});
+
+test('current-state snapshot period is tied to read context, not the selected performance range',async()=>{
+ const source=await read('src/lib/retail/analytics/overview.ts');
+ const currentPeriod=source.match(/function currentStateMetricPeriod\(snapshot: AnalyticsSnapshot\) \{([\s\S]*?)\n\}/)?.[1]||'';
+ assert.match(currentPeriod,/snapshot\.as_of/);
+ assert.match(currentPeriod,/snapshot\.timezone/);
+ assert.match(currentPeriod,/metricPeriodFromDateSelection/);
+ assert.doesNotMatch(currentPeriod,/selection|input\.from|input\.to/);
+ assert.match(source,/aggregation: "snapshot"/);
 });
 
 test('Phase 5 period contract is based on Phase 4 timezone-aware inclusive/exclusive semantics',async()=>{
@@ -84,8 +123,8 @@ test('sales zero-reference comparison remains mathematically unavailable and oth
   referenceValue:0,absoluteDelta:700,percentageDelta:null,percentageDeltaReason:'zero_reference'
  });
  const source=await read('src/lib/retail/analytics/overview.ts');
- assert.match(source,/const isNetSales = id === "retail\.net_sales"/);
- assert.match(source,/reference: isNetSales \?/);
+ assert.match(source,/id === "retail\.net_sales"/);
+ assert.match(source,/previous_revenue/);
  assert.match(source,/comparison: "none"/);
  assert.equal(/favorable|unfavorable/.test(source),false);
 });
