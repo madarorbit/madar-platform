@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedDecisionOverview } from "@/components/connected/ConnectedDecisionOverview";
 import {
   Badge,
   ButtonLink,
@@ -6,18 +7,11 @@ import {
   Notice,
   Panel,
   Stat,
-  StatusBadge,
 } from "@/components/ui/Enterprise";
 import { Icon, type IconName } from "@/components/ui/Icons";
 import { WorkspaceModule, WorkspaceModuleHeader } from "@/components/workspace/WorkspaceModule";
 import { requireBusinessWorkspace, type BusinessWorkspace, type WorkspaceSector } from "@/src/lib/business";
 import { formatDateTime } from "@/src/lib/format";
-import {
-  connectionStatusLabel,
-  connectionStatusTone,
-  getConnectedOverview,
-  latestHealthByConnection,
-} from "@/src/lib/services/experience";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 import { sectorMetrics } from "@/src/lib/v2/sector-report";
 
@@ -27,83 +21,8 @@ export const metadata = { title: "نظرة عامة | مساحة مَدار" };
 export default async function WorkspaceHome({ searchParams }: { searchParams: Promise<{ module?: string }> }) {
   const [context, params] = await Promise.all([requireBusinessWorkspace(), searchParams]);
   return context.workspace.operating_mode === "CONNECTED_EXTERNAL"
-    ? <ConnectedDashboard workspace={context.workspace} sector={context.sector} />
+    ? <ConnectedDecisionOverview workspace={context.workspace} sector={context.sector} />
     : <NativeDashboard workspace={context.workspace} sector={context.sector} moduleUnavailable={params.module === "unavailable"} />;
-}
-
-async function ConnectedDashboard({ workspace, sector }: { workspace: BusinessWorkspace; sector: WorkspaceSector }) {
-  const overview = await getConnectedOverview(workspace.id);
-  const connections = overview.connections.data;
-  const healthByConnection = latestHealthByConnection(overview.health.data);
-  const hasConnectionError = connections.some((item) => ["error", "disconnected"].includes(item.status));
-  const hasConnecting = connections.some((item) => ["draft", "verifying"].includes(item.status));
-  const overall = !connections.length ? "draft" : hasConnectionError ? "error" : hasConnecting ? "pending" : "active";
-  const latestSuccess = connections.map((item) => item.last_success_at).filter((value): value is string => Boolean(value)).sort().at(-1) || null;
-  const recordTypes = new Set(overview.records.data.map((record) => record.entity_type));
-  const failedSections = Object.values(overview).filter((item) => item.failed).length;
-
-  return <WorkspaceModule>
-    <WorkspaceModuleHeader
-      eyebrow="ملخص مباشر · ربط تجارة قائمة"
-      title={`مركز قيادة ${workspace.name}`}
-      description="ابدأ بصحة الربط وحداثة البيانات، ثم انتقل إلى التقارير أو اسأل ORBY ضمن سياق هذه المساحة."
-      icon="layers"
-      actions={<><ButtonLink href="/workspace/connect" variant="secondary"><Icon name="layers" />فحص الربط</ButtonLink><ButtonLink href="/workspace/orby"><Icon name="sparkles" />اسأل ORBY</ButtonLink></>}
-    />
-    {failedSections ? <Notice title="بعض مؤشرات الربط لم تتحدث" variant="warning">بقية المساحة ما زالت قابلة للاستخدام. افتح مركز الربط للمحاولة مجددًا.</Notice> : null}
-
-    <section className="md-service-primary-grid" aria-label="أهم مؤشرات الربط">
-      <Stat label="حالة الربط" value={<StatusBadge status={overall}>{overall === "active" ? "متصل" : overall === "pending" ? "جارٍ الإعداد" : overall === "error" ? "يحتاج إصلاحًا" : "غير مربوط"}</StatusBadge>} detail={`${connections.length.toLocaleString("ar-YE")} اتصال`} />
-      <Stat label="آخر مزامنة ناجحة" value={latestSuccess ? formatDateTime(latestSuccess) : "لم تتم بعد"} detail="من جميع الاتصالات الحالية" />
-      <Stat label="البيانات الواصلة" value={overview.records.data.length.toLocaleString("ar-YE")} detail={`${recordTypes.size.toLocaleString("ar-YE")} نوع بيانات ضمن السجلات المحملة`} />
-      <Stat label="تنبيهات مفتوحة" value={overview.incidents.data.length.toLocaleString("ar-YE")} detail="تحذيرات وأخطاء تحتاج متابعة" />
-    </section>
-
-    <section className="md-service-dashboard-grid">
-      <Panel className="md-service-panel">
-        <div className="md-service-panel-heading"><div><span className="md-eyebrow">الصحة أولًا</span><h2>الاتصالات الحالية</h2></div><Link href="/workspace/connect" className="md-button md-button-ghost md-button-sm">التفاصيل والمزامنة</Link></div>
-        <div className="md-service-list">
-          {connections.length ? connections.map((connection) => {
-            const health = healthByConnection.get(connection.id);
-            const status = health?.status || connection.status;
-            return <article key={connection.id} className="md-service-list-row">
-              <span className="md-service-list-icon"><Icon name="layers" /></span>
-              <div><strong>{connection.name}</strong><small>{connection.connector_key} · {connection.connection_mode === "READ_ONLY" ? "قراءة فقط" : "كتابة محددة"}</small></div>
-              <div className="md-service-row-meta"><StatusBadge status={connectionStatusTone(status)}>{connectionStatusLabel(status)}</StatusBadge><small>{connection.last_success_at ? `آخر نجاح ${formatDateTime(connection.last_success_at)}` : "لم تنجح مزامنة بعد"}</small></div>
-            </article>;
-          }) : <EmptyState compact title="لا يوجد اتصال بعد" description="ابدأ بموصل معتمد أو أرسل طلب موصل لنظامك الحالي." icon="layers" action={<ButtonLink href="/workspace/connect">إعداد أول اتصال</ButtonLink>} />}
-        </div>
-      </Panel>
-
-      <Panel className="md-service-panel">
-        <div className="md-service-panel-heading"><div><span className="md-eyebrow">يحتاج انتباهك</span><h2>التنبيهات والمشكلات</h2></div></div>
-        <div className="md-service-list">
-          {overview.incidents.data.length ? overview.incidents.data.map((incident) => <article key={incident.id} className="md-service-list-row is-warning">
-            <span className="md-service-list-icon"><Icon name="warning" /></span>
-            <div><strong>{incident.title}</strong><small>{formatDateTime(incident.opened_at)}</small></div>
-            <Badge variant={incident.severity === "critical" || incident.severity === "error" ? "danger" : "warning"}>{incident.severity === "critical" ? "حرج" : incident.severity === "error" ? "خطأ" : "تحذير"}</Badge>
-          </article>) : <EmptyState compact title="لا توجد تنبيهات مفتوحة" description={connections.length ? "لم تسجل مَدار مشكلة ربط تحتاج إجراءً حاليًا." : "ستظهر تنبيهات صحة الربط بعد إنشاء الاتصال."} icon="check" />}
-        </div>
-      </Panel>
-    </section>
-
-    <Panel className="md-service-panel">
-      <div className="md-service-panel-heading"><div><span className="md-eyebrow">المزامنة</span><h2>آخر العمليات</h2></div><Link href="/workspace/data" className="md-button md-button-ghost md-button-sm">البيانات الواصلة</Link></div>
-      <div className="md-service-activity">
-        {overview.runs.data.length ? overview.runs.data.map((run) => <article key={run.id}>
-          <StatusBadge status={connectionStatusTone(run.status)}>{connectionStatusLabel(run.status)}</StatusBadge>
-          <div><strong>{run.sync_mode === "initial" ? "مزامنة أولى" : "مزامنة تزايدية"}</strong><small>{Number(run.records_received).toLocaleString("ar-YE")} سجل · {formatDateTime(run.started_at)}</small>{run.error_message ? <p>{run.error_message}</p> : null}</div>
-        </article>) : <EmptyState compact title="لا يوجد سجل مزامنة" description="بعد تشغيل أول مزامنة ستظهر مدتها وحالتها وعدد السجلات هنا." icon="clock" />}
-      </div>
-    </Panel>
-
-    <QuickActions items={[
-      { href: "/workspace/connect", icon: "layers", label: connections.length ? "مزامنة وفحص الربط" : "إعداد أول اتصال" },
-      { href: "/workspace/data", icon: "document", label: "استعراض البيانات" },
-      ...(sector.enabledModules.includes("analytics") ? [{ href: "/workspace/analytics", icon: "chart" as IconName, label: "فتح التقارير" }] : []),
-      { href: "/workspace/orby", icon: "sparkles", label: `اسأل ORBY عن ${sector.specializationName}` },
-    ]} />
-  </WorkspaceModule>;
 }
 
 async function NativeDashboard({ workspace, sector, moduleUnavailable }: { workspace: BusinessWorkspace; sector: WorkspaceSector; moduleUnavailable: boolean }) {
