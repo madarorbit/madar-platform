@@ -84,5 +84,8 @@ test('server wiring forwards full comparison context and documents request-order
  assert.match(server,/comparison: context\.comparison/);
  assert.match(server,/comparison: input\.context\.comparison/);
  assert.equal(server.includes('comparisonPeriod:'),false);
- for(const phrase of ['self-describing comparison','comparison kind + period','typed filter encoding','request order']) assert.ok(doc.includes(phrase),phrase);
+ assert.match(doc,/self-describing comparison/i);
+ assert.match(doc,/comparison kind \+ period/i);
+ assert.match(doc,/typed filter encoding/i);
+ assert.match(doc,/request order/i);
 });
