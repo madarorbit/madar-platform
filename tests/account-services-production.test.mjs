@@ -24,9 +24,10 @@ test("registration creates a MADAR account profile only", async () => {
 });
 
 test("the account exposes exactly three independently stateful services", async () => {
-  const [catalog, server, account] = await Promise.all([
+  const [catalog, server, accountServer, account] = await Promise.all([
     read("src/lib/services/catalog.ts"),
     read("src/lib/services/server.ts"),
+    read("src/lib/account/server.ts"),
     read("app/account/page.tsx"),
   ]);
   for (const code of ["CONNECT_EXISTING", "BUILD_ON_MADAR", "MADAR_RETAIL"]) {
@@ -37,7 +38,8 @@ test("the account exposes exactly three independently stateful services", async 
   }
   assert.match(server, /workspace_subscriptions\?user_id/);
   assert.match(server, /workspace_requests\?user_id/);
-  assert.match(account, /getAccountServices/);
+  assert.match(accountServer, /getAccountServices/);
+  assert.match(account, /getAccountHomeData/);
   assert.match(account, /صورة الحساب/);
 });
 

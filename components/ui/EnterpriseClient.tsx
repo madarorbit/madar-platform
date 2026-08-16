@@ -1,11 +1,14 @@
 'use client';
 
-import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
+import {useEffect,useId,useRef,useState,useSyncExternalStore,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {Button,IconButton,cx} from '@/components/ui/Enterprise';
 import {Icon,type IconName} from '@/components/ui/Icons';
 
 const focusableSelector='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+const subscribeClient=()=>()=>{};
+const getClientSnapshot=()=>true;
+const getServerSnapshot=()=>false;
 
 export function Menu({label,trigger,children,className=''}:{label:string;trigger:ReactNode;children:ReactNode;className?:string}){
  const[open,setOpen]=useState(false),rootRef=useRef<HTMLDivElement>(null),buttonRef=useRef<HTMLButtonElement>(null),panelRef=useRef<HTMLDivElement>(null),panelId=useId();
@@ -22,8 +25,7 @@ export function Menu({label,trigger,children,className=''}:{label:string;trigger
 }
 
 export function Sheet({open,title,description,children,onClose}:{open:boolean;title:string;description?:string;children:ReactNode;onClose:()=>void}){
- const titleId=useId(),descriptionId=useId(),panelRef=useRef<HTMLElement>(null),returnFocusRef=useRef<HTMLElement|null>(null),[mounted,setMounted]=useState(false);
- useEffect(()=>setMounted(true),[]);
+ const titleId=useId(),descriptionId=useId(),panelRef=useRef<HTMLElement>(null),returnFocusRef=useRef<HTMLElement|null>(null),mounted=useSyncExternalStore(subscribeClient,getClientSnapshot,getServerSnapshot);
  useEffect(()=>{
   if(!open)return;
   returnFocusRef.current=document.activeElement as HTMLElement|null;

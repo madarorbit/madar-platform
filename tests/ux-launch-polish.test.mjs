@@ -39,14 +39,16 @@ test("enterprise navigation exposes history controls, breadcrumbs, progress and 
 });
 
 test("account services and business space have focused navigation", async () => {
-  const [accountPage, workspaceShell, workspacePage, workspaceNavigation] = await Promise.all([
+  const [accountPage, accountServer, workspaceShell, workspacePage, workspaceNavigation] = await Promise.all([
     read("app/account/page.tsx"),
+    read("src/lib/account/server.ts"),
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
     read("app/workspace/page.tsx"),
     read("src/lib/v2/navigation.ts"),
   ]);
-  assert.match(accountPage, /getAccountServices/);
-  assert.match(accountPage, /فتح خدماتي/);
+  assert.match(accountPage, /getAccountHomeData/);
+  assert.match(accountServer, /getAccountServices/);
+  assert.match(accountPage, /href="\/account\/services"/);
   assert.doesNotMatch(accountPage, /student|طالب/i);
   assert.match(workspaceShell, /workspaceNavigationGroups/);
   assert.match(workspaceNavigation, /لوحة المعلومات/);
