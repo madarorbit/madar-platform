@@ -372,16 +372,19 @@ export function CompositionDonut({
 }) {
   const mobile = useMobileVisualization();
   const reducedMotion = useReducedVisualizationMotion();
-  const valid = data.filter((item) => Number.isFinite(item.value) && item.value >= 0);
-  const total = valid.reduce((sum, item) => sum + item.value, 0);
-  if (!valid.length || total <= 0) {
+  const hasInvalidPart = data.some((item) => !Number.isFinite(item.value) || item.value < 0);
+  if (hasInvalidPart) {
+    return <VisualizationGuidance>تحتوي بيانات التركيب على جزء مفقود أو غير صالح. لا يسقط مَدار الفئة بصمت ولا يعيد حساب الإجمالي دونها.</VisualizationGuidance>;
+  }
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  if (!data.length || total <= 0) {
     return noMeaningfulChartData("لا توجد تركيبة ذات معنى", "يحتاج Donut إلى أجزاء صحيحة من إجمالي حقيقي، لا إلى قيم مفقودة أو أصفار مصطنعة.");
   }
-  if (valid.length > MAX_DONUT_SLICES) {
+  if (data.length > MAX_DONUT_SLICES) {
     return <VisualizationGuidance>عدد الفئات أكبر من النطاق المناسب للـDonut. استخدم Bar عندما تصبح مقارنة الفئات أهم من قراءة إجمالي بسيط.</VisualizationGuidance>;
   }
 
-  const entries = valid.map((item, index) => ({
+  const entries = data.map((item, index) => ({
     key: `${item.label}-${index}`,
     label: item.label,
     color: resolveSeriesColor(item.color, index),
@@ -397,7 +400,7 @@ export function CompositionDonut({
                 const entry = payload?.[0];
                 const payloadDatum = entry?.payload as CompositionDatum | undefined;
                 if (!payloadDatum) return null;
-                const index = valid.findIndex((item) => item === payloadDatum || item.label === payloadDatum.label);
+                const index = data.findIndex((item) => item === payloadDatum || item.label === payloadDatum.label);
                 return (
                   <VisualizationTooltip
                     active={active}
@@ -414,7 +417,7 @@ export function CompositionDonut({
               }}
             />
             <Pie
-              data={valid}
+              data={data}
               dataKey="value"
               nameKey="label"
               innerRadius={mobile ? 56 : 68}
@@ -424,7 +427,7 @@ export function CompositionDonut({
               strokeWidth={2}
               isAnimationActive={!reducedMotion}
             >
-              {valid.map((item, index) => (
+              {data.map((item, index) => (
                 <Cell key={`${item.label}-${index}`} fill={resolveSeriesColor(item.color, index)} />
               ))}
             </Pie>
@@ -458,30 +461,31 @@ export function TargetProgress({
   format?: VisualizationValueFormat;
   outcome?: VisualizationOutcome;
 }) {
-  const safeTarget = Number.isFinite(target) && target > 0 ? target : 0;
-  const safeValue = Number.isFinite(value) ? value : 0;
-  const percentage = safeTarget > 0 ? Math.max(0, Math.min(100, (safeValue / safeTarget) * 100)) : 0;
-  if (!safeTarget) {
+  if (!Number.isFinite(value)) {
+    return noMeaningfulChartData("لا توجد قيمة تقدم صالحة", "لا يحول مَدار القيمة المفقودة أو غير الصالحة إلى صفر.");
+  }
+  if (!Number.isFinite(target) || target <= 0) {
     return <VisualizationGuidance>لا يمكن عرض التقدم دون هدف أو حد مرجعي صالح ومعلن.</VisualizationGuidance>;
   }
+  const percentage = Math.max(0, Math.min(100, (value / target) * 100));
   return (
     <VisualizationFrame ariaLabel={ariaLabel} summary={summary}>
       <div className="md-viz-target" data-outcome={outcome}>
         <div className="md-viz-target-header">
           <strong>{label}</strong>
           <span>
-            <bdi dir="ltr">{formatVisualizationValue(safeValue, format)}</bdi>
+            <bdi dir="ltr">{formatVisualizationValue(value, format)}</bdi>
             <span aria-hidden="true"> / </span>
             <span className="md-viz-sr-only">من هدف قدره</span>
-            <bdi dir="ltr">{formatVisualizationValue(safeTarget, format)}</bdi>
+            <bdi dir="ltr">{formatVisualizationValue(target, format)}</bdi>
           </span>
         </div>
         <div
           className="md-viz-target-track"
           role="progressbar"
           aria-valuemin={0}
-          aria-valuemax={safeTarget}
-          aria-valuenow={safeValue}
+          aria-valuemax={target}
+          aria-valuenow={value}
           aria-label={label}
         >
           <span className="md-viz-target-fill" style={{ width: `${percentage}%` }} />
