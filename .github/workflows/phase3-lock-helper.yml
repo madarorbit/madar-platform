@@ -1,0 +1,42 @@
+name: Phase 3 lock helper
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/phase3-lock-helper.yml
+      - package.json
+      - package-lock.json
+
+permissions:
+  contents: write
+
+jobs:
+  generate-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Generate dependency lock with npm
+        run: npm install --save-exact --package-lock-only --ignore-scripts recharts@3.10.1 react-is@19.2.4
+      - name: Commit lock if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "Dependency manifest and lock are already current."
+            exit 0
+          fi
+          git config user.name "madarorbit"
+          git config user.email "orbit.ops.digital@gmail.com"
+          git add package.json package-lock.json
+          git commit -m "build(dashboards): add recharts visualization engine"
+          git push origin HEAD:main
