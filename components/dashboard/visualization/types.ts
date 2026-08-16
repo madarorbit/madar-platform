@@ -7,6 +7,13 @@ export type VisualizationSeriesToken =
   | "series-4"
   | "series-5";
 
+export type VisualizationFillPattern =
+  | "solid"
+  | "diagonal"
+  | "crosshatch"
+  | "dots"
+  | "horizontal";
+
 export type VisualizationSeriesRole = "actual" | "reference";
 
 export type VisualizationValueFormat = {
@@ -29,6 +36,7 @@ export type VisualizationSeriesDefinition = {
   key: string;
   label: string;
   color?: VisualizationSeriesToken;
+  pattern?: VisualizationFillPattern;
   role?: VisualizationSeriesRole;
   outcome?: VisualizationOutcome;
   format?: VisualizationValueFormat;
@@ -51,6 +59,7 @@ export type VisualizationOrientation = "auto" | "horizontal" | "vertical";
 
 export type CompositionDatum = {
   label: string;
-  value: number;
+  value: number | null | undefined;
   color?: VisualizationSeriesToken;
+  pattern?: VisualizationFillPattern;
 };
