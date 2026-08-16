@@ -125,7 +125,7 @@ test('limited records probe is existence/latest only and no limited incident lis
   read('components/connected/ConnectedDecisionOverview.tsx'),
   read('supabase/migrations/20260816224500_connected_dashboard_facts.sql'),
  ]);
- assert.match(server,/records_probe[\s\S]*limit=1/);
+ assert.match(server,/integration_udm_records[^\n]*order=updated_at\.desc&limit=1/);
  assert.match(server,/existence\/latest probe, never a total/);
  assert.doesNotMatch(component,/records\.data\.length|recordTypes|overview\.records\.data\.length/);
  assert.doesNotMatch(server,/integration_health_incidents[^\n]*limit=/);
