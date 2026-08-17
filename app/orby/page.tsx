@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import OrbyShell from "@/components/orby/OrbyShell";
 import OrbyChat from "@/components/orby/OrbyChat";
 import OrbyConversationSidebar from "@/components/orby/OrbyConversationSidebar";
 import {
-  getOptionalShellIdentity,
+  getShellIdentityState,
   getShellServiceOptions,
+  sessionRecoveryHref,
 } from "@/src/lib/shell/server";
 import { supabaseFetch } from "@/src/lib/supabase/server";
 import type { ShellContextDefinition } from "@/src/lib/ux/shell";
@@ -35,8 +37,9 @@ export default async function OrbyPage({
   searchParams: Promise<{ conversation?: string; organization?: string; service?: string; starter?: string; session?: string }>;
 }) {
   const params = await searchParams;
-  const identity = await getOptionalShellIdentity();
-  if (!identity) {
+  const identityState = await getShellIdentityState();
+  if (identityState.status === "recovering") redirect(sessionRecoveryHref("/orby"));
+  if (identityState.status === "unauthenticated") {
     const guestUsage = await readOrbyGuestUsage(await headers()).catch(() => ({ remaining: 5, daily_limit: 5 }));
     const guestKey = `guest:${String(params.session || "chat").slice(0, 80)}:${params.starter || "chat"}`;
     return (
@@ -64,6 +67,7 @@ export default async function OrbyPage({
     );
   }
 
+  const identity = identityState.identity;
   const user = identity.user;
   const [conversationRows, serviceOptions, usageRaw] = await Promise.all([
     supabaseFetch(
