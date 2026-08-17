@@ -16,6 +16,8 @@ const lockdown = fs.readFileSync(
 );
 const actions = fs.readFileSync("app/actions/business.ts", "utf8");
 const dashboard = fs.readFileSync("app/workspace/page.tsx", "utf8");
+const nativeDashboard = fs.readFileSync("components/native/NativeDecisionOverview.tsx", "utf8");
+const nativeDomain = fs.readFileSync("src/lib/native/dashboard/domain.ts", "utf8");
 const navigation = fs.readFileSync("src/lib/v2/navigation.ts", "utf8");
 
 const tenantTables = [
@@ -127,10 +129,12 @@ test("server actions redirect only after work completes", () => {
   assert.doesNotMatch(actions, /try\{[\s\S]*?redirect\([^)]*\)[\s\S]*?\}catch/);
 });
 
-test("workspace exposes the operating center and core modules", () => {
-  assert.match(dashboard, /ملخص مباشر/);
-  assert.match(dashboard, /sectorMetrics/);
-  assert.match(dashboard, /business_tasks/);
+test("workspace exposes the operating center and core modules through the Native Decision Overview", () => {
+  assert.match(dashboard, /NativeDecisionOverview/);
+  assert.match(nativeDashboard, /DashboardMetricCard/);
+  assert.match(nativeDomain, /nativeOverviewMetricRegistry/);
+  assert.match(nativeDomain, /enabledModules\.includes/);
+  assert.doesNotMatch(`${dashboard}\n${nativeDashboard}\n${nativeDomain}`, /sectorMetrics\s*\(/);
   for (const route of [
     "/workspace/products",
     "/workspace/customers",
