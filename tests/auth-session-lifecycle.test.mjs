@@ -28,8 +28,8 @@ test("access-token expiry uses refresh-token recovery instead of being treated a
 test("temporary refresh network, rate-limit, and server failures preserve the session", () => {
   assert.match(proxy, /catch\{return\{kind:'unavailable'\};\}/);
   assert.match(proxy, /status!==400/);
-  assert.match(proxy, /result\.kind==='unavailable'\)return recoveryPendingResponse\(request\)/);
-  const unavailableBranch = proxy.match(/if\(result\.kind==='unavailable'\)[^\n]+/)?.[0] || "";
+  const unavailableBranch = proxy.match(/if\(result\.kind==='unavailable'\)return recoveryPendingResponse\(request\);/)?.[0] || "";
+  assert.ok(unavailableBranch);
   assert.doesNotMatch(unavailableBranch, /clearSession|loginRedirect/);
   assert.match(proxy, /x-madar-auth-recovery-pending/);
 });
