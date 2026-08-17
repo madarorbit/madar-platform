@@ -17,9 +17,10 @@ export type ORBYGuidePresentationProps = Readonly<{
 }>;
 
 /**
- * Phase 3B presentation. The authoritative ORBY asset is intentionally static
- * until a genuine layered/rigged production asset is authored. Semantic motion
- * attributes are exposed for the future driver without faking skeletal motion.
+ * Phase 3B presentation. The authoritative 1536×1536 ORBY master is used
+ * unchanged as the static fallback until a genuine layered/rigged production
+ * asset is authored. Semantic motion attributes are exposed for the future
+ * driver without faking skeletal motion.
  */
 export default function ORBYGuidePresentation({
   character,
@@ -43,10 +44,10 @@ export default function ORBYGuidePresentation({
     >
       <div className="md-orby-guide-character" aria-hidden="true">
         <Image
-          src="/brand/orby-assistant.svg"
+          src="/assets/orby/orby-master.png"
           alt=""
-          width={112}
-          height={112}
+          width={1536}
+          height={1536}
           sizes="(max-width: 639px) 72px, 112px"
           className="md-orby-guide-character-image"
           priority={false}
