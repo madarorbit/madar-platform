@@ -1,8 +1,9 @@
 import "server-only";
 
+import { redirect } from "next/navigation";
 import { cache } from "react";
 import {
-  currentUser,
+  currentUserState,
   profileForUser,
   supabaseFetch,
   type AuthUser,
@@ -24,12 +25,20 @@ export type ShellSubscriptionRow = {
 };
 
 export type ShellServerIdentity = { userId: string; role: string; user: AuthUser; profile: Profile | null; shell: ShellIdentity };
+export type ShellIdentityState =
+  | { status: "authenticated"; identity: ShellServerIdentity }
+  | { status: "unauthenticated" }
+  | { status: "recovering" };
 const nested = <T,>(value: T | T[] | null | undefined) => Array.isArray(value) ? value[0] : value;
 const safeNotificationHref = (value: string | null) => value?.startsWith("/") && !value.startsWith("//") ? value : "/account/notifications";
+const safeReturnPath = (value: string) => value.startsWith("/") && !value.startsWith("//") ? value : "/account";
+export const sessionRecoveryHref = (nextPath: string) => `/auth/recover?next=${encodeURIComponent(safeReturnPath(nextPath))}`;
+const loginHref = (nextPath: string) => `/login?next=${encodeURIComponent(safeReturnPath(nextPath))}`;
 
-export const getOptionalShellIdentity = cache(async (): Promise<ShellServerIdentity | null> => {
-  const user = await currentUser();
-  if (!user) return null;
+export const getShellIdentityState = cache(async (): Promise<ShellIdentityState> => {
+  const auth = await currentUserState();
+  if (auth.status !== "authenticated") return { status: auth.status };
+  const user = auth.user;
   const [profileValue, unreadRows, notificationRows] = await Promise.all([
     profileForUser(user.id).catch(() => null),
     supabaseFetch("/rest/v1/notifications?read_at=is.null&select=id").catch(() => []),
@@ -44,7 +53,7 @@ export const getOptionalShellIdentity = cache(async (): Promise<ShellServerIdent
     createdAt: item.created_at,
     read: Boolean(item.read_at),
   }));
-  return {
+  const identity: ShellServerIdentity = {
     user,
     profile,
     userId: user.id,
@@ -59,7 +68,22 @@ export const getOptionalShellIdentity = cache(async (): Promise<ShellServerIdent
       notifications,
     },
   };
+  return { status: "authenticated", identity };
 });
+
+/** Optional presentation identity. A recovering session is not a guest session; it is simply unavailable for this public render. */
+export const getOptionalShellIdentity = cache(async (): Promise<ShellServerIdentity | null> => {
+  const state = await getShellIdentityState();
+  return state.status === "authenticated" ? state.identity : null;
+});
+
+/** Protected rendering boundary: invalid sessions go to login; transient verification goes to bounded recovery. */
+export async function requireShellIdentity(nextPath: string): Promise<ShellServerIdentity> {
+  const state = await getShellIdentityState();
+  if (state.status === "recovering") redirect(sessionRecoveryHref(nextPath));
+  if (state.status === "unauthenticated") redirect(loginHref(nextPath));
+  return state.identity;
+}
 
 export const getShellSubscriptionRows = cache(async (): Promise<ShellSubscriptionRow[]> => {
   const identity = await getOptionalShellIdentity();
