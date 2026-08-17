@@ -158,12 +158,12 @@ test('Connected Overview uses shared dashboard layers, no Global Date Range, no 
  assert.doesNotMatch(component,/\/workspace\/analytics/);
 });
 
-test('Phase 6 remains Connected-only and does not start Phase 7 scope',async()=>{
+test('Phase 6 remains isolated after Native receives its own Phase 7 implementation',async()=>{
  const [page,component,server]=await Promise.all([
   read('app/workspace/page.tsx'),
   read('components/connected/ConnectedDecisionOverview.tsx'),
   read('src/lib/connected/dashboard/server.ts'),
  ]);
- assert.match(page,/nativeVisibleMetrics/,'Native implementation remains present and separate');
- assert.doesNotMatch(`${component}\n${server}`,/retail\/workspace|AdminDashboard|Founder|Phase 7/i);
+ assert.match(page,/NativeDecisionOverview/,'Native implementation remains present and separate');
+ assert.doesNotMatch(`${component}\n${server}`,/retail\/workspace|AdminDashboard|Founder|native\/dashboard/i);
 });
