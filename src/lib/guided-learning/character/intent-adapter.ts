@@ -1,7 +1,8 @@
 import type { GuideCharacterDirection, GuideCharacterIntent } from "../contracts";
-import type { GuidePhysicalPlacement, GuideTargetResolutionState } from "../browser/engine";
+import type { GuidePhysicalPlacement } from "../browser/engine";
 import type {
   ORBYCharacterPresentationRequest,
+  ORBYLayoutDirection,
   ORBYMotionDirection,
   ORBYMotionIntent,
   ORBYMotionStage,
@@ -23,7 +24,7 @@ export function mapGuideIntentToORBY(intent?: GuideCharacterIntent): ORBYMotionI
 
 export function semanticDirectionFromPhysical(
   physical: "left" | "right",
-  pageDirection: "rtl" | "ltr",
+  pageDirection: ORBYLayoutDirection,
 ): ORBYMotionDirection {
   if (physical === "left") return pageDirection === "rtl" ? "inline-end" : "inline-start";
   return pageDirection === "rtl" ? "inline-start" : "inline-end";
@@ -31,7 +32,7 @@ export function semanticDirectionFromPhysical(
 
 export function directionFromPlacement(
   placement: GuidePhysicalPlacement,
-  pageDirection: "rtl" | "ltr",
+  pageDirection: ORBYLayoutDirection,
 ): ORBYMotionDirection {
   // Placement describes where the presentation sits relative to the target;
   // pointing direction is therefore the inverse physical direction.
@@ -45,7 +46,7 @@ export function directionFromPlacement(
 export function resolveGuideDirection(
   requested: GuideCharacterDirection | undefined,
   placement: GuidePhysicalPlacement,
-  pageDirection: "rtl" | "ltr",
+  pageDirection: ORBYLayoutDirection,
 ): ORBYMotionDirection {
   if (!requested || requested === "target") return directionFromPlacement(placement, pageDirection);
   if (requested === "left" || requested === "right") return semanticDirectionFromPhysical(requested, pageDirection);
@@ -54,13 +55,14 @@ export function resolveGuideDirection(
 
 export function resolveORBYPresentationRequest(
   request: ORBYCharacterPresentationRequest,
-): Readonly<{ intent: ORBYMotionIntent; direction: ORBYMotionDirection }> {
-  if (request.targetState === "pending") return { intent: "waiting", direction: "neutral" };
-  if (request.targetState !== "resolved") return { intent: "waiting", direction: "neutral" };
+): Readonly<{ intent: ORBYMotionIntent; direction: ORBYMotionDirection; layoutDirection: ORBYLayoutDirection }> {
+  if (request.targetState === "pending") return { intent: "waiting", direction: "neutral", layoutDirection: request.pageDirection };
+  if (request.targetState !== "resolved") return { intent: "waiting", direction: "neutral", layoutDirection: request.pageDirection };
   const intent = mapGuideIntentToORBY(request.guideIntent);
   return {
     intent,
     direction: resolveGuideDirection(request.guideDirection, request.placement, request.pageDirection),
+    layoutDirection: request.pageDirection,
   };
 }
 
