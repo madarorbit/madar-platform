@@ -3,7 +3,7 @@
 .md-guide-host {
   position: fixed;
   inset: 0;
-  z-index: var(--md-z-guided);
+  z-index: calc(var(--md-z-modal) + 5);
   pointer-events: none;
   font-family: var(--md-font-sans);
 }
