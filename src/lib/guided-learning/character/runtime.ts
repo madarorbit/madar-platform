@@ -69,16 +69,17 @@ export class ORBYCharacterRuntime {
   async present(input: Readonly<{
     intent: ORBYMotionIntent;
     direction: ORBYMotionDirection;
-    layoutDirection: ORBYLayoutDirection;
+    layoutDirection?: ORBYLayoutDirection;
     reducedMotion: boolean;
   }>): Promise<number> {
     if (this.disposed) return this.sequence;
     const previous = this.snapshot.frame;
+    const layoutDirection = input.layoutDirection ?? previous.layoutDirection;
     if (
       previous.active &&
       previous.intent === input.intent &&
       previous.direction === input.direction &&
-      previous.layoutDirection === input.layoutDirection &&
+      previous.layoutDirection === layoutDirection &&
       previous.mode === motionMode(input.reducedMotion)
     ) {
       return previous.sequence;
@@ -89,12 +90,12 @@ export class ORBYCharacterRuntime {
     const stages = createORBYMotionPlan(input);
     const entering = !previous.active && !input.reducedMotion;
     if (entering) {
-      this.apply(sequence, "enter", input.direction, input.layoutDirection, "animated", true);
+      this.apply(sequence, "enter", input.direction, layoutDirection, "animated", true);
     }
     const offset = entering ? 85 : 0;
     for (const stage of stages) {
       this.schedule(sequence, offset + stage.delayMs, () => {
-        this.apply(sequence, stage.intent, stage.direction, input.layoutDirection, motionMode(input.reducedMotion), true);
+        this.apply(sequence, stage.intent, stage.direction, layoutDirection, motionMode(input.reducedMotion), true);
       });
     }
     return sequence;
