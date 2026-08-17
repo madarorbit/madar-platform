@@ -37,6 +37,7 @@ export default function ORBYGuidePresentation({
   return (
     <div
       className="md-orby-guide-presentation"
+      data-orby-source="authoritative-master"
       data-orby-motion-intent={frame.intent}
       data-orby-motion-direction={frame.direction}
       data-orby-motion-mode={frame.mode}
