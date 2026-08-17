@@ -19,3 +19,11 @@ test("restored-tab recovery has one in-flight refresh request and one completion
   assert.match(recoverySurface, /router\.replace\(nextPath\)/);
   assert.doesNotMatch(recoverySurface, /router\.refresh\(|sessionStorage|localStorage/);
 });
+
+test("refresh bypass is limited to known public assets instead of arbitrary file-like routes", () => {
+  assert.match(proxy, /path\.startsWith\('\/brand\/'\)/);
+  assert.match(proxy, /path\.startsWith\('\/assets\/'\)/);
+  assert.match(proxy, /path\.startsWith\('\/services\/'\)/);
+  assert.match(proxy, /PUBLIC_ROOT_ASSET/);
+  assert.doesNotMatch(proxy, /pdf\|zip|zip\|pdf/);
+});
