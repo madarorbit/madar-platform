@@ -75,6 +75,32 @@ export default function GuidedLearningHost({ controller }: { controller: GuidedL
         spotlight: visual.spotlight,
       };
 
+  const run = useCallback(async (operation: () => Promise<unknown>) => {
+    if (transitioning) return;
+    setTransitioning(true);
+    try {
+      await operation();
+    } finally {
+      setTransitioning(false);
+    }
+  }, [transitioning]);
+
+  const runTerminal = useCallback(async (
+    reason: "complete" | "dismiss" | "skip",
+    operation: () => Promise<unknown>,
+  ) => {
+    if (transitioning) return;
+    setTransitioning(true);
+    const reducedMotion = prefersReducedMotion();
+    characterRuntime.exit({ reason, reducedMotion });
+    try {
+      if (!reducedMotion) await briefDelay(reason === "complete" ? 170 : 90);
+      await operation();
+    } finally {
+      setTransitioning(false);
+    }
+  }, [characterRuntime, transitioning]);
+
   useEffect(() => {
     if (!active || !step || !stepKey) return;
     const sequence = ++resolutionSequence.current;
@@ -182,9 +208,7 @@ export default function GuidedLearningHost({ controller }: { controller: GuidedL
     };
     document.addEventListener("keydown", keydown, true);
     return () => document.removeEventListener("keydown", keydown, true);
-  // runTerminal is intentionally stable over the render values used here.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, controller, guide, pointerPolicy, transitioning]);
+  }, [active, controller, guide, pointerPolicy, runTerminal, transitioning]);
 
   useEffect(() => {
     if (active) return;
@@ -202,32 +226,6 @@ export default function GuidedLearningHost({ controller }: { controller: GuidedL
   }, [active, characterRuntime]);
 
   useEffect(() => () => characterRuntime.dispose(), [characterRuntime]);
-
-  const run = useCallback(async (operation: () => Promise<unknown>) => {
-    if (transitioning) return;
-    setTransitioning(true);
-    try {
-      await operation();
-    } finally {
-      setTransitioning(false);
-    }
-  }, [transitioning]);
-
-  const runTerminal = useCallback(async (
-    reason: "complete" | "dismiss" | "skip",
-    operation: () => Promise<unknown>,
-  ) => {
-    if (transitioning) return;
-    setTransitioning(true);
-    const reducedMotion = prefersReducedMotion();
-    characterRuntime.exit({ reason, reducedMotion });
-    try {
-      if (!reducedMotion) await briefDelay(reason === "complete" ? 170 : 90);
-      await operation();
-    } finally {
-      setTransitioning(false);
-    }
-  }, [characterRuntime, transitioning]);
 
   const viewport = active && clientReady ? getGuideViewport() : { width: 0, height: 0 };
   const targetTransitioning = currentVisual.resolution === "pending";
@@ -248,14 +246,19 @@ export default function GuidedLearningHost({ controller }: { controller: GuidedL
     targetState: currentVisual.resolution,
     reducedMotion: prefersReducedMotion(),
   }) : null;
+  const characterIntent = characterRequest?.intent ?? null;
+  const characterDirection = characterRequest?.direction ?? null;
+  const characterLayoutDirection = characterRequest?.layoutDirection ?? null;
 
   useEffect(() => {
-    if (!active || !characterRequest) return;
+    if (!active || !characterIntent || !characterDirection || !characterLayoutDirection) return;
     void characterRuntime.present({
-      ...characterRequest,
+      intent: characterIntent,
+      direction: characterDirection,
+      layoutDirection: characterLayoutDirection,
       reducedMotion: prefersReducedMotion(),
     });
-  }, [active, characterRequest?.direction, characterRequest?.intent, characterRuntime, stepKey]);
+  }, [active, characterDirection, characterIntent, characterLayoutDirection, characterRuntime, stepKey]);
 
   if (!clientReady || !active || !guide || !step) return null;
 
@@ -294,7 +297,7 @@ export default function GuidedLearningHost({ controller }: { controller: GuidedL
             ? runTerminal("complete", () => controller.nextStep())
             : run(() => controller.nextStep()))}
         >
-          {currentIndex >= total ? "إنهاء" : step.interaction.mode === "user_action" ? "جرّب الآن" : "التالي"}
+          {currentIndex >= total ? "إنهاء" : "التالي"}
         </button>
       )}
       {step.target?.optional && unavailable ? (
