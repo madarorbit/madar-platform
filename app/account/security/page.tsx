@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "الحساب والأمان | مَدار" };
 
 export default async function SecurityPage() {
-  const user = await requireUser();
+  const user = await requireUser("/account/security");
   const provider = typeof user.app_metadata?.provider === "string" ? user.app_metadata.provider : "email";
   return (
     <AccountPage size="narrow">
