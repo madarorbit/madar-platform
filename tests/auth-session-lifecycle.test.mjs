@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const proxy = await readFile(new URL("../proxy.ts", import.meta.url), "utf8");
+const refreshHelper = await readFile(new URL("../src/lib/auth/session-refresh.ts", import.meta.url), "utf8");
 const server = await readFile(new URL("../src/lib/supabase/server.ts", import.meta.url), "utf8");
 const sharedAuth = await readFile(new URL("../src/lib/auth.ts", import.meta.url), "utf8");
 const authActions = await readFile(new URL("../app/actions/auth.ts", import.meta.url), "utf8");
@@ -20,16 +21,16 @@ test("protected unauthenticated requests still go to login and preserve the retu
 
 test("access-token expiry uses refresh-token recovery instead of being treated as logout", () => {
   has(proxy, "expiresSoon(access)");
-  has(proxy, "grant_type=refresh_token");
   has(proxy, "result.kind==='refreshed'");
   has(proxy, "setSessionCookies(result,session)");
+  has(refreshHelper, "grant_type=refresh_token");
   has(authActions, "madar-refresh-token");
   has(authActions, "const SESSION_MAX_AGE = 60 * 60 * 24 * 365;");
 });
 
 test("temporary refresh network, rate-limit, and server failures preserve the session", () => {
-  has(proxy, "kind:'unavailable'");
-  has(proxy, "status!==400");
+  has(refreshHelper, '{ kind: "unavailable" }');
+  has(refreshHelper, "status !== 400");
   has(proxy, "if(result.kind==='unavailable')return recoveryPendingResponse(request);");
   has(proxy, "x-madar-auth-recovery-pending");
   const unavailableBranch = "if(result.kind==='unavailable')return recoveryPendingResponse(request);";
@@ -37,10 +38,10 @@ test("temporary refresh network, rate-limit, and server failures preserve the se
 });
 
 test("only terminal refresh-token invalidation destroys the persistent session", () => {
-  has(proxy, "refreshFailureIsTerminal");
-  has(proxy, "status===401||status===403");
-  has(proxy, "refresh[_ ]?token");
-  has(proxy, "invalid[_ ]?grant");
+  has(refreshHelper, "refreshFailureIsTerminal");
+  has(refreshHelper, "status === 401 || status === 403");
+  has(refreshHelper, "refresh[_ ]?token");
+  has(refreshHelper, "invalid[_ ]?grant");
   const clearCalls = proxy.match(/clearSession\(result\)/g) || [];
   assert.equal(clearCalls.length, 2);
 });
