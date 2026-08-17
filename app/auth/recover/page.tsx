@@ -1,6 +1,6 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import SessionRecoveryState from "@/components/auth/SessionRecoveryState";
-import { getShellIdentityState } from "@/src/lib/shell/server";
 
 const safeReturnPath = (value: string | undefined) =>
   value?.startsWith("/") && !value.startsWith("//") ? value : "/account";
@@ -14,10 +14,8 @@ export default async function AuthRecoveryPage({
 }) {
   const params = await searchParams;
   const nextPath = safeReturnPath(params.next);
-  const state = await getShellIdentityState();
-
-  if (state.status === "authenticated") redirect(nextPath);
-  if (state.status === "unauthenticated") {
+  const jar = await cookies();
+  if (!jar.get("madar-refresh-token")?.value) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
