@@ -44,12 +44,17 @@ test("external source of truth cannot mutate Native business operations", async 
 });
 
 test("Native dashboard and navigation only expose enabled modules", async () => {
-  const [dashboard, navigation] = await Promise.all([
+  const [dashboard, component, domain, navigation] = await Promise.all([
     read("app/workspace/page.tsx"),
+    read("components/native/NativeDecisionOverview.tsx"),
+    read("src/lib/native/dashboard/domain.ts"),
     read("src/lib/v2/navigation.ts"),
   ]);
-  assert.match(dashboard, /nativeVisibleMetrics/);
-  assert.match(dashboard, /sector\.enabledModules\.includes/);
+  assert.match(dashboard, /NativeDecisionOverview/);
+  assert.match(component, /enabledModules\.includes/);
+  assert.match(domain, /nativeSetupRequired/);
+  assert.match(domain, /enabledModules\.includes/);
+  assert.doesNotMatch(`${dashboard}\n${component}\n${domain}`, /nativeVisibleMetrics|sectorMetrics\s*\(/);
   assert.match(navigation, /enabledKeys \? new Set\(enabledKeys\) : null/);
 });
 
