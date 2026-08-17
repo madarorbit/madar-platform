@@ -35,10 +35,12 @@ test('authenticated navigation depends on the verified auth user, not a profile 
   const [navbar,identity,home,server]=await Promise.all([read('components/layout/Navbar.tsx'),read('src/lib/shell/server.ts'),read('app/page.tsx'),read('src/lib/supabase/server.ts')]);
   assert.match(navbar,/getOptionalShellIdentity/);
   assert.match(navbar,/authenticated=\{Boolean\(identity\)\}/);
-  assert.match(identity,/currentUser\(\)/);
+  assert.match(identity,/currentUserState\(\)/);
+  assert.match(identity,/const user = auth\.user/);
   assert.match(identity,/profileForUser\(user\.id\)/);
   assert.match(home,/Boolean\(await getOptionalShellIdentity\(\)\)/);
   assert.doesNotMatch(home,/Boolean\(await currentProfile\(\)/);
+  assert.match(server,/export async function currentUserState/);
   assert.match(server,/export async function profileForUser/);
 });
 
@@ -71,6 +73,6 @@ test('health endpoint reports the approved stable V2 technical baseline', async 
   assert.match(source, /const RELEASE_CHANNEL='stable'/);
   assert.match(source, /const RELEASED_AT='2026-08-04'/);
   assert.match(source, /platform_generation:'MADAR_V2'/);
-  assert.match(source, /orby_generation:'ORBY_V2'/);
+  assert.match(source,/orby_generation:'ORBY_V2'/);
   assert.doesNotMatch(source, /beta-2\.0\.0/);
 });
