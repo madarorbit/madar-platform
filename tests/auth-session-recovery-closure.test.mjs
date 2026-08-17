@@ -7,9 +7,13 @@ const [
   proxy,
   server,
   shell,
+  strictAuth,
+  refreshHelper,
+  refreshRoute,
   home,
   login,
   accountLayout,
+  securityPage,
   orby,
   retailLayout,
   guideBoundary,
@@ -19,9 +23,13 @@ const [
   read("proxy.ts"),
   read("src/lib/supabase/server.ts"),
   read("src/lib/shell/server.ts"),
+  read("src/lib/auth.ts"),
+  read("src/lib/auth/session-refresh.ts"),
+  read("app/auth/refresh/route.ts"),
   read("app/page.tsx"),
   read("app/login/page.tsx"),
   read("app/account/layout.tsx"),
+  read("app/account/security/page.tsx"),
   read("app/orby/page.tsx"),
   read("app/retail/workspace/layout.tsx"),
   read("components/guided-learning/GuidedLearningBoundary.tsx"),
@@ -36,13 +44,30 @@ test("healthy access token bypasses refresh and continues normally", () => {
   has(proxy, "forwardedResponse(request)");
   const healthyBranch = proxy.slice(
     proxy.indexOf("if(access&&!expiresSoon(access))"),
-    proxy.indexOf("if(refresh){"),
+    proxy.indexOf("if(access&&!tokenExpired(access)"),
   );
   assert.doesNotMatch(healthyBranch, /refreshSession\(/);
 });
 
-test("near-expiry access token rotates cookies after a successful refresh", () => {
-  has(proxy, "expiresSoon(access)");
+test("near-expiry background requests do not create proactive refresh fan-out", () => {
+  has(proxy, "!tokenExpired(access)&&!isDocumentNavigation(request)");
+  const backgroundBranch = proxy.slice(
+    proxy.indexOf("if(access&&!tokenExpired(access)"),
+    proxy.indexOf("if(refresh){"),
+  );
+  assert.doesNotMatch(backgroundBranch, /refreshSession\(/);
+});
+
+test("static assets and the dedicated recovery endpoints never enter session refresh", () => {
+  has(proxy, "isStaticAsset(path)");
+  has(proxy, "authRefreshBypass=['/auth/recover','/auth/refresh']");
+  has(proxy, "if(isStaticAsset(path)||authRefreshBypass.includes(path))return forwardedResponse(request);");
+  const bypassIndex = proxy.indexOf("if(isStaticAsset(path)||authRefreshBypass.includes(path))");
+  const refreshIndex = proxy.indexOf("const result=await refreshSession");
+  assert.ok(bypassIndex >= 0 && refreshIndex > bypassIndex, "asset/recovery bypass must happen before refresh");
+});
+
+test("successful navigation refresh rotates both cookies", () => {
   has(proxy, "const result=await refreshSession(base,key,refresh);");
   has(proxy, "if(result.kind==='refreshed')return refreshedResponse(request,result.session);");
   has(proxy, "request.cookies.set('madar-access-token',session.access_token)");
@@ -59,9 +84,35 @@ test("temporary refresh outage preserves cookies and becomes a recoverable reque
 });
 
 test("terminal invalid refresh token still clears session and protects routes", () => {
-  has(proxy, "refreshFailureIsTerminal");
-  has(proxy, "status===401||status===403");
+  has(refreshHelper, "refreshFailureIsTerminal");
+  has(refreshHelper, "status === 401 || status === 403");
   has(proxy, "const result=protectedRoute?loginRedirect(request):NextResponse.next();clearSession(result);return result;");
+  has(refreshRoute, "result.kind === \"invalid\"");
+  has(refreshRoute, 'jar.set("madar-refresh-token", "", cookieOptions(0))');
+});
+
+test("dedicated recovery endpoint is the single cookie-writing recovery authority", () => {
+  has(refreshRoute, 'jar.get("madar-refresh-token")');
+  has(refreshRoute, "await refreshSession(url, key, refreshToken)");
+  has(refreshRoute, 'jar.set(\n      "madar-access-token"');
+  has(refreshRoute, 'jar.set(\n      "madar-refresh-token"');
+  has(refreshRoute, '{ status: "recovering" }, 503');
+  has(refreshRoute, 'response.headers.set("Retry-After", "2")');
+});
+
+test("recovery page does not misclassify an expired access token as logout", () => {
+  has(recoveryPage, 'jar.get("madar-refresh-token")');
+  assert.doesNotMatch(recoveryPage, /getShellIdentityState|currentUserState|currentUser\(/);
+  has(recoveryPage, "<SessionRecoveryState nextPath={nextPath} />");
+});
+
+test("browser recovery retries the explicit endpoint without refresh or storage loops", () => {
+  has(recoverySurface, 'fetch("/auth/refresh"');
+  has(recoverySurface, "MAX_AUTOMATIC_ATTEMPTS = 2");
+  has(recoverySurface, "inFlightRef");
+  has(recoverySurface, "router.replace(nextPath)");
+  assert.doesNotMatch(recoverySurface, /sessionStorage|localStorage|setInterval|location\.reload/);
+  assert.doesNotMatch(recoverySurface, /setTimeout\(\(\) => router\.refresh/);
 });
 
 test("public shell can render without optional identity while recovery remains explicit", () => {
@@ -76,12 +127,12 @@ test("public login does not require strict authentication", () => {
   assert.doesNotMatch(login, /currentUser|requireShellIdentity|AuthVerificationUnavailableError/);
 });
 
-test("bounded server recovery cannot form an automatic refresh loop", () => {
-  has(recoveryPage, "state.status === \"authenticated\"");
-  has(recoveryPage, "state.status === \"unauthenticated\"");
-  has(recoverySurface, "MAX_AUTOMATIC_RETRIES = 2");
-  has(recoverySurface, "RECOVERY_WINDOW_MS = 30_000");
-  assert.doesNotMatch(recoverySurface, /setInterval|location\.reload|window\.location/);
+test("strict render guards redirect recovery instead of throwing it into an error boundary", () => {
+  has(strictAuth, "currentUserState");
+  has(strictAuth, "state.status==='recovering'");
+  has(strictAuth, "redirect(recoveryHref(nextPath))");
+  has(securityPage, 'requireUser("/account/security")');
+  assert.doesNotMatch(strictAuth, /AuthVerificationUnavailableError/);
 });
 
 test("account protected route distinguishes recovery from login", () => {
@@ -109,7 +160,7 @@ test("Guided Learning boundary adds no server auth verification of its own", () 
   assert.doesNotMatch(guideBoundary, /currentUser|getOptionalShellIdentity|requireShellIdentity|supabaseFetch/);
 });
 
-test("strict auth is still strict for protected data and actions", () => {
+test("strict auth remains strict for protected data and actions", () => {
   has(server, "if(state.status==='recovering')throw new AuthVerificationUnavailableError();");
   has(server, "return state.status==='authenticated'?state.user:null;");
   assert.doesNotMatch(server, /currentUser[\s\S]{0,250}catch\(\(\) => null\)/);
