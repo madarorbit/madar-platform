@@ -17,7 +17,8 @@ function tokenExpired(token:string){const payload=jwtPayload(token);return !payl
 function isProtected(path:string){return sessionProtected.some(prefix=>path===prefix||path.startsWith(`${prefix}/`))}
 function isAuthOnly(path:string){return authOnly.some(prefix=>path===prefix||path.startsWith(`${prefix}/`))}
 function isStaticAsset(path:string){return path.startsWith('/_next/')||path.startsWith('/brand/')||path.startsWith('/assets/')||path==='/manifest.webmanifest'||path==='/robots.txt'||path==='/sitemap.xml'||path==='/favicon.ico'||/\.(?:png|jpe?g|webp|gif|svg|ico|css|js|map|woff2?|ttf|otf|mp4|webm|mp3|wav|pdf|zip)$/i.test(path)}
-function isDocumentNavigation(request:NextRequest){const dest=request.headers.get('sec-fetch-dest');if(dest==='document')return true;const accept=request.headers.get('accept')||'';return !request.headers.has('rsc')&&accept.includes('text/html')}
+function isRscRequest(request:NextRequest){const accept=request.headers.get('accept')||'';return request.headers.get('rsc')==='1'||accept.includes('text/x-component')}
+function isDocumentNavigation(request:NextRequest){const dest=request.headers.get('sec-fetch-dest');if(dest==='document')return true;const accept=request.headers.get('accept')||'';return !isRscRequest(request)&&accept.includes('text/html')}
 function safeReturnTo(value:string|null|undefined,fallback='/account'){return value?.startsWith('/')&&!value.startsWith('//')&&!value.startsWith('/login')?value:fallback}
 function loginRedirect(request:NextRequest){const target=request.nextUrl.clone(),next=`${request.nextUrl.pathname}${request.nextUrl.search}`;target.pathname='/login';target.search='';target.searchParams.set('next',next);return NextResponse.redirect(target)}
 function authenticatedRedirect(request:NextRequest){return NextResponse.redirect(new URL(safeReturnTo(request.nextUrl.searchParams.get('next')),request.url))}
@@ -42,6 +43,7 @@ export async function proxy(request:NextRequest){
  const protectedRoute=isProtected(path),authOnlyRoute=isAuthOnly(path),access=request.cookies.get('madar-access-token')?.value,refresh=request.cookies.get('madar-refresh-token')?.value;
  if(access&&!expiresSoon(access)){const result=authOnlyRoute?authenticatedRedirect(request):forwardedResponse(request);rememberPath(result,request);return result;}
  if(access&&!tokenExpired(access)&&!isDocumentNavigation(request)){const result=forwardedResponse(request);rememberPath(result,request);return result;}
+ if(refresh&&isRscRequest(request))return recoveryPendingResponse(request);
  if(refresh){
   const base=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if(base&&key){
