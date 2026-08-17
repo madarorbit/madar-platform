@@ -333,10 +333,8 @@ export function trackGuideTarget(
   const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
   resizeObserver?.observe(element);
   const parent = element.parentElement;
-  const detachObserver = parent && typeof MutationObserver !== "undefined"
-    ? new MutationObserver(schedule)
-    : null;
-  detachObserver?.observe(parent, { childList: true, subtree: true });
+  const detachObserver = parent && typeof MutationObserver !== "undefined" ? new MutationObserver(schedule) : null;
+  if (detachObserver && parent) detachObserver.observe(parent, { childList: true, subtree: true });
   schedule();
   return () => {
     stopped = true;
