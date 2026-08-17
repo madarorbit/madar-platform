@@ -73,8 +73,21 @@ test("missing, hidden, detached or pending targets never produce a point into em
       targetState,
       reducedMotion: false,
     });
-    assert.deepEqual(result, { intent: "waiting", direction: "neutral" });
+    assert.deepEqual(result, { intent: "waiting", direction: "neutral", layoutDirection: "rtl" });
   }
+});
+
+test("resolved requests carry layout direction into the future animation driver boundary", () => {
+  const result = resolveORBYPresentationRequest({
+    guideIntent: "point",
+    guideDirection: "target",
+    placement: "right",
+    pageDirection: "ltr",
+    targetState: "resolved",
+    reducedMotion: false,
+  });
+  assert.equal(result.layoutDirection, "ltr");
+  assert.equal(result.direction, "inline-start");
 });
 
 test("resolved point intent uses look then point instead of snapping directly", () => {
@@ -91,22 +104,23 @@ test("reduced motion keeps the semantic point as a still pose without flourish",
 test("rapid step changes cancel stale look/point stages", async () => {
   const manual = manualScheduler();
   const runtime = new ORBYCharacterRuntime({ scheduler: manual.scheduler });
-  await runtime.present({ intent: "point", direction: "inline-start", reducedMotion: false });
+  await runtime.present({ intent: "point", direction: "inline-start", layoutDirection: "rtl", reducedMotion: false });
   assert.equal(runtime.getSnapshot().frame.intent, "enter");
   assert.ok(manual.size() > 0);
-  await runtime.present({ intent: "attention", direction: "inline-end", reducedMotion: false });
+  await runtime.present({ intent: "attention", direction: "inline-end", layoutDirection: "rtl", reducedMotion: false });
   manual.flush();
   assert.equal(runtime.getSnapshot().frame.intent, "attention");
   assert.equal(runtime.getSnapshot().frame.direction, "inline-end");
+  assert.equal(runtime.getSnapshot().frame.layoutDirection, "rtl");
   runtime.dispose();
 });
 
 test("same target semantics do not restart the motion plan on geometry-only movement", async () => {
   const manual = manualScheduler();
   const runtime = new ORBYCharacterRuntime({ scheduler: manual.scheduler });
-  await runtime.present({ intent: "attention", direction: "inline-start", reducedMotion: true });
+  await runtime.present({ intent: "attention", direction: "inline-start", layoutDirection: "rtl", reducedMotion: true });
   const first = runtime.getSnapshot().frame.sequence;
-  await runtime.present({ intent: "attention", direction: "inline-start", reducedMotion: true });
+  await runtime.present({ intent: "attention", direction: "inline-start", layoutDirection: "rtl", reducedMotion: true });
   assert.equal(runtime.getSnapshot().frame.sequence, first);
   runtime.dispose();
 });
@@ -124,7 +138,7 @@ test("animation driver is not requested while no guide presentation is active", 
 
 test("animation driver failure degrades to static fallback without throwing", async () => {
   const runtime = new ORBYCharacterRuntime({ driverFactory: async () => { throw new Error("rig unavailable"); } });
-  await runtime.present({ intent: "idle", direction: "neutral", reducedMotion: true });
+  await runtime.present({ intent: "idle", direction: "neutral", layoutDirection: "rtl", reducedMotion: true });
   await Promise.resolve();
   await Promise.resolve();
   assert.equal(runtime.getSnapshot().driverStatus, "fallback");
@@ -135,19 +149,19 @@ test("animation driver failure degrades to static fallback without throwing", as
 test("completion is the only terminal path allowed to celebrate", async () => {
   const completeScheduler = manualScheduler();
   const complete = new ORBYCharacterRuntime({ scheduler: completeScheduler.scheduler });
-  await complete.present({ intent: "idle", direction: "neutral", reducedMotion: true });
+  await complete.present({ intent: "idle", direction: "neutral", layoutDirection: "rtl", reducedMotion: true });
   complete.exit({ reason: "complete", reducedMotion: false });
   assert.equal(complete.getSnapshot().frame.intent, "celebrate");
   completeScheduler.flush();
   assert.equal(complete.getSnapshot().frame.intent, "exit");
 
   const dismissed = new ORBYCharacterRuntime();
-  await dismissed.present({ intent: "idle", direction: "neutral", reducedMotion: true });
+  await dismissed.present({ intent: "idle", direction: "neutral", layoutDirection: "rtl", reducedMotion: true });
   dismissed.exit({ reason: "dismiss", reducedMotion: false });
   assert.equal(dismissed.getSnapshot().frame.intent, "exit");
 
   const skipped = new ORBYCharacterRuntime();
-  await skipped.present({ intent: "idle", direction: "neutral", reducedMotion: true });
+  await skipped.present({ intent: "idle", direction: "neutral", layoutDirection: "rtl", reducedMotion: true });
   skipped.exit({ reason: "skip", reducedMotion: false });
   assert.equal(skipped.getSnapshot().frame.intent, "exit");
   complete.dispose(); dismissed.dispose(); skipped.dispose();
