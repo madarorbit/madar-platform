@@ -11,6 +11,8 @@ export type ShellNotification = {
 };
 
 export type ShellIdentity = {
+  /** Stable authenticated MADAR account identity; optional for compatibility adapters only. */
+  accountId?: string;
   displayName: string;
   email: string;
   hasAvatar: boolean;
