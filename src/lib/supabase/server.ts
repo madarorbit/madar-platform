@@ -1,5 +1,5 @@
 import 'server-only';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { supabaseConfig } from '@/src/lib/env';
 
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'CUSTOMER';
@@ -22,7 +22,7 @@ const domainErrorMessages:Record<string,string>={
 function requestErrorMessage(status:number,payload:SupabaseErrorPayload|null){
  const source=payload?.message||payload?.msg||payload?.error_description||'';
  if(domainErrorMessages[source])return domainErrorMessages[source];
- if(status===401)return'انتهت جلسة تسجيل الدخول. سجّل الدخول مجددًا.';
+ if(status===401)return'تعذر التحقق من جلسة الدخول الحالية.';
  if(status===403)return'ليست لديك صلاحية لتنفيذ هذه العملية.';
  if(status===404)return'لم يتم العثور على البيانات المطلوبة.';
  if(status===409||payload?.code==='23505')return'توجد بيانات مسجلة بالقيمة نفسها بالفعل.';
@@ -34,6 +34,9 @@ function requestErrorMessage(status:number,payload:SupabaseErrorPayload|null){
 export class SupabaseRequestError extends Error {
  constructor(public status:number,public code:string|undefined,message:string){super(message);this.name='SupabaseRequestError';}
 }
+export class AuthVerificationUnavailableError extends Error {
+ constructor(){super('تعذر التحقق من جلسة الدخول مؤقتًا. لم يتم تسجيل خروجك.');this.name='AuthVerificationUnavailableError';}
+}
 async function responsePayload(response:Response){
  const raw=await response.text();
  if(!raw.trim())return null;
@@ -43,11 +46,20 @@ async function responsePayload(response:Response){
   return null;
  }
 }
+async function recoveryPending(){
+ try{return (await headers()).get('x-madar-auth-recovery-pending')==='1';}
+ catch{return false;}
+}
 export async function serverToken() { return (await cookies()).get('madar-access-token')?.value; }
 export async function supabaseFetch(path:string, init:RequestInit = {}, accessToken?:string) {
  const {url,key}=supabaseConfig(); const token=accessToken??await serverToken();
  const headers = new Headers(init.headers); headers.set('apikey', key); headers.set('Content-Type','application/json'); if(token) headers.set('Authorization',`Bearer ${token}`); headers.set('Prefer', headers.get('Prefer') || 'return=representation');
- const response=await fetch(`${url}${path}`, {...init, headers, cache:'no-store'});
+ let response:Response;
+ try{response=await fetch(`${url}${path}`, {...init, headers, cache:'no-store'});}
+ catch(error){
+  console.warn('Supabase request temporarily unavailable',{path:path.split('?')[0],kind:error instanceof Error?error.name:'network'});
+  throw error;
+ }
  if(!response.ok) {
   const payload=await responsePayload(response) as SupabaseErrorPayload|null;
   const context={path:path.split('?')[0],status:response.status,code:payload?.code};
@@ -57,6 +69,16 @@ export async function supabaseFetch(path:string, init:RequestInit = {}, accessTo
  }
  return responsePayload(response);
 }
-export async function currentUser(accessToken?:string):Promise<AuthUser|null>{ const token=accessToken??await serverToken(); if(!token)return null; try{return await supabaseFetch('/auth/v1/user',{},token) as AuthUser;}catch{return null;} }
+export async function currentUser(accessToken?:string):Promise<AuthUser|null>{
+ const token=accessToken??await serverToken();
+ const pending=!accessToken&&await recoveryPending();
+ if(!token){if(pending)throw new AuthVerificationUnavailableError();return null;}
+ try{return await supabaseFetch('/auth/v1/user',{},token) as AuthUser;}
+ catch(error){
+  if(pending)throw new AuthVerificationUnavailableError();
+  if(error instanceof SupabaseRequestError&&(error.status===401||error.status===403))return null;
+  throw error;
+ }
+}
 export async function profileForUser(userId:string,accessToken?:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status,account_type,default_commercial_organization_id`,{},accessToken); return rows?.[0] as Profile|undefined; }
 export async function currentProfile(accessToken?:string){ const user=await currentUser(accessToken); if(!user)return null; return profileForUser(user.id,accessToken); }

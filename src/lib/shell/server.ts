@@ -53,7 +53,7 @@ const safeNotificationHref = (value: string | null) =>
     : "/account/notifications";
 
 export const getOptionalShellIdentity = cache(async (): Promise<ShellServerIdentity | null> => {
-  const user = await currentUser().catch(() => null);
+  const user = await currentUser();
   if (!user) return null;
   const [profileValue, unreadRows, notificationRows] = await Promise.all([
     profileForUser(user.id).catch(() => null),
