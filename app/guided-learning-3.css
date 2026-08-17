@@ -1,0 +1,167 @@
+/* MADAR ORBY Guided Learning — Phase 3B presentation layer.
+   Character motion remains intentionally unimplemented until a genuine rig asset exists. */
+
+.md-orby-guide-surface {
+  width: min(30rem, calc(100vw - 2rem));
+  padding: var(--md-space-4);
+  background: color-mix(in srgb, var(--md-surface-overlay) 97%, var(--md-mint-subtle));
+}
+
+.md-orby-guide-presentation {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: end;
+  gap: var(--md-space-3);
+  min-width: 0;
+}
+
+.md-orby-guide-character {
+  align-self: end;
+  display: grid;
+  place-items: end center;
+  width: 6.5rem;
+  min-height: 7rem;
+  pointer-events: none;
+  user-select: none;
+}
+
+.md-orby-guide-character-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 7rem;
+  object-fit: contain;
+  /* No translate/rotate/scale animation here: the authoritative source is a
+     flat raster wrapped by SVG, not a skeletal rig. */
+}
+
+.md-orby-guide-message {
+  position: relative;
+  min-width: 0;
+  padding: var(--md-space-4);
+  border: 1px solid color-mix(in srgb, var(--md-border-default) 82%, var(--md-mint));
+  border-radius: var(--md-radius-lg);
+  background: color-mix(in srgb, var(--md-surface-raised) 96%, var(--md-mint-subtle));
+  box-shadow: var(--md-shadow-2);
+}
+
+.md-orby-guide-message::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -0.45rem;
+  bottom: 1.6rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  background: inherit;
+  border-inline-start: 1px solid color-mix(in srgb, var(--md-border-default) 82%, var(--md-mint));
+  border-bottom: 1px solid color-mix(in srgb, var(--md-border-default) 82%, var(--md-mint));
+  transform: rotate(45deg);
+}
+
+[dir="rtl"] .md-orby-guide-message::before {
+  transform: rotate(45deg);
+}
+
+.md-orby-guide-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-space-3);
+  color: var(--md-mint);
+  font-size: var(--md-type-caption);
+  font-weight: var(--md-weight-bold);
+  letter-spacing: 0.02em;
+}
+
+.md-orby-guide-message h2 {
+  margin: var(--md-space-3) 0 var(--md-space-2);
+  font-size: var(--md-type-h3);
+  line-height: var(--md-leading-heading);
+}
+
+.md-orby-guide-message p {
+  margin: var(--md-space-3) 0;
+  color: var(--md-text-secondary);
+  line-height: var(--md-leading-body);
+}
+
+.md-orby-guide-message small {
+  display: block;
+  color: var(--md-text-muted);
+  line-height: var(--md-leading-body);
+}
+
+.md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-presentation,
+.md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-presentation {
+  grid-template-columns: minmax(0, 1fr) 6.5rem;
+}
+
+.md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-character,
+.md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-character {
+  grid-column: 2;
+}
+
+.md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-message,
+.md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-message {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-message::before,
+.md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-message::before {
+  inset-inline-start: auto;
+  inset-inline-end: -0.45rem;
+  transform: rotate(225deg);
+}
+
+@media (max-width: 639px) {
+  .md-orby-guide-surface {
+    width: calc(100vw - 1.5rem);
+    padding: var(--md-space-3);
+  }
+
+  .md-orby-guide-presentation,
+  .md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-presentation,
+  .md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-presentation {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    align-items: end;
+    gap: var(--md-space-2);
+  }
+
+  .md-orby-guide-character,
+  .md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-character,
+  .md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-character {
+    grid-column: 1;
+    grid-row: 1;
+    width: 4.5rem;
+    min-height: 4.75rem;
+  }
+
+  .md-orby-guide-message,
+  .md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-message,
+  .md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-message {
+    grid-column: 2;
+    grid-row: 1;
+    padding: var(--md-space-3);
+    border-radius: var(--md-radius-md);
+  }
+
+  .md-orby-guide-surface[data-guide-placement="left"] .md-orby-guide-message::before,
+  .md-orby-guide-surface[data-guide-placement="top"] .md-orby-guide-message::before {
+    inset-inline-start: -0.45rem;
+    inset-inline-end: auto;
+    transform: rotate(45deg);
+  }
+
+  .md-orby-guide-character-image { max-width: 4.5rem; }
+  .md-guide-actions { margin-top: var(--md-space-4); gap: var(--md-space-1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-orby-guide-character,
+  .md-orby-guide-character-image,
+  .md-orby-guide-message {
+    animation: none !important;
+    transition: none !important;
+  }
+}
