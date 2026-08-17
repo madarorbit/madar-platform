@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState, type ReactNode } from "react";
+import GuidedLearningBoundary from "@/components/guided-learning/GuidedLearningBoundary";
 import CartStatusLink from "@/components/platform/CartStatusLink";
 import GlobalUserActions from "@/components/platform/GlobalUserActions";
 import MadarLayerNavigation from "@/components/shell/MadarLayerNavigation";
@@ -17,11 +18,11 @@ export default function OrbyShell({children,sidebar,plus,newChatHref,authenticat
   const [layersOpen,setLayersOpen]=useState(false);
   const closeSidebar=useCallback(()=>setSidebarOpen(false),[]);
   const closeLayers=useCallback(()=>setLayersOpen(false),[]);
-  return (
+  const shell = (
     <main className="md-orby-shell">
       <a href="#orby-content" className="md-skip-link">تجاوز إلى المحادثة</a>
       <div className="md-orby-layout">
-        <header className="md-orby-header md-no-print">
+        <header className="md-orby-header md-no-print" data-madar-guide-occluder="top">
           <div className="md-orby-header-main">
             <IconButton label="فتح طبقات مَدار" onClick={()=>setLayersOpen(true)} aria-expanded={layersOpen} aria-controls="orby-layer-navigation"><Icon name="layers" /></IconButton>
             <IconLink href={returnHref} label="العودة إلى السياق السابق"><Icon name="back" className="md-icon-directional" /></IconLink>
@@ -50,4 +51,7 @@ export default function OrbyShell({children,sidebar,plus,newChatHref,authenticat
       <Sheet open={layersOpen} onClose={closeLayers} title="طبقات مَدار" description={contextLabel}><div id="orby-layer-navigation"><MadarLayerNavigation authenticated={authenticated} context={shellContext} onNavigate={closeLayers}/></div></Sheet>
     </main>
   );
+  return authenticated && identity?.accountId
+    ? <GuidedLearningBoundary accountId={identity.accountId}>{shell}</GuidedLearningBoundary>
+    : shell;
 }
