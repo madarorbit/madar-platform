@@ -28,7 +28,7 @@ export default function GuidedLearningHost({controller}:{controller:GuidedLearni
   const active=runtime.phase==="active"&&Boolean(guide&&step);
   const pointerPolicy=step?pointerPolicyForStep(step):"block_background";
   const stepKey=active&&guide&&step?`${guide.id}:${runtime.journeyId??"journey"}:${runtime.stepIndex??0}:${retryKey}`:"";
-  const currentVisual:VisualState=visual.key===stepKey?visual:{key:stepKey,resolution:step?.target?"pending":"resolved",geometry:null,spotlight:null};
+  const currentVisual:VisualState=visual.key===stepKey?visual:{key:stepKey,resolution:step?.target?"pending":"resolved",geometry:visual.geometry,spotlight:visual.spotlight};
 
   useEffect(()=>{
     if(!active||!step||!stepKey)return;
@@ -38,7 +38,7 @@ export default function GuidedLearningHost({controller}:{controller:GuidedLearni
     void Promise.resolve().then(async()=>{
       if(abort.signal.aborted||sequence!==resolutionSequence.current)return;
       if(!step.target){setVisual({key:stepKey,resolution:"resolved",geometry:null,spotlight:null});return;}
-      const result=await waitForGuideTarget([step.target.id],{timeoutMs:step.route?.waitForTarget?2400:1000,signal:abort.signal,onState:(state)=>{if(abort.signal.aborted||sequence!==resolutionSequence.current)return;setVisual((previous)=>({key:stepKey,resolution:state,geometry:previous.key===stepKey?previous.geometry:null,spotlight:previous.key===stepKey?previous.spotlight:null}));}});
+      const result=await waitForGuideTarget([step.target.id],{timeoutMs:step.route?.waitForTarget?2400:1000,signal:abort.signal,onState:(state)=>{if(abort.signal.aborted||sequence!==resolutionSequence.current)return;setVisual((previous)=>({key:stepKey,resolution:state,geometry:previous.geometry,spotlight:previous.spotlight}));}});
       if(abort.signal.aborted||sequence!==resolutionSequence.current)return;
       if(result.state!=="resolved"||!result.element){setVisual({key:stepKey,resolution:result.state,geometry:null,spotlight:null});return;}
       const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches??false;
@@ -87,11 +87,12 @@ export default function GuidedLearningHost({controller}:{controller:GuidedLearni
   useEffect(()=>{if(active)return;const restore=restoreFocusRef.current;restoreFocusRef.current=null;if(restore?.isConnected)restore.focus({preventScroll:true});},[active]);
   const run=useCallback(async(operation:()=>Promise<unknown>)=>{if(transitioning)return;setTransitioning(true);try{await operation();}finally{setTransitioning(false);}},[transitioning]);
   const viewport=active&&clientReady?getGuideViewport():{width:0,height:0};
-  const placement=computeGuidePlacement({target:currentVisual.geometry,viewport,surface:surfaceSize,requested:step?.placementHint,direction:pageDirection()});
+  const targetTransitioning=currentVisual.resolution==="pending";
+  const movingBetweenTargets=targetTransitioning&&Boolean(currentVisual.spotlight);
+  const placement=computeGuidePlacement({target:currentVisual.geometry,viewport,surface:surfaceSize,requested:movingBetweenTargets?"auto":step?.placementHint,direction:pageDirection()});
   if(!clientReady||!active||!guide||!step)return null;
   const blockers=currentVisual.spotlight&&pointerPolicy==="allow_target"?computeCutoutBlockers(currentVisual.spotlight,viewport):[];
   const unavailable=Boolean(step.target)&&currentVisual.resolution!=="resolved"&&currentVisual.resolution!=="pending";
-  const targetTransitioning=currentVisual.resolution==="pending";
   const currentIndex=(runtime.stepIndex??0)+1;
   const total=guide.journeys.find((candidate)=>candidate.id===runtime.journeyId)?.steps.length??currentIndex;
 
@@ -101,14 +102,14 @@ export default function GuidedLearningHost({controller}:{controller:GuidedLearni
     {pointerPolicy==="allow_target"?blockers.map((rect,index)=><div key={index} className="md-guide-pointer-slice" aria-hidden="true" style={{top:rect.top,left:rect.left,width:rect.width,height:rect.height}}/>):null}
     <div ref={surfaceRef} className="md-guide-surface" role={pointerPolicy==="block_background"?"dialog":"group"} aria-modal={pointerPolicy==="block_background"?true:undefined} aria-label="إرشاد مَدار" tabIndex={-1} data-guide-placement={placement.placement} style={{transform:`translate3d(${placement.x}px, ${placement.y}px, 0)`,maxWidth:Math.min(400,placement.maxWidth)}}>
       <div className="md-guide-surface-meta"><span>إرشاد مَدار</span><span>{currentIndex} / {total}</span></div>
-      {step.content.title?<h2>{step.content.title.defaultText}</h2>:null}<p>{step.content.message.defaultText}</p>{step.content.hint?<small>{step.content.hint.defaultText}</small>:null}
-      {targetTransitioning?<div className="md-guide-status">جارٍ تجهيز العنصر…</div>:null}{unavailable?<div className="md-guide-status is-warning" role="status">تعذر الوصول إلى العنصر الآن. يمكنك المحاولة مجددًا دون إيقاف الجولة.</div>:null}
+      {movingBetweenTargets?<div className="md-guide-status">جارٍ الانتقال إلى الخطوة التالية…</div>:<>{step.content.title?<h2>{step.content.title.defaultText}</h2>:null}<p>{step.content.message.defaultText}</p>{step.content.hint?<small>{step.content.hint.defaultText}</small>:null}{targetTransitioning?<div className="md-guide-status">جارٍ تجهيز العنصر…</div>:null}</>}
+      {unavailable?<div className="md-guide-status is-warning" role="status">تعذر الوصول إلى العنصر الآن. يمكنك المحاولة مجددًا دون إيقاف الجولة.</div>:null}
       <div className="md-guide-actions">
-        {currentIndex>1?<button type="button" className="md-button md-button-ghost md-button-sm" disabled={transitioning} onClick={()=>void run(()=>controller.previousStep())}>السابق</button>:null}
+        {currentIndex>1?<button type="button" className="md-button md-button-ghost md-button-sm" disabled={transitioning||movingBetweenTargets} onClick={()=>void run(()=>controller.previousStep())}>السابق</button>:null}
         {unavailable?<button type="button" className="md-button md-button-secondary md-button-sm" disabled={transitioning} onClick={()=>setRetryKey((value)=>value+1)}>إعادة المحاولة</button>:<button type="button" className="md-button md-button-primary md-button-sm" disabled={transitioning||targetTransitioning} onClick={()=>void run(()=>controller.nextStep())}>{currentIndex>=total?"إنهاء":"التالي"}</button>}
         {step.target?.optional&&unavailable?<button type="button" className="md-button md-button-ghost md-button-sm" disabled={transitioning} onClick={()=>void run(()=>controller.nextStep())}>تجاوز الخطوة</button>:null}
-        {guide.completion.allowSkip?<button type="button" className="md-button md-button-ghost md-button-sm" disabled={transitioning} onClick={()=>void run(()=>controller.skipGuide())}>تخطي الجولة</button>:null}
-        {guide.completion.allowDismiss?<button type="button" className="md-guide-close" disabled={transitioning} onClick={()=>void run(()=>controller.dismissGuide())} aria-label="إغلاق الإرشاد">×</button>:null}
+        {guide.completion.allowSkip?<button type="button" className="md-button md-button-ghost md-button-sm" disabled={transitioning||movingBetweenTargets} onClick={()=>void run(()=>controller.skipGuide())}>تخطي الجولة</button>:null}
+        {guide.completion.allowDismiss?<button type="button" className="md-guide-close" disabled={transitioning||movingBetweenTargets} onClick={()=>void run(()=>controller.dismissGuide())} aria-label="إغلاق الإرشاد">×</button>:null}
       </div>
     </div>
   </div>,document.body);
