@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import AccountShell from "@/components/account/AccountShell";
+import GuidedLearningBoundary from "@/components/guided-learning/GuidedLearningBoundary";
 import {
   getOptionalShellIdentity,
   getShellServiceOptions,
@@ -13,8 +14,10 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   ]);
   if (!identity) redirect("/login?next=/account");
   return (
-    <AccountShell identity={identity.shell} serviceOptions={serviceOptions}>
-      {children}
-    </AccountShell>
+    <GuidedLearningBoundary accountId={identity.userId}>
+      <AccountShell identity={identity.shell} serviceOptions={serviceOptions}>
+        {children}
+      </AccountShell>
+    </GuidedLearningBoundary>
   );
 }
