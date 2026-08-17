@@ -8,6 +8,7 @@ const sessionProtected=['/admin','/account','/dashboard','/onboarding','/workspa
 const authOnly=['/login','/register','/forgot-password'];
 const authRefreshBypass=['/auth/recover','/auth/refresh'];
 const PUBLIC_ROOT_ASSET=/^\/(?:favicon\.ico|logo(?:-white)?\.(?:png|svg)|symbol(?:-\d+x\d+)?\.png|manifest\.webmanifest|robots\.txt|sitemap\.xml)$/i;
+const PUBLIC_SERVICE_ASSET=/^\/services\/(?:build-on-madar|connect-existing|madar-retail)\.webp$/i;
 
 type JwtPayload={exp?:number;sub?:string};
 type Session={access_token:string;refresh_token:string;expires_in:number};
@@ -17,7 +18,7 @@ function expiresSoon(token:string){const payload=jwtPayload(token);return !paylo
 function tokenExpired(token:string){const payload=jwtPayload(token);return !payload.exp||payload.exp<=Math.floor(Date.now()/1000)}
 function isProtected(path:string){return sessionProtected.some(prefix=>path===prefix||path.startsWith(`${prefix}/`))}
 function isAuthOnly(path:string){return authOnly.some(prefix=>path===prefix||path.startsWith(`${prefix}/`))}
-function isStaticAsset(path:string){return path.startsWith('/_next/')||path.startsWith('/brand/')||path.startsWith('/assets/')||path.startsWith('/services/')||PUBLIC_ROOT_ASSET.test(path)}
+function isStaticAsset(path:string){return path.startsWith('/_next/')||path.startsWith('/brand/')||path.startsWith('/assets/')||PUBLIC_ROOT_ASSET.test(path)||PUBLIC_SERVICE_ASSET.test(path)}
 function isRscRequest(request:NextRequest){const accept=request.headers.get('accept')||'';return request.headers.get('rsc')==='1'||accept.includes('text/x-component')}
 function isDocumentNavigation(request:NextRequest){const dest=request.headers.get('sec-fetch-dest');if(dest==='document')return true;const accept=request.headers.get('accept')||'';return !isRscRequest(request)&&accept.includes('text/html')}
 function safeReturnTo(value:string|null|undefined,fallback='/account'){return value?.startsWith('/')&&!value.startsWith('//')&&!value.startsWith('/login')?value:fallback}
