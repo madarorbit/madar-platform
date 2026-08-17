@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 import SessionRecoveryState from "@/components/auth/SessionRecoveryState";
 
 const safeReturnPath = (value: string | undefined) =>
-  value?.startsWith("/") && !value.startsWith("//") ? value : "/account";
+  value?.startsWith("/") &&
+  !value.startsWith("//") &&
+  !value.startsWith("/auth/recover") &&
+  !value.startsWith("/login")
+    ? value
+    : "/account";
 
 export const dynamic = "force-dynamic";
 
