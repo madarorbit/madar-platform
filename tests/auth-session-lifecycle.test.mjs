@@ -45,17 +45,23 @@ test("only terminal refresh-token invalidation destroys the persistent session",
   assert.equal(clearCalls.length, 2);
 });
 
-test("server auth distinguishes unauthenticated from verification unavailable", () => {
-  has(server, "AuthVerificationUnavailableError");
-  has(server, "x-madar-auth-recovery-pending");
-  has(server, "error instanceof SupabaseRequestError&&(error.status===401||error.status===403)");
-  has(server, "throw error");
+test("server auth has an explicit authenticated unauthenticated recovering state", () => {
+  has(server, "export type AuthVerificationState");
+  has(server, "status:'authenticated'");
+  has(server, "status:'unauthenticated'");
+  has(server, "status:'recovering'");
+  has(server, "export async function currentUserState");
+  has(server, "if(state.status==='recovering')throw new AuthVerificationUnavailableError();");
   assert.doesNotMatch(server, /currentUser\(accessToken\?[\s\S]*catch\{return null;\}/);
 });
 
-test("shell identity does not downgrade a temporary auth failure to guest", () => {
-  has(shell, "const user = await currentUser();");
+test("optional shell identity degrades a recovering render without erasing the third auth state", () => {
+  has(shell, "export type ShellIdentityState");
+  has(shell, "const state = await getShellIdentityState();");
+  has(shell, "return state.status === \"authenticated\" ? state.identity : null;");
+  has(shell, "if (state.status === \"recovering\") redirect(sessionRecoveryHref(nextPath));");
   assert.doesNotMatch(shell, /currentUser\(\)\.catch\(\(\) => null\)/);
+  assert.doesNotMatch(shell, /catch\(\(\) => null\)[\s\S]*getOptionalShellIdentity/);
 });
 
 test("authentication and Retail authorization remain separate", () => {
