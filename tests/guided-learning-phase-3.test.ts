@@ -35,6 +35,33 @@ function manualScheduler() {
   };
 }
 
+function jpegDimensions(buffer: Buffer): { width: number; height: number } {
+  assert.equal(buffer[0], 0xff);
+  assert.equal(buffer[1], 0xd8);
+  let offset = 2;
+  while (offset + 8 < buffer.length) {
+    if (buffer[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+    const marker = buffer[offset + 1];
+    if (marker === 0xd8 || marker === 0xd9) {
+      offset += 2;
+      continue;
+    }
+    const length = buffer.readUInt16BE(offset + 2);
+    if (length < 2) break;
+    if ([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marker)) {
+      return {
+        height: buffer.readUInt16BE(offset + 5),
+        width: buffer.readUInt16BE(offset + 7),
+      };
+    }
+    offset += 2 + length;
+  }
+  throw new Error("JPEG dimensions were not found");
+}
+
 test("Phase 1 semantic intents map to technology-neutral ORBY motion intents", () => {
   for (const intent of ["idle", "point", "attention", "confirm", "celebrate", "thinking"] as const) {
     assert.equal(mapGuideIntentToORBY(intent), intent);
@@ -174,7 +201,17 @@ test("Phase 3 fixture is Arabic-first and covers reusable semantic states only",
   assert.ok(steps.every((step) => step.content.message.defaultLocale === "ar"));
 });
 
-test("authoritative ORBY source is present and honestly classified as flat raster wrapped by SVG", () => {
+test("authoritative ORBY master is the unchanged 1536x1536 source asset", () => {
+  const asset = readFileSync("public/assets/orby/orby-master.png");
+  // The approved master keeps its historical .png filename but its source bytes
+  // are JPEG. Do not silently re-encode or replace it.
+  assert.equal(asset[0], 0xff);
+  assert.equal(asset[1], 0xd8);
+  assert.equal(asset[2], 0xff);
+  assert.deepEqual(jpegDimensions(asset), { width: 1536, height: 1536 });
+});
+
+test("compact shell ORBY asset is a flat raster derivative and not a rig", () => {
   const asset = readFileSync("public/brand/orby-assistant.svg", "utf8");
   assert.match(asset, /viewBox="0 0 256 256"/);
   assert.match(asset, /<image\b/);
@@ -185,7 +222,8 @@ test("Phase 3 does not add a fake Rive dependency or a fabricated rig file", () 
   const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { dependencies?: Record<string, string> };
   assert.equal(Object.keys(pkg.dependencies ?? {}).some((name) => /rive|lottie/i.test(name)), false);
   const presentation = readFileSync("components/guided-learning/ORBYGuidePresentation.tsx", "utf8");
-  assert.match(presentation, /\/brand\/orby-assistant\.svg/);
+  assert.match(presentation, /\/assets\/orby\/orby-master\.png/);
+  assert.doesNotMatch(presentation, /\/brand\/orby-assistant\.svg/);
 });
 
 test("Guided Learning Host keeps Phase 2 placement as the single positioning source", () => {
