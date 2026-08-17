@@ -37,7 +37,8 @@ test("temporary refresh network, rate-limit, and server failures preserve the se
 test("only terminal refresh-token invalidation destroys the persistent session", () => {
   assert.match(proxy, /refreshFailureIsTerminal/);
   assert.match(proxy, /status===401\|\|status===403/);
-  assert.match(proxy, /refresh\[_ \]\?token|invalid\[_ \]\?grant/);
+  assert.ok(proxy.includes("refresh[_ ]?token"));
+  assert.ok(proxy.includes("invalid[_ ]?grant"));
   const clearCalls = proxy.match(/clearSession\(result\)/g) || [];
   assert.equal(clearCalls.length, 2);
 });
