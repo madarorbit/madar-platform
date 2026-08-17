@@ -8,9 +8,9 @@ import type { OperatingMode } from "@/src/lib/v2/account";
 import type { VerticalExtension } from "@/src/lib/v2/verticals";
 import { commercialWorkspaceCookie } from "@/src/lib/workspace-selection";
 import {
-  getOptionalShellIdentity,
   getShellServiceOptions,
   getShellSubscriptionRows,
+  requireShellIdentity,
 } from "@/src/lib/shell/server";
 
 export type WorkspaceType = "INDIVIDUAL" | "MERCHANT" | "COMPANY";
@@ -83,8 +83,7 @@ async function resolveBusinessWorkspace({
   allowMissing = false,
   allowCancelled = false,
 }: RequireBusinessWorkspaceOptions = {}) {
-  const shellIdentity = await getOptionalShellIdentity();
-  if (!shellIdentity) redirect("/login?next=/workspace");
+  const shellIdentity = await requireShellIdentity("/workspace");
   const { user, profile } = shellIdentity;
   const selectedOrganization = (await cookies()).get(commercialWorkspaceCookie)?.value;
   const [rows, allServiceRows, serviceOptions] = await Promise.all([
@@ -235,8 +234,7 @@ export async function requireNativeBusinessWorkspace(requiredModule?: string) {
 }
 
 export async function requirePersonalAccount() {
-  const shellIdentity = await getOptionalShellIdentity();
-  if (!shellIdentity) redirect("/login?next=/account");
+  const shellIdentity = await requireShellIdentity("/account");
   const { user, profile } = shellIdentity;
   return { user, profile };
 }
