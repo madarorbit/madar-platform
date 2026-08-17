@@ -24,7 +24,9 @@ test('refreshed session is propagated to the same request and persisted', async 
   const source = await read('proxy.ts');
   assert.match(source, /request\.cookies\.set\('madar-access-token'/);
   assert.match(source, /request\.cookies\.set\('madar-refresh-token'/);
-  assert.match(source, /NextResponse\.next\(\{request:\{headers:new Headers\(request\.headers\)\}\}\)/);
+  assert.match(source, /function forwardedResponse\(request:NextRequest,authRecoveryPending=false\)/);
+  assert.match(source, /NextResponse\.next\(\{request:\{headers:requestHeaders\}\}\)/);
+  assert.match(source, /refreshedResponse\(request:NextRequest,session:Session\)/);
   assert.match(source, /Cache-Control','private, no-store'/);
   assert.match(source, /SESSION_MAX_AGE=60\*60\*24\*365/);
 });
