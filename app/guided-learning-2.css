@@ -1,5 +1,7 @@
 /* MADAR ORBY Guided Learning — Phase 2 visual engine */
 
+.md-guide-app-root { display: contents; }
+
 .md-guide-host {
   position: fixed;
   inset: 0;
@@ -40,7 +42,6 @@
   pointer-events: auto;
   background: transparent;
 }
-
 .md-guide-pointer-blocker { inset: 0; }
 
 .md-guide-surface {
@@ -59,7 +60,6 @@
   backdrop-filter: blur(14px);
   outline: none;
 }
-
 .md-guide-surface:focus-visible { box-shadow: var(--md-shadow-3), var(--md-shadow-focus); }
 .md-guide-surface h2 { margin: var(--md-space-3) 0 var(--md-space-2); font-size: var(--md-type-h3); line-height: var(--md-leading-heading); }
 .md-guide-surface p { margin: var(--md-space-3) 0; color: var(--md-text-secondary); line-height: var(--md-leading-body); }
@@ -125,7 +125,5 @@
 @media (prefers-reduced-motion: reduce) {
   .md-guide-dimmer,
   .md-guide-spotlight,
-  .md-guide-surface {
-    transition-duration: 1ms !important;
-  }
+  .md-guide-surface { transition-duration: 1ms !important; }
 }
