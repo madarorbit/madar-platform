@@ -5,6 +5,10 @@ import { supabaseConfig } from '@/src/lib/env';
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'CUSTOMER';
 export type Profile = { id:string; email:string|null; full_name:string|null; phone:string|null; avatar_url:string|null; role:Role; status:'active'|'disabled'; account_type?:'PERSONAL'|'BUSINESS'; default_commercial_organization_id?:string|null };
 export type AuthUser = { id:string; email?:string|null; email_confirmed_at?:string|null; phone?:string|null; created_at?:string; app_metadata?:Record<string,unknown>|null; user_metadata?:Record<string,unknown>|null };
+export type AuthVerificationState =
+ | {status:'authenticated';user:AuthUser}
+ | {status:'unauthenticated'}
+ | {status:'recovering'};
 
 type SupabaseErrorPayload={code?:string;message?:string;msg?:string;error_description?:string;details?:string;hint?:string};
 const domainErrorMessages:Record<string,string>={
@@ -50,6 +54,10 @@ async function recoveryPending(){
  try{return (await headers()).get('x-madar-auth-recovery-pending')==='1';}
  catch{return false;}
 }
+function verificationTemporarilyUnavailable(error:unknown){
+ if(error instanceof SupabaseRequestError)return error.status>=500;
+ return error instanceof TypeError||error instanceof DOMException;
+}
 export async function serverToken() { return (await cookies()).get('madar-access-token')?.value; }
 export async function supabaseFetch(path:string, init:RequestInit = {}, accessToken?:string) {
  const {url,key}=supabaseConfig(); const token=accessToken??await serverToken();
@@ -69,16 +77,26 @@ export async function supabaseFetch(path:string, init:RequestInit = {}, accessTo
  }
  return responsePayload(response);
 }
-export async function currentUser(accessToken?:string):Promise<AuthUser|null>{
+export async function currentUserState(accessToken?:string):Promise<AuthVerificationState>{
  const token=accessToken??await serverToken();
  const pending=!accessToken&&await recoveryPending();
- if(!token){if(pending)throw new AuthVerificationUnavailableError();return null;}
- try{return await supabaseFetch('/auth/v1/user',{},token) as AuthUser;}
+ if(!token)return pending?{status:'recovering'}:{status:'unauthenticated'};
+ try{
+  const user=await supabaseFetch('/auth/v1/user',{},token) as AuthUser;
+  return{status:'authenticated',user};
+ }
  catch(error){
-  if(pending)throw new AuthVerificationUnavailableError();
-  if(error instanceof SupabaseRequestError&&(error.status===401||error.status===403))return null;
+  if(error instanceof SupabaseRequestError&&(error.status===401||error.status===403)){
+   return pending?{status:'recovering'}:{status:'unauthenticated'};
+  }
+  if(pending||verificationTemporarilyUnavailable(error))return{status:'recovering'};
   throw error;
  }
+}
+export async function currentUser(accessToken?:string):Promise<AuthUser|null>{
+ const state=await currentUserState(accessToken);
+ if(state.status==='recovering')throw new AuthVerificationUnavailableError();
+ return state.status==='authenticated'?state.user:null;
 }
 export async function profileForUser(userId:string,accessToken?:string):Promise<Profile|undefined>{ const rows=await supabaseFetch(`/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,full_name,phone,avatar_url,role,status,account_type,default_commercial_organization_id`,{},accessToken); return rows?.[0] as Profile|undefined; }
 export async function currentProfile(accessToken?:string){ const user=await currentUser(accessToken); if(!user)return null; return profileForUser(user.id,accessToken); }
