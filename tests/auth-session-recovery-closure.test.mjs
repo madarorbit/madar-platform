@@ -106,13 +106,17 @@ test("recovery page does not misclassify an expired access token as logout", () 
   has(recoveryPage, "<SessionRecoveryState nextPath={nextPath} />");
 });
 
+test("recovery return paths cannot target recovery or login loops", () => {
+  has(recoveryPage, '!value.startsWith("/auth/recover")');
+  has(recoveryPage, '!value.startsWith("/login")');
+});
+
 test("browser recovery retries the explicit endpoint without refresh or storage loops", () => {
   has(recoverySurface, 'fetch("/auth/refresh"');
   has(recoverySurface, "MAX_AUTOMATIC_ATTEMPTS = 2");
   has(recoverySurface, "inFlightRef");
   has(recoverySurface, "router.replace(nextPath)");
-  assert.doesNotMatch(recoverySurface, /sessionStorage|localStorage|setInterval|location\.reload/);
-  assert.doesNotMatch(recoverySurface, /setTimeout\(\(\) => router\.refresh/);
+  assert.doesNotMatch(recoverySurface, /sessionStorage|localStorage|setInterval|location\.reload|router\.refresh\(/);
 });
 
 test("public shell can render without optional identity while recovery remains explicit", () => {
