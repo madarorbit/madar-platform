@@ -4,14 +4,16 @@ This contract is the Phase 3A handoff for a professional animator/Rive author. I
 
 ## 1. Authoritative source
 
-- Source: `public/brand/orby-assistant.svg`.
-- Source canvas/viewBox: `0 0 256 256`.
-- The file currently contains one embedded WebP raster image; it is not layered artwork.
-- The animator must use the visible source pixels as the identity reference. No redraw, face redesign, recoloring, hand replacement, body-proportion change, AI regeneration, or stylistic reinterpretation.
+- Source: `public/assets/orby/orby-master.png`.
+- Source dimensions: 1536×1536.
+- Historical filename note: the approved master has a `.png` filename but its original bytes are JPEG. Do not silently re-encode it as part of rig preparation.
+- The source is one flat raster image; it is not layered artwork.
+- `public/brand/orby-assistant.svg` is only a compact shell derivative containing an embedded WebP raster and must not replace the master during rig authoring.
+- The animator must use the visible master pixels as the identity reference. No redraw, face redesign, recoloring, hand replacement, body-proportion change, AI regeneration, or stylistic reinterpretation.
 
 ## 2. Non-destructive source preparation
 
-Create a high-fidelity layered working file by masking/segmenting the authoritative source only. Any newly revealed pixels needed behind an overlapping limb must be reconstructed conservatively from adjacent source geometry and reviewed against the original; do not invent a new silhouette.
+Create a high-fidelity layered working file by masking/segmenting the authoritative master only. Any newly revealed pixels needed behind an overlapping limb must be reconstructed conservatively from adjacent source geometry and reviewed against the original; do not invent a new silhouette.
 
 Required separable regions where the source anatomy supports them:
 
@@ -28,10 +30,10 @@ If the source does not contain enough information to separate a region without i
 
 - Rive artboard name: `ORBY_Guide`.
 - Preserve the original square aspect ratio.
-- Recommended authoring artboard: 512×512 logical units for comfortable mesh work, with source composition scaled uniformly from the 256×256 reference.
+- Recommended authoring artboard: 512×512 logical units for comfortable mesh work, with the 1536×1536 master scaled uniformly and non-destructively into that logical coordinate system.
 - Character origin: visual body center at the neutral pose.
-- Preserve transparent edges; no baked background.
-- Keep enough transparent safe area for modest hand extensions without clipping.
+- Preserve transparent/edge fidelity exactly as approved; do not add a baked background.
+- Keep enough safe area for modest hand extensions without clipping.
 
 Do not hard-code browser pixels into the rig. Browser footprint is controlled by the Phase 2/3 presentation layer.
 
@@ -200,7 +202,7 @@ When no guide is active:
 
 Expected production asset path after approval:
 
-`public/brand/orby-guided-learning.riv`
+`public/assets/orby/orby-guided-learning.riv`
 
 Requirements:
 
@@ -214,15 +216,15 @@ Requirements:
 
 A `.riv` is accepted only after visual QA confirms:
 
-- ORBY is recognizably identical to the authoritative source at rest;
+- ORBY is recognizably identical to the authoritative 1536×1536 master at rest;
 - no face/display warping;
 - no hand/finger distortion;
 - no mesh tearing or seam exposure;
-- no halo/transparent-edge artifacts in light or dark UI;
+- no halo/edge artifacts in light or dark UI;
 - clean transitions with no snapping;
 - restrained idle motion;
 - readable directional point in RTL and LTR;
 - clean rendering at compact mobile and medium desktop footprints;
 - reduced-motion mode contains no continuous decorative animation.
 
-Until an asset passes this gate, MADAR must continue using the static authoritative ORBY fallback and Phase 3.0 remains not closed.
+Until an asset passes this gate, MADAR must continue using the static authoritative ORBY master fallback and Phase 3.0 remains not closed.
