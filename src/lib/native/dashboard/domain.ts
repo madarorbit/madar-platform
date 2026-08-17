@@ -2,6 +2,7 @@ import type {
   MetricAvailability,
   MetricDefinition,
   MetricPeriod,
+  MetricUnitDefinition,
   NormalizedMetricResult,
 } from "../../dashboard/metrics/contracts.ts";
 import {
@@ -12,28 +13,14 @@ import {
 } from "../../dashboard/metrics/core.ts";
 
 export type NativeVertical = "commerce" | "food_service" | "hospitality";
-
-export type NativeSection<T> = Readonly<{
-  data: T | null;
-  failed: boolean;
-}>;
-
-export type NativeMoneyBucket = Readonly<{
-  currency: string;
-  amount: number;
-  dataAsOf: string | null;
-}>;
-
-export type NativeCommerceSalesBucket = NativeMoneyBucket & Readonly<{
-  completedSalesCount: number;
-}>;
-
-export type NativeStockItem = Readonly<{
-  id: string;
-  name: string;
-  stockQuantity: number;
-  lowStockThreshold: number;
-}>;
+export type NativeSection<T> = Readonly<{ data: T | null; failed: boolean }>;
+export type NativeMoneyBucket = Readonly<{ currency: string; amount: number; dataAsOf: string | null }>;
+export type NativeCommerceSalesBucket = NativeMoneyBucket & Readonly<{ completedSalesCount: number }>;
+export type NativeStockItem = Readonly<{ id: string; name: string; stockQuantity: number; lowStockThreshold: number }>;
+export type NativeKitchenTicket = Readonly<{ id: string; ticketNumber: string; status: string; priority: string; openedAt: string }>;
+export type NativeHousekeepingItem = Readonly<{ id: string; roomNumber: string; taskType: string; status: string; serviceDate: string }>;
+export type NativeMaintenanceItem = Readonly<{ id: string; title: string; priority: string; status: string; createdAt: string }>;
+export type NativeTaskItem = Readonly<{ id: string; title: string; priority: string; dueAt: string }>;
 
 export type NativeCommerceFacts = Readonly<{
   kind: "commerce";
@@ -50,14 +37,6 @@ export type NativeCommerceFacts = Readonly<{
     stockOutSample: readonly NativeStockItem[];
     lowStockSample: readonly NativeStockItem[];
   }>;
-}>;
-
-export type NativeKitchenTicket = Readonly<{
-  id: string;
-  ticketNumber: string;
-  status: string;
-  priority: string;
-  openedAt: string;
 }>;
 
 export type NativeFoodFacts = Readonly<{
@@ -86,22 +65,6 @@ export type NativeFoodFacts = Readonly<{
   }>;
 }>;
 
-export type NativeHousekeepingItem = Readonly<{
-  id: string;
-  roomNumber: string;
-  taskType: string;
-  status: string;
-  serviceDate: string;
-}>;
-
-export type NativeMaintenanceItem = Readonly<{
-  id: string;
-  title: string;
-  priority: string;
-  status: string;
-  createdAt: string;
-}>;
-
 export type NativeHospitalityFacts = Readonly<{
   kind: "hospitality";
   propertyCount: number;
@@ -111,11 +74,7 @@ export type NativeHospitalityFacts = Readonly<{
   occupiedRooms: number;
   roomRevenueByCurrency: readonly NativeMoneyBucket[];
   inHouseStays: number;
-  housekeeping: Readonly<{
-    activeCount: number;
-    blockedCount: number;
-    blockedSample: readonly NativeHousekeepingItem[];
-  }>;
+  housekeeping: Readonly<{ activeCount: number; blockedCount: number; blockedSample: readonly NativeHousekeepingItem[] }>;
   maintenance: Readonly<{
     activeCount: number;
     emergencyCount: number;
@@ -126,27 +85,17 @@ export type NativeHospitalityFacts = Readonly<{
 }>;
 
 export type NativeVerticalFacts = NativeCommerceFacts | NativeFoodFacts | NativeHospitalityFacts;
-
-export type NativeTaskItem = Readonly<{
-  id: string;
-  title: string;
-  priority: string;
-  dueAt: string;
-}>;
-
 export type NativeTaskFacts = Readonly<{
   overdueCount: number;
   highUrgentOverdueCount: number;
   dataAsOf: string | null;
   overdueSample: readonly NativeTaskItem[];
 }>;
-
 export type NativeDashboardData = Readonly<{
   organizationCreatedAt: string | null;
   facts: NativeSection<NativeVerticalFacts>;
   tasks: NativeSection<NativeTaskFacts>;
 }>;
-
 export type NativeOverviewContext = Readonly<{
   currency: string;
   setupStatus: "not_started" | "in_progress" | "ready" | "blocked";
@@ -154,7 +103,6 @@ export type NativeOverviewContext = Readonly<{
   specializationName: string;
   enabledModules: readonly string[];
 }>;
-
 export type NativeMetricView = Readonly<{
   result: NormalizedMetricResult;
   label: string;
@@ -163,7 +111,6 @@ export type NativeMetricView = Readonly<{
   detail?: string;
   status?: string;
 }>;
-
 export type NativeAttentionItem = Readonly<{
   severity: "critical" | "attention";
   title: string;
@@ -171,14 +118,12 @@ export type NativeAttentionItem = Readonly<{
   href: string;
   samples?: readonly string[];
 }>;
-
 export type NativeStatusNotice = Readonly<{
   tone: "info" | "warning";
   title: string;
   description: string;
   href: string;
 }>;
-
 export type NativeOverviewModel = Readonly<{
   vertical: NativeVertical;
   setupRequired: boolean;
@@ -202,7 +147,7 @@ const commerceDefinitions = [
   { id: "native.commerce.expenses", version: "1", valueKind: "number", unit: { kind: "money", currency: "workspace" }, aggregation: "sum", comparison: "none", sourceCategory: "madar_native", semanticIntent: "المصروفات المسجلة تراكميًا حسب عملتها الأصلية" },
   { id: "native.commerce.returns", version: "1", valueKind: "number", unit: { kind: "money", currency: "workspace" }, aggregation: "sum", comparison: "none", sourceCategory: "derived", semanticIntent: "قيمة مرتجعات البيع المرحلة تراكميًا حسب عملة عملية البيع" },
   { id: "native.commerce.stock_out_count", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "عدد الأصناف النشطة ذات مخزون صفري الآن" },
-  { id: "native.commerce.low_stock_count", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "عدد الأصناف النشطة الواقعة عند أو تحت حد المخزون المنخفض المعرّف لها" },
+  { id: "native.commerce.low_stock_count", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "عدد الأصناف النشطة عند أو تحت حد المخزون المنخفض المعرّف لها" },
 ] as const satisfies readonly MetricDefinition[];
 
 const foodDefinitions = [
@@ -211,7 +156,7 @@ const foodDefinitions = [
   { id: "native.food.gross_profit", version: "1", valueKind: "number", unit: { kind: "money", currency: "workspace" }, aggregation: "sum", comparison: "none", sourceCategory: "derived", semanticIntent: "إيراد الطلبات المخدومة أو المكتملة ناقص تكلفة مكوناتها" },
   { id: "native.food.ingredient_cost", version: "1", valueKind: "number", unit: { kind: "money", currency: "workspace" }, aggregation: "sum", comparison: "none", sourceCategory: "madar_native", semanticIntent: "تكلفة مكونات الطلبات المخدومة أو المكتملة" },
   { id: "native.food.kitchen_workload", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "تذاكر المطبخ الحالية NEW أو PREPARING أو READY" },
-  { id: "native.food.avg_ticket_minutes", version: "1", valueKind: "number", unit: { kind: "duration", unit: "minutes" }, aggregation: "average", comparison: "none", sourceCategory: "derived", semanticIntent: "متوسط الزمن من فتح التذكرة حتى ready_at للتذاكر التي وصلت إلى الجاهزية" },
+  { id: "native.food.avg_ticket_minutes", version: "1", valueKind: "number", unit: { kind: "duration", unit: "minutes" }, aggregation: "average", comparison: "none", sourceCategory: "derived", semanticIntent: "متوسط الزمن من فتح التذكرة حتى ready_at" },
   { id: "native.food.kitchen_attention_count", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "تذاكر المطبخ النشطة ذات أولوية HIGH أو URGENT" },
   { id: "native.food.ingredient_stock_out_count", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "derived", semanticIntent: "مكونات مستخدمة في وصفات نشطة ذات مخزون صفري" },
   { id: "native.food.ingredient_low_stock_count", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "derived", semanticIntent: "مكونات وصفات نشطة عند أو تحت حد المخزون المنخفض" },
@@ -219,19 +164,19 @@ const foodDefinitions = [
 
 const hospitalityDefinitions = [
   { id: "native.hotel.total_rooms", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "إجمالي الغرف في جميع المنشآت الفندقية النشطة للمنظمة" },
-  { id: "native.hotel.occupied_rooms", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "إجمالي الغرف الحالية ذات حالة OCCUPIED عبر جميع المنشآت" },
-  { id: "native.hotel.occupancy", version: "1", valueKind: "number", unit: { kind: "percentage" }, aggregation: "ratio", comparison: "none", sourceCategory: "derived", semanticIntent: "sum occupied rooms / sum total rooms عبر المنظمة، وليس متوسط نسب المنشآت" },
-  { id: "native.hotel.room_revenue_today", version: "1", valueKind: "number", unit: { kind: "money", currency: "workspace" }, aggregation: "sum", comparison: "none", sourceCategory: "derived", semanticIntent: "رسوم الغرف المنشورة في اليوم المحلي للمنشأة، وتعرض فقط عندما يكون السياق الزمني والعملة قابلين للتوحيد بأمان" },
-  { id: "native.hotel.in_house_stays", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "الإقامات الحالية IN_HOUSE عبر المنشآت النشطة" },
+  { id: "native.hotel.occupied_rooms", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "إجمالي الغرف الحالية ذات حالة OCCUPIED" },
+  { id: "native.hotel.occupancy", version: "1", valueKind: "number", unit: { kind: "percentage" }, aggregation: "ratio", comparison: "none", sourceCategory: "derived", semanticIntent: "sum occupied rooms / sum total rooms عبر المنظمة" },
+  { id: "native.hotel.room_revenue_today", version: "1", valueKind: "number", unit: { kind: "money", currency: "workspace" }, aggregation: "sum", comparison: "none", sourceCategory: "derived", semanticIntent: "رسوم الغرف المنشورة في اليوم المحلي عندما يمكن توحيد الزمن والعملة بأمان" },
+  { id: "native.hotel.in_house_stays", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "الإقامات الحالية IN_HOUSE" },
   { id: "native.hotel.housekeeping_active", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "مهام التنظيف الحالية غير المكتملة" },
-  { id: "native.hotel.housekeeping_blocked", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "مهام التنظيف الحالية ذات حالة BLOCKED" },
-  { id: "native.hotel.maintenance_active", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "طلبات الصيانة الحالية OPEN أو ASSIGNED أو IN_PROGRESS" },
-  { id: "native.hotel.maintenance_emergency", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "طلبات الصيانة الحالية ذات أولوية EMERGENCY" },
-  { id: "native.hotel.maintenance_high", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "طلبات الصيانة الحالية ذات أولوية HIGH" },
+  { id: "native.hotel.housekeeping_blocked", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "مهام التنظيف الحالية BLOCKED" },
+  { id: "native.hotel.maintenance_active", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "طلبات الصيانة المفتوحة الحالية" },
+  { id: "native.hotel.maintenance_emergency", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "طلبات الصيانة الحالية EMERGENCY" },
+  { id: "native.hotel.maintenance_high", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "طلبات الصيانة الحالية HIGH" },
 ] as const satisfies readonly MetricDefinition[];
 
 const sharedDefinitions = [
-  { id: "native.tasks.overdue", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "المهام المفتوحة التي تجاوز due_at الآن" },
+  { id: "native.tasks.overdue", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "المهام المفتوحة التي تجاوزت due_at" },
   { id: "native.tasks.high_urgent_overdue", version: "1", valueKind: "integer", unit: { kind: "count" }, aggregation: "snapshot", comparison: "none", sourceCategory: "madar_native", semanticIntent: "المهام المتأخرة ذات أولوية high أو urgent" },
 ] as const satisfies readonly MetricDefinition[];
 
@@ -243,9 +188,7 @@ export const nativeOverviewMetricRegistry = createMetricRegistry([
 ]);
 
 export function nativeCoreModule(vertical: NativeVertical) {
-  if (vertical === "food_service") return "restaurant";
-  if (vertical === "hospitality") return "hotel";
-  return "sales";
+  return vertical === "food_service" ? "restaurant" : vertical === "hospitality" ? "hotel" : "sales";
 }
 
 export function nativeSetupRequired(context: NativeOverviewContext) {
@@ -262,9 +205,9 @@ function cumulativePeriod(start: string, calculatedAt: string): MetricPeriod {
   const from = isoInstant(start, "NATIVE_INVALID_ORGANIZATION_START");
   const calculated = Date.parse(calculatedAt);
   if (!Number.isFinite(calculated)) throw new Error("NATIVE_INVALID_CALCULATED_AT");
-  const to = new Date(calculated + 1).toISOString();
-  if (Date.parse(from) >= Date.parse(to)) throw new Error("NATIVE_INVALID_CUMULATIVE_PERIOD");
-  return Object.freeze({ fromInclusive: from, toExclusive: to, timezone: "UTC" });
+  const toExclusive = new Date(calculated + 1).toISOString();
+  if (Date.parse(from) >= Date.parse(toExclusive)) throw new Error("NATIVE_INVALID_CUMULATIVE_PERIOD");
+  return Object.freeze({ fromInclusive: from, toExclusive, timezone: "UTC" });
 }
 
 function snapshotPeriod(calculatedAt: string): MetricPeriod {
@@ -273,15 +216,10 @@ function snapshotPeriod(calculatedAt: string): MetricPeriod {
 }
 
 function localDate(instant: string, timezone: string) {
-  const parsed = new Date(isoInstant(instant, "NATIVE_INVALID_CALCULATED_AT"));
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(parsed);
-  const pick = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value;
-  const year = pick("year"), month = pick("month"), day = pick("day");
+  const date = new Date(isoInstant(instant, "NATIVE_INVALID_CALCULATED_AT"));
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value;
+  const year = value("year"), month = value("month"), day = value("day");
   if (!year || !month || !day) throw new Error("NATIVE_INVALID_LOCAL_DATE");
   return `${year}-${month}-${day}`;
 }
@@ -291,10 +229,11 @@ function localTodayPeriod(calculatedAt: string, timezone: string) {
   return metricPeriodFromDateSelection({ fromDate: date, toDateInclusive: date, timezone });
 }
 
-function moneyDefinition(metricId: string, currency: string | null) {
+function moneyDefinition(metricId: string, currency: string | null): MetricDefinition {
   const base = nativeOverviewMetricRegistry.require(metricId);
   if (!currency || base.unit.kind !== "money") return base;
-  return Object.freeze({ ...base, unit: { kind: "money", currency: { code: currency } } }) satisfies MetricDefinition;
+  const unit: MetricUnitDefinition = { kind: "money", currency: { code: currency } };
+  return Object.freeze({ ...base, unit });
 }
 
 function normalizedMetric(input: {
@@ -309,9 +248,7 @@ function normalizedMetric(input: {
   availability?: MetricAvailability;
   coverage?: { state: "complete" | "partial"; ratio?: number; reason?: string };
 }) {
-  const definition = input.currency
-    ? moneyDefinition(input.id, input.currency)
-    : nativeOverviewMetricRegistry.require(input.id);
+  const definition = input.currency ? moneyDefinition(input.id, input.currency) : nativeOverviewMetricRegistry.require(input.id);
   return normalizeMetricResult({
     definition,
     adapter: {
@@ -329,8 +266,8 @@ function normalizedMetric(input: {
 }
 
 function latestDataAsOf(rows: readonly NativeMoneyBucket[]) {
-  const timestamps = rows.map((row) => row.dataAsOf).filter((value): value is string => Boolean(value)).map(Date.parse).filter(Number.isFinite);
-  return timestamps.length ? new Date(Math.max(...timestamps)).toISOString() : null;
+  const values = rows.map((row) => row.dataAsOf).filter((value): value is string => Boolean(value)).map(Date.parse).filter(Number.isFinite);
+  return values.length ? new Date(Math.max(...values)).toISOString() : null;
 }
 
 function collapseMoney(rows: readonly NativeMoneyBucket[], workspaceCurrency: string) {
@@ -339,74 +276,45 @@ function collapseMoney(rows: readonly NativeMoneyBucket[], workspaceCurrency: st
   return { value: null, currency: null, currencies: rows.map((row) => row.currency).sort(), dataAsOf: latestDataAsOf(rows), safe: false };
 }
 
-function sampleNames(items: readonly NativeStockItem[]) {
-  return items.map((item) => item.name);
-}
-
-function taskAttention(context: NativeOverviewContext, data: NativeDashboardData, calculatedAt: string, current: NativeMetricView[], attention: NativeAttentionItem[]) {
-  if (!context.enabledModules.includes("tasks")) return;
-  if (data.tasks.failed || !data.tasks.data) return;
-  const tasks = data.tasks.data;
-  const period = snapshotPeriod(calculatedAt);
-  current.push({
-    label: "المهام المتأخرة",
-    timeContext: "حاليًا",
-    href: "/workspace/tasks",
-    result: normalizedMetric({ id: "native.tasks.overdue", value: tasks.overdueCount, period, calculatedAt, workspaceCurrency: context.currency, dataAsOf: tasks.dataAsOf, source: "business_tasks" }),
-  });
-  if (tasks.overdueCount > 0) {
-    attention.push({
-      severity: "attention",
-      title: tasks.highUrgentOverdueCount > 0 ? `${tasks.highUrgentOverdueCount} مهام عالية/عاجلة متأخرة` : `${tasks.overdueCount} مهام متأخرة`,
-      description: "المهمة تصبح Attention لأنها تجاوزت due_at وهي ما تزال مفتوحة؛ الأولوية العالية أو العاجلة ترفع أولوية المتابعة ولا تتحول تلقائيًا إلى Critical.",
-      href: "/workspace/tasks",
-      samples: tasks.overdueSample.map((task) => task.title),
-    });
-  }
-}
-
-function emptyModel(context: NativeOverviewContext, data: NativeDashboardData): NativeOverviewModel {
+function baseModel(context: NativeOverviewContext, data: NativeDashboardData): NativeOverviewModel {
+  const tasksFailed = context.enabledModules.includes("tasks") && data.tasks.failed;
   return {
     vertical: context.extension,
     setupRequired: nativeSetupRequired(context),
     coreModule: nativeCoreModule(context.extension),
     isFirstUse: false,
-    isPartial: data.facts.failed || (context.enabledModules.includes("tasks") && data.tasks.failed),
-    failedSources: [data.facts.failed ? "vertical_facts" : null, context.enabledModules.includes("tasks") && data.tasks.failed ? "tasks" : null].filter((value): value is string => Boolean(value)),
+    isPartial: data.facts.failed || tasksFailed,
+    failedSources: [data.facts.failed ? "vertical_facts" : null, tasksFailed ? "tasks" : null].filter((value): value is string => Boolean(value)),
     primary: [], current: [], supporting: [], critical: [], attention: [], notices: [],
   };
 }
 
-function buildCommerce(context: NativeOverviewContext, data: NativeDashboardData, facts: NativeCommerceFacts, calculatedAt: string) {
-  const model = emptyModel(context, data);
-  const primary: NativeMetricView[] = [];
-  const current: NativeMetricView[] = [];
-  const supporting: NativeMetricView[] = [];
-  const critical: NativeAttentionItem[] = [];
-  const attention: NativeAttentionItem[] = [];
-  const notices: NativeStatusNotice[] = [];
-  const cumulative = cumulativePeriod(data.organizationCreatedAt!, calculatedAt);
-  const snapshot = snapshotPeriod(calculatedAt);
+function taskAttention(context: NativeOverviewContext, data: NativeDashboardData, calculatedAt: string, current: NativeMetricView[], attention: NativeAttentionItem[]) {
+  if (!context.enabledModules.includes("tasks") || data.tasks.failed || !data.tasks.data) return;
+  const tasks = data.tasks.data;
+  current.push({
+    label: "المهام المتأخرة", timeContext: "حاليًا", href: "/workspace/tasks",
+    result: normalizedMetric({ id: "native.tasks.overdue", value: tasks.overdueCount, period: snapshotPeriod(calculatedAt), calculatedAt, workspaceCurrency: context.currency, dataAsOf: tasks.dataAsOf, source: "business_tasks" }),
+  });
+  if (tasks.overdueCount > 0) attention.push({
+    severity: "attention",
+    title: tasks.highUrgentOverdueCount > 0 ? `${tasks.highUrgentOverdueCount} مهام عالية/عاجلة متأخرة` : `${tasks.overdueCount} مهام متأخرة`,
+    description: "المهمة تصبح Attention لأنها تجاوزت due_at وهي ما تزال مفتوحة؛ الأولوية العالية أو العاجلة ترفع أولوية المتابعة ولا تصبح Critical تلقائيًا.",
+    href: "/workspace/tasks",
+    samples: tasks.overdueSample.map((task) => task.title),
+  });
+}
+
+function buildCommerce(context: NativeOverviewContext, data: NativeDashboardData, facts: NativeCommerceFacts, calculatedAt: string): NativeOverviewModel {
+  const model = baseModel(context, data), primary: NativeMetricView[] = [], current: NativeMetricView[] = [], supporting: NativeMetricView[] = [], critical: NativeAttentionItem[] = [], attention: NativeAttentionItem[] = [], notices: NativeStatusNotice[] = [];
+  const cumulative = cumulativePeriod(data.organizationCreatedAt!, calculatedAt), snapshot = snapshotPeriod(calculatedAt);
+  const salesCount = facts.salesByCurrency.reduce((sum, item) => sum + item.completedSalesCount, 0);
 
   if (context.enabledModules.includes("sales")) {
-    const salesCount = facts.salesByCurrency.reduce((sum, item) => sum + item.completedSalesCount, 0);
-    const salesMoney = collapseMoney(facts.salesByCurrency, context.currency);
-    primary.push({
-      label: "عمليات البيع المكتملة",
-      timeContext: "تراكمي",
-      href: "/workspace/sales",
-      result: normalizedMetric({ id: "native.commerce.completed_sales_count", value: salesCount, period: cumulative, calculatedAt, workspaceCurrency: context.currency, dataAsOf: latestDataAsOf(facts.salesByCurrency), source: "business_sales" }),
-    });
-    if (salesMoney.safe) {
-      primary.unshift({
-        label: "المبيعات",
-        timeContext: "تراكمي",
-        href: "/workspace/sales",
-        result: normalizedMetric({ id: "native.commerce.sales_amount", value: salesMoney.value, period: cumulative, calculatedAt, workspaceCurrency: context.currency, dataAsOf: salesMoney.dataAsOf, source: "business_sales", currency: salesMoney.currency }),
-      });
-    } else {
-      notices.push({ tone: "warning", title: "المبيعات موزعة على أكثر من عملة", description: `العملات الموجودة: ${salesMoney.currencies.join("، ")}. لا تجمع مَدار هذه القيم ولا تنفذ تحويل FX ضمن النظرة العامة.`, href: "/workspace/sales" });
-    }
+    const sales = collapseMoney(facts.salesByCurrency, context.currency);
+    if (sales.safe) primary.push({ label: "المبيعات", timeContext: "تراكمي", href: "/workspace/sales", result: normalizedMetric({ id: "native.commerce.sales_amount", value: sales.value, period: cumulative, calculatedAt, workspaceCurrency: context.currency, dataAsOf: sales.dataAsOf, source: "business_sales", currency: sales.currency }) });
+    else notices.push({ tone: "warning", title: "المبيعات موزعة على أكثر من عملة", description: `العملات الموجودة: ${sales.currencies.join("، ")}. لا تجمع مَدار هذه القيم ولا تنفذ FX ضمن النظرة العامة.`, href: "/workspace/sales" });
+    primary.push({ label: "عمليات البيع المكتملة", timeContext: "تراكمي", href: "/workspace/sales", result: normalizedMetric({ id: "native.commerce.completed_sales_count", value: salesCount, period: cumulative, calculatedAt, workspaceCurrency: context.currency, dataAsOf: latestDataAsOf(facts.salesByCurrency), source: "business_sales" }) });
 
     const cogs = collapseMoney(facts.cogsByCurrency, context.currency);
     if (cogs.safe) supporting.push({ label: "تكلفة المبيعات المكتملة", timeContext: "تراكمي", href: "/workspace/sales", result: normalizedMetric({ id: "native.commerce.cogs", value: cogs.value, period: cumulative, calculatedAt, workspaceCurrency: context.currency, dataAsOf: cogs.dataAsOf, source: "business_sale_items", currency: cogs.currency }) });
@@ -425,35 +333,20 @@ function buildCommerce(context: NativeOverviewContext, data: NativeDashboardData
 
   if (context.enabledModules.includes("inventory")) {
     const inventory = facts.inventory;
-    current.push({
-      label: "قيمة المخزون",
-      timeContext: "حاليًا",
-      href: "/workspace/inventory",
-      detail: "تكلفة الصنف في Native Commerce تُخزن دون حقل عملة مستقل؛ لذلك تُقرأ بعقد عملة المساحة نفسها.",
-      result: normalizedMetric({ id: "native.commerce.inventory_value", value: inventory.inventoryValue, period: snapshot, calculatedAt, workspaceCurrency: context.currency, dataAsOf: inventory.dataAsOf, source: "business_products", currency: context.currency }),
-    });
+    current.push({ label: "قيمة المخزون", timeContext: "حاليًا", href: "/workspace/inventory", detail: "تكلفة الصنف في Native Commerce لا تحمل حقل عملة مستقلًا؛ لذلك تتبع عملة مساحة Native.", result: normalizedMetric({ id: "native.commerce.inventory_value", value: inventory.inventoryValue, period: snapshot, calculatedAt, workspaceCurrency: context.currency, dataAsOf: inventory.dataAsOf, source: "business_products", currency: context.currency }) });
     normalizedMetric({ id: "native.commerce.stock_out_count", value: inventory.stockOutCount, period: snapshot, calculatedAt, workspaceCurrency: context.currency, dataAsOf: inventory.dataAsOf, source: "business_products" });
     normalizedMetric({ id: "native.commerce.low_stock_count", value: inventory.lowStockCount, period: snapshot, calculatedAt, workspaceCurrency: context.currency, dataAsOf: inventory.dataAsOf, source: "business_products" });
-    if (inventory.stockOutCount > 0) critical.push({ severity: "critical", title: `${inventory.stockOutCount} أصناف نفد مخزونها`, description: "stock_quantity = 0 حقيقة تشغيلية تمنع البيع من المخزون الحالي.", href: "/workspace/inventory", samples: sampleNames(inventory.stockOutSample) });
-    if (inventory.lowStockCount > 0) attention.push({ severity: "attention", title: `${inventory.lowStockCount} أصناف عند حد المخزون المنخفض`, description: "التصنيف يستخدم low_stock_threshold المخزنة للصنف نفسه؛ لا توجد عتبة عامة مخترعة.", href: "/workspace/inventory", samples: sampleNames(inventory.lowStockSample) });
+    if (inventory.stockOutCount > 0) critical.push({ severity: "critical", title: `${inventory.stockOutCount} أصناف نفد مخزونها`, description: "stock_quantity = 0 حقيقة تشغيلية تمنع البيع من المخزون الحالي.", href: "/workspace/inventory", samples: inventory.stockOutSample.map((item) => item.name) });
+    if (inventory.lowStockCount > 0) attention.push({ severity: "attention", title: `${inventory.lowStockCount} أصناف عند حد المخزون المنخفض`, description: "التصنيف يستخدم low_stock_threshold المخزنة للصنف نفسه؛ لا توجد عتبة عامة مخترعة.", href: "/workspace/inventory", samples: inventory.lowStockSample.map((item) => item.name) });
   }
 
   taskAttention(context, data, calculatedAt, current, attention);
-  const salesCount = facts.salesByCurrency.reduce((sum, item) => sum + item.completedSalesCount, 0);
-  const isFirstUse = facts.inventory.activeProductCount === 0 && salesCount === 0;
-  return Object.freeze({ ...model, isFirstUse, primary: Object.freeze(primary), current: Object.freeze(current), supporting: Object.freeze(supporting), critical: Object.freeze(critical), attention: Object.freeze(attention), notices: Object.freeze(notices) });
+  return Object.freeze({ ...model, isFirstUse: facts.inventory.activeProductCount === 0 && salesCount === 0, primary: Object.freeze(primary), current: Object.freeze(current), supporting: Object.freeze(supporting), critical: Object.freeze(critical), attention: Object.freeze(attention), notices: Object.freeze(notices) });
 }
 
-function buildFood(context: NativeOverviewContext, data: NativeDashboardData, facts: NativeFoodFacts, calculatedAt: string) {
-  const model = emptyModel(context, data);
-  const primary: NativeMetricView[] = [];
-  const current: NativeMetricView[] = [];
-  const supporting: NativeMetricView[] = [];
-  const critical: NativeAttentionItem[] = [];
-  const attention: NativeAttentionItem[] = [];
-  const notices: NativeStatusNotice[] = [];
-  const cumulative = cumulativePeriod(data.organizationCreatedAt!, calculatedAt);
-  const snapshot = snapshotPeriod(calculatedAt);
+function buildFood(context: NativeOverviewContext, data: NativeDashboardData, facts: NativeFoodFacts, calculatedAt: string): NativeOverviewModel {
+  const model = baseModel(context, data), primary: NativeMetricView[] = [], current: NativeMetricView[] = [], supporting: NativeMetricView[] = [], critical: NativeAttentionItem[] = [], attention: NativeAttentionItem[] = [], notices: NativeStatusNotice[] = [];
+  const cumulative = cumulativePeriod(data.organizationCreatedAt!, calculatedAt), snapshot = snapshotPeriod(calculatedAt);
 
   if (context.enabledModules.includes("restaurant")) {
     primary.push(
@@ -465,28 +358,22 @@ function buildFood(context: NativeOverviewContext, data: NativeDashboardData, fa
     supporting.push({ label: "تكلفة المكونات", timeContext: "تراكمي", href: "/workspace/restaurant", result: normalizedMetric({ id: "native.food.ingredient_cost", value: facts.ingredientCost, period: cumulative, calculatedAt, workspaceCurrency: context.currency, dataAsOf: facts.ordersDataAsOf, source: "restaurant_orders", currency: context.currency }) });
     if (facts.kitchen.averageTicketMinutes !== null) supporting.push({ label: "متوسط زمن التجهيز", timeContext: "تراكمي", href: "/workspace/restaurant", detail: "من opened_at إلى ready_at فقط؛ لا يستخدم join مع الطلبات لحساب الإيراد.", result: normalizedMetric({ id: "native.food.avg_ticket_minutes", value: facts.kitchen.averageTicketMinutes, period: cumulative, calculatedAt, workspaceCurrency: context.currency, dataAsOf: facts.kitchen.dataAsOf, source: "restaurant_kitchen_tickets" }) });
     normalizedMetric({ id: "native.food.kitchen_attention_count", value: facts.kitchen.attentionCount, period: snapshot, calculatedAt, workspaceCurrency: context.currency, dataAsOf: facts.kitchen.dataAsOf, source: "restaurant_kitchen_tickets" });
-    if (facts.kitchen.attentionCount > 0) attention.push({ severity: "attention", title: `${facts.kitchen.attentionCount} تذاكر مطبخ عالية/عاجلة`, description: "فقط HIGH وURGENT ضمن NEW/PREPARING/READY تحتاج إبرازًا؛ الحالات التشغيلية العادية لا تتحول إلى Alerts.", href: "/workspace/restaurant", samples: facts.kitchen.attentionSample.map((ticket) => ticket.ticketNumber) });
+    if (facts.kitchen.attentionCount > 0) attention.push({ severity: "attention", title: `${facts.kitchen.attentionCount} تذاكر مطبخ عالية/عاجلة`, description: "فقط HIGH وURGENT ضمن NEW/PREPARING/READY تحتاج إبرازًا؛ الحالات التشغيلية العادية لا تتحول إلى Alerts.", href: "/workspace/restaurant", samples: facts.kitchen.attentionSample.map((item) => item.ticketNumber) });
   }
 
   if (context.enabledModules.includes("inventory")) {
     normalizedMetric({ id: "native.food.ingredient_stock_out_count", value: facts.ingredients.stockOutCount, period: snapshot, calculatedAt, workspaceCurrency: context.currency, dataAsOf: facts.ingredients.dataAsOf, source: "restaurant_recipe_ingredients+business_products" });
     normalizedMetric({ id: "native.food.ingredient_low_stock_count", value: facts.ingredients.lowStockCount, period: snapshot, calculatedAt, workspaceCurrency: context.currency, dataAsOf: facts.ingredients.dataAsOf, source: "restaurant_recipe_ingredients+business_products" });
-    if (facts.ingredients.stockOutCount > 0) critical.push({ severity: "critical", title: `${facts.ingredients.stockOutCount} مكونات وصفات نفد مخزونها`, description: "يقتصر الفحص على المنتجات المستخدمة فعليًا في وصفات نشطة؛ stock_quantity = 0 يمكن أن يمنع تشغيل الوجبات.", href: "/workspace/inventory", samples: sampleNames(facts.ingredients.stockOutSample) });
-    if (facts.ingredients.lowStockCount > 0) attention.push({ severity: "attention", title: `${facts.ingredients.lowStockCount} مكونات عند حد المخزون المنخفض`, description: "يعتمد التصنيف على low_stock_threshold الخاصة بكل مكوّن.", href: "/workspace/inventory", samples: sampleNames(facts.ingredients.lowStockSample) });
+    if (facts.ingredients.stockOutCount > 0) critical.push({ severity: "critical", title: `${facts.ingredients.stockOutCount} مكونات وصفات نفد مخزونها`, description: "يقتصر الفحص على المنتجات المستخدمة فعليًا في وصفات نشطة؛ stock_quantity = 0 يمكن أن يمنع تشغيل الوجبات.", href: "/workspace/inventory", samples: facts.ingredients.stockOutSample.map((item) => item.name) });
+    if (facts.ingredients.lowStockCount > 0) attention.push({ severity: "attention", title: `${facts.ingredients.lowStockCount} مكونات عند حد المخزون المنخفض`, description: "يعتمد التصنيف على low_stock_threshold الخاصة بكل مكوّن.", href: "/workspace/inventory", samples: facts.ingredients.lowStockSample.map((item) => item.name) });
   }
 
   taskAttention(context, data, calculatedAt, current, attention);
   return Object.freeze({ ...model, isFirstUse: facts.orderCount === 0 && facts.recipeCount === 0, primary: Object.freeze(primary), current: Object.freeze(current), supporting: Object.freeze(supporting), critical: Object.freeze(critical), attention: Object.freeze(attention), notices: Object.freeze(notices) });
 }
 
-function buildHospitality(context: NativeOverviewContext, data: NativeDashboardData, facts: NativeHospitalityFacts, calculatedAt: string) {
-  const model = emptyModel(context, data);
-  const primary: NativeMetricView[] = [];
-  const current: NativeMetricView[] = [];
-  const supporting: NativeMetricView[] = [];
-  const critical: NativeAttentionItem[] = [];
-  const attention: NativeAttentionItem[] = [];
-  const notices: NativeStatusNotice[] = [];
+function buildHospitality(context: NativeOverviewContext, data: NativeDashboardData, facts: NativeHospitalityFacts, calculatedAt: string): NativeOverviewModel {
+  const model = baseModel(context, data), primary: NativeMetricView[] = [], current: NativeMetricView[] = [], supporting: NativeMetricView[] = [], critical: NativeAttentionItem[] = [], attention: NativeAttentionItem[] = [], notices: NativeStatusNotice[] = [];
   const snapshot = snapshotPeriod(calculatedAt);
 
   if (context.enabledModules.includes("hotel")) {
@@ -495,33 +382,14 @@ function buildHospitality(context: NativeOverviewContext, data: NativeDashboardD
       { label: "الغرف المشغولة", timeContext: "حاليًا", href: "/workspace/hotel", result: normalizedMetric({ id: "native.hotel.occupied_rooms", value: facts.occupiedRooms, period: snapshot, calculatedAt, workspaceCurrency: context.currency, source: "hotel_rooms" }) },
     );
     const occupancy = calculateMetricRatio(facts.occupiedRooms, facts.totalRooms);
-    primary.push({
-      label: "نسبة الإشغال",
-      timeContext: "حاليًا",
-      href: "/workspace/hotel",
-      detail: "sum(occupied_rooms) / sum(total_rooms) عبر كل المنشآت النشطة؛ ليست average لنسب Properties.",
-      result: normalizedMetric({
-        id: "native.hotel.occupancy",
-        value: occupancy.value === null ? null : occupancy.value * 100,
-        period: snapshot,
-        calculatedAt,
-        workspaceCurrency: context.currency,
-        source: "hotel_rooms",
-        availability: occupancy.value === null ? { state: "missing", reason: occupancy.reason ?? "occupancy_unavailable" } : undefined,
-      }),
-    });
+    primary.push({ label: "نسبة الإشغال", timeContext: "حاليًا", href: "/workspace/hotel", detail: "sum(occupied_rooms) / sum(total_rooms) عبر كل المنشآت النشطة؛ ليست average لنسب Properties.", result: normalizedMetric({ id: "native.hotel.occupancy", value: occupancy.value === null ? null : occupancy.value * 100, period: snapshot, calculatedAt, workspaceCurrency: context.currency, source: "hotel_rooms", availability: occupancy.value === null ? { state: "missing", reason: occupancy.reason ?? "occupancy_unavailable" } : undefined }) });
 
-    if (facts.invalidTimezoneCount > 0) {
-      notices.push({ tone: "warning", title: "تعذر توحيد إيراد الغرف اليوم", description: "هناك منشأة واحدة على الأقل تحمل timezone غير صالح؛ لا تعرض مَدار رقم اليوم قبل تصحيح سياق الزمن.", href: "/workspace/hotel" });
-    } else if (facts.propertyTimezones.length > 1) {
-      notices.push({ tone: "info", title: "إيراد اليوم موزع على مناطق زمنية متعددة", description: `المنشآت تستخدم: ${facts.propertyTimezones.join("، ")}. لا تفرض النظرة العامة يومًا عالميًا واحدًا على هذه البيانات.`, href: "/workspace/hotel" });
-    } else if (facts.propertyTimezones.length === 1) {
+    if (facts.invalidTimezoneCount > 0) notices.push({ tone: "warning", title: "تعذر توحيد إيراد الغرف اليوم", description: "هناك منشأة واحدة على الأقل تحمل timezone غير صالح؛ لا تعرض مَدار رقم اليوم قبل تصحيح سياق الزمن.", href: "/workspace/hotel" });
+    else if (facts.propertyTimezones.length > 1) notices.push({ tone: "info", title: "إيراد اليوم موزع على مناطق زمنية متعددة", description: `المنشآت تستخدم: ${facts.propertyTimezones.join("، ")}. لا تفرض النظرة العامة يومًا عالميًا واحدًا على هذه البيانات.`, href: "/workspace/hotel" });
+    else if (facts.propertyTimezones.length === 1) {
       const revenue = collapseMoney(facts.roomRevenueByCurrency, context.currency);
-      if (revenue.safe) {
-        primary.push({ label: "إيراد الغرف", timeContext: "اليوم", href: "/workspace/hotel", detail: `اليوم المحلي للمنشأة: ${facts.propertyTimezones[0]}`, result: normalizedMetric({ id: "native.hotel.room_revenue_today", value: revenue.value, period: localTodayPeriod(calculatedAt, facts.propertyTimezones[0]), calculatedAt, workspaceCurrency: context.currency, dataAsOf: revenue.dataAsOf, source: "hotel_folio_charges+hotel_folios", currency: revenue.currency }) });
-      } else {
-        notices.push({ tone: "warning", title: "إيراد الغرف اليوم متعدد العملات", description: `العملات الموجودة: ${revenue.currencies.join("، ")}. لا يتم جمعها أو تحويلها ضمن Phase 7.`, href: "/workspace/hotel" });
-      }
+      if (revenue.safe) primary.push({ label: "إيراد الغرف", timeContext: "اليوم", href: "/workspace/hotel", detail: `اليوم المحلي للمنشأة: ${facts.propertyTimezones[0]}`, result: normalizedMetric({ id: "native.hotel.room_revenue_today", value: revenue.value, period: localTodayPeriod(calculatedAt, facts.propertyTimezones[0]), calculatedAt, workspaceCurrency: context.currency, dataAsOf: revenue.dataAsOf, source: "hotel_folio_charges+hotel_folios", currency: revenue.currency }) });
+      else notices.push({ tone: "warning", title: "إيراد الغرف اليوم متعدد العملات", description: `العملات الموجودة: ${revenue.currencies.join("، ")}. لا يتم جمعها أو تحويلها ضمن Phase 7.`, href: "/workspace/hotel" });
     }
 
     current.push(
@@ -542,7 +410,7 @@ function buildHospitality(context: NativeOverviewContext, data: NativeDashboardD
 }
 
 export function buildNativeOverviewModel(context: NativeOverviewContext, data: NativeDashboardData, calculatedAt: string): NativeOverviewModel {
-  const base = emptyModel(context, data);
+  const base = baseModel(context, data);
   if (base.setupRequired) return Object.freeze(base);
   if (data.facts.failed || !data.facts.data || !data.organizationCreatedAt) return Object.freeze({ ...base, isPartial: true, failedSources: Object.freeze([...new Set([...base.failedSources, "vertical_facts"])]) });
   if (data.facts.data.kind !== context.extension) return Object.freeze({ ...base, isPartial: true, failedSources: Object.freeze([...new Set([...base.failedSources, "vertical_mismatch"])]) });
