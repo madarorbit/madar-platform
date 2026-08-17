@@ -8,11 +8,13 @@
 
 ## Asset audit and rigging gate
 
-The authoritative repository asset is `public/brand/orby-assistant.svg` at a 256×256 viewBox. Despite its `.svg` extension, it is a container around a single embedded WebP raster image. It is not a layered vector drawing, sprite sheet, Lottie animation, Rive artboard, or bone/mesh rig.
+The authoritative repository master is `public/assets/orby/orby-master.png`. It preserves the approved 1536×1536 source bytes unchanged. The historical filename ends in `.png`, but the authoritative file itself is JPEG data; Phase 3 deliberately does not re-encode or alter it.
+
+`public/brand/orby-assistant.svg` is a compact shell derivative at a 256×256 viewBox. Despite its `.svg` extension, it is a container around one embedded WebP raster image. Neither the master nor the compact derivative is layered vector artwork, a sprite sheet, a Lottie animation, a Rive artboard, or a bone/mesh rig.
 
 Repository and dependency inspection found no `.riv`, Rive dependency, Lottie runtime, Bodymovin source, layered ORBY source, or existing character state machine. Adding a Rive runtime without a real `.riv` asset would add bundle cost without producing real character animation, so Phase 3 intentionally does not do that.
 
-The static authoritative ORBY image remains the honest technical fallback. It is not translated, rotated, bounced, warped, or scaled as a fake substitute for skeletal motion.
+The static authoritative ORBY master remains the honest technical fallback. It is not translated, rotated, bounced, warped, or animated as a fake substitute for skeletal motion.
 
 ## Phase 3B architecture
 
@@ -78,7 +80,7 @@ With `prefers-reduced-motion: reduce`:
 
 The generic Phase 2 panel is replaced by a single ORBY presentation composition:
 
-- authoritative ORBY identity;
+- unchanged authoritative 1536×1536 ORBY master;
 - compact conversational message card;
 - Arabic-first title/message/hint;
 - progress indicator;
@@ -106,4 +108,4 @@ Only real guide completion may request `celebrate`. Dismiss and Skip request `ex
 
 ## Phase 3A blocker
 
-A professional character rig cannot be truthfully authored from the current flat raster inside this repository/tooling alone. The exact handoff contract for the required production rig lives in `docs/orby-guided-learning-rig-contract.md`.
+A professional character rig cannot be truthfully authored from the current flat raster master inside this repository/tooling alone. The exact handoff contract for the required production rig lives in `docs/orby-guided-learning-rig-contract.md`.
