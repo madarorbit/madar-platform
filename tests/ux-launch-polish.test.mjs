@@ -5,12 +5,14 @@ import { readFile } from "node:fs/promises";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("valid sessions refresh automatically and resume the last protected page", async () => {
-  const [proxy, auth, navigation] = await Promise.all([
+  const [proxy, refreshHelper, auth, navigation] = await Promise.all([
     read("proxy.ts"),
+    read("src/lib/auth/session-refresh.ts"),
     read("app/actions/auth.ts"),
     read("components/navigation/NavigationExperience.tsx"),
   ]);
-  assert.match(proxy, /grant_type=refresh_token/);
+  assert.match(proxy, /refreshSession\(base,key,refresh\)/);
+  assert.match(refreshHelper, /grant_type=refresh_token/);
   assert.match(proxy, /madar-refresh-token/);
   assert.match(proxy, /madar-last-path/);
   assert.match(proxy, /loginRedirect\(request\)/);
