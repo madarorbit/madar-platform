@@ -27,11 +27,13 @@ export const ORBY_MOTION_DIRECTIONS = [
 
 export type ORBYMotionDirection = (typeof ORBY_MOTION_DIRECTIONS)[number];
 export type ORBYMotionMode = "animated" | "still";
+export type ORBYLayoutDirection = "rtl" | "ltr";
 
 export type ORBYMotionFrame = Readonly<{
   sequence: number;
   intent: ORBYMotionIntent;
   direction: ORBYMotionDirection;
+  layoutDirection: ORBYLayoutDirection;
   mode: ORBYMotionMode;
   active: boolean;
 }>;
@@ -40,7 +42,7 @@ export type ORBYCharacterPresentationRequest = Readonly<{
   guideIntent?: GuideCharacterIntent;
   guideDirection?: GuideCharacterDirection;
   placement: GuidePhysicalPlacement;
-  pageDirection: "rtl" | "ltr";
+  pageDirection: ORBYLayoutDirection;
   targetState: GuideTargetResolutionState;
   reducedMotion: boolean;
 }>;
