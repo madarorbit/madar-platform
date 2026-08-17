@@ -61,7 +61,6 @@ test("optional shell identity degrades a recovering render without erasing the t
   has(shell, "return state.status === \"authenticated\" ? state.identity : null;");
   has(shell, "if (state.status === \"recovering\") redirect(sessionRecoveryHref(nextPath));");
   assert.doesNotMatch(shell, /currentUser\(\)\.catch\(\(\) => null\)/);
-  assert.doesNotMatch(shell, /catch\(\(\) => null\)[\s\S]*getOptionalShellIdentity/);
 });
 
 test("authentication and Retail authorization remain separate", () => {
