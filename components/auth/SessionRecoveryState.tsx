@@ -41,12 +41,10 @@ export default function SessionRecoveryState({ nextPath }: { nextPath: string })
   const finish = useCallback((result: RecoveryResult) => {
     if (result === "authenticated") {
       router.replace(nextPath);
-      router.refresh();
       return true;
     }
     if (result === "unauthenticated") {
       router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
-      router.refresh();
       return true;
     }
     return false;
