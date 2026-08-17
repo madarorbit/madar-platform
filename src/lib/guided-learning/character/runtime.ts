@@ -2,6 +2,7 @@ import { createORBYMotionPlan } from "./intent-adapter";
 import type {
   ORBYCharacterDriver,
   ORBYCharacterDriverFactory,
+  ORBYLayoutDirection,
   ORBYMotionDirection,
   ORBYMotionFrame,
   ORBYMotionIntent,
@@ -29,6 +30,7 @@ const INITIAL_FRAME: ORBYMotionFrame = {
   sequence: 0,
   intent: "idle",
   direction: "neutral",
+  layoutDirection: "rtl",
   mode: "still",
   active: false,
 };
@@ -67,6 +69,7 @@ export class ORBYCharacterRuntime {
   async present(input: Readonly<{
     intent: ORBYMotionIntent;
     direction: ORBYMotionDirection;
+    layoutDirection: ORBYLayoutDirection;
     reducedMotion: boolean;
   }>): Promise<number> {
     if (this.disposed) return this.sequence;
@@ -75,6 +78,7 @@ export class ORBYCharacterRuntime {
       previous.active &&
       previous.intent === input.intent &&
       previous.direction === input.direction &&
+      previous.layoutDirection === input.layoutDirection &&
       previous.mode === motionMode(input.reducedMotion)
     ) {
       return previous.sequence;
@@ -85,12 +89,12 @@ export class ORBYCharacterRuntime {
     const stages = createORBYMotionPlan(input);
     const entering = !previous.active && !input.reducedMotion;
     if (entering) {
-      this.apply(sequence, "enter", input.direction, "animated", true);
+      this.apply(sequence, "enter", input.direction, input.layoutDirection, "animated", true);
     }
     const offset = entering ? 85 : 0;
     for (const stage of stages) {
       this.schedule(sequence, offset + stage.delayMs, () => {
-        this.apply(sequence, stage.intent, stage.direction, motionMode(input.reducedMotion), true);
+        this.apply(sequence, stage.intent, stage.direction, input.layoutDirection, motionMode(input.reducedMotion), true);
       });
     }
     return sequence;
@@ -101,21 +105,21 @@ export class ORBYCharacterRuntime {
     reducedMotion: boolean,
   ): number {
     const sequence = this.beginSequence();
-    const direction = this.snapshot.frame.direction;
-    this.apply(sequence, intent, direction, motionMode(reducedMotion), true);
+    const frame = this.snapshot.frame;
+    this.apply(sequence, intent, frame.direction, frame.layoutDirection, motionMode(reducedMotion), true);
     return sequence;
   }
 
   exit(input: Readonly<{ reason: "complete" | "dismiss" | "skip" | "interrupt"; reducedMotion: boolean }>): number {
     const sequence = this.beginSequence();
-    const direction = this.snapshot.frame.direction;
+    const frame = this.snapshot.frame;
     // Completion is the only terminal path that may celebrate. Dismiss/skip
     // never imply success.
     if (input.reason === "complete" && !input.reducedMotion) {
-      this.apply(sequence, "celebrate", direction, "animated", true);
-      this.schedule(sequence, 150, () => this.apply(sequence, "exit", direction, "animated", false));
+      this.apply(sequence, "celebrate", frame.direction, frame.layoutDirection, "animated", true);
+      this.schedule(sequence, 150, () => this.apply(sequence, "exit", frame.direction, frame.layoutDirection, "animated", false));
     } else {
-      this.apply(sequence, "exit", direction, motionMode(input.reducedMotion), false);
+      this.apply(sequence, "exit", frame.direction, frame.layoutDirection, motionMode(input.reducedMotion), false);
     }
     return sequence;
   }
@@ -184,11 +188,12 @@ export class ORBYCharacterRuntime {
     sequence: number,
     intent: ORBYMotionIntent,
     direction: ORBYMotionDirection,
+    layoutDirection: ORBYLayoutDirection,
     mode: ORBYMotionMode,
     active: boolean,
   ): void {
     if (sequence !== this.sequence || this.disposed) return;
-    const frame: ORBYMotionFrame = { sequence, intent, direction, mode, active };
+    const frame: ORBYMotionFrame = { sequence, intent, direction, layoutDirection, mode, active };
     this.snapshot = { ...this.snapshot, frame };
     this.driver?.apply(frame);
     this.notify();
