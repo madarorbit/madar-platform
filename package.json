@@ -19,7 +19,7 @@
     "orby:os-smoke": "tsx scripts/run-orby-stage-4-smoke.ts",
     "orby:os-security": "tsx scripts/run-orby-stage-4-security.ts",
     "orby:os-load": "tsx scripts/run-orby-stage-4-load.ts",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --import tsx --test tests/*.test.mjs tests/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.2",
