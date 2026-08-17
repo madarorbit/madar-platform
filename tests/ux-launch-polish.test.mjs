@@ -39,11 +39,12 @@ test("enterprise navigation exposes history controls, breadcrumbs, progress and 
 });
 
 test("account services and business space have focused navigation", async () => {
-  const [accountPage, accountServer, workspaceShell, workspacePage, workspaceNavigation] = await Promise.all([
+  const [accountPage, accountServer, workspaceShell, workspacePage, nativeOverview, workspaceNavigation] = await Promise.all([
     read("app/account/page.tsx"),
     read("src/lib/account/server.ts"),
     read("components/workspace/EnterpriseWorkspaceShell.tsx"),
     read("app/workspace/page.tsx"),
+    read("components/native/NativeDecisionOverview.tsx"),
     read("src/lib/v2/navigation.ts"),
   ]);
   assert.match(accountPage, /getAccountHomeData/);
@@ -52,7 +53,8 @@ test("account services and business space have focused navigation", async () => 
   assert.doesNotMatch(accountPage, /student|طالب/i);
   assert.match(workspaceShell, /workspaceNavigationGroups/);
   assert.match(workspaceNavigation, /لوحة المعلومات/);
-  assert.match(workspacePage, /ملخص مباشر/);
+  assert.match(workspacePage, /NativeDecisionOverview/);
+  assert.match(nativeOverview, /المؤشرات الأساسية لهذا القطاع/);
 });
 
 test("official identity and supplied ORBY artwork are used without a boxed logo placeholder", async () => {
