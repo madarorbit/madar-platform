@@ -32,7 +32,7 @@
   max-width: 7rem;
   object-fit: contain;
   /* No translate/rotate/scale animation here: the authoritative source is a
-     flat raster wrapped by SVG, not a skeletal rig. */
+     flat raster master, not a skeletal rig. */
 }
 
 .md-orby-guide-message {
