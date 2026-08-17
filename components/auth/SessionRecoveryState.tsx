@@ -1,38 +1,78 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-const MAX_AUTOMATIC_RETRIES = 2;
-const RECOVERY_WINDOW_MS = 30_000;
+const MAX_AUTOMATIC_ATTEMPTS = 2;
+const RETRY_DELAYS_MS = [900, 2_200] as const;
+
+type RecoveryResult = "authenticated" | "unauthenticated" | "recovering";
 
 export default function SessionRecoveryState({ nextPath }: { nextPath: string }) {
   const router = useRouter();
-  const storageKey = `madar:auth-recovery:${nextPath}`;
+  const inFlightRef = useRef<Promise<RecoveryResult> | null>(null);
+
+  const recover = useCallback(async (): Promise<RecoveryResult> => {
+    if (inFlightRef.current) return inFlightRef.current;
+    const request = (async () => {
+      try {
+        const response = await fetch("/auth/refresh", {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+        const payload = await response.json().catch(() => null) as { status?: RecoveryResult } | null;
+        if (response.ok && payload?.status === "authenticated") return "authenticated";
+        if (response.status === 401 || payload?.status === "unauthenticated") return "unauthenticated";
+        return "recovering";
+      } catch {
+        return "recovering";
+      }
+    })();
+    inFlightRef.current = request;
+    try {
+      return await request;
+    } finally {
+      if (inFlightRef.current === request) inFlightRef.current = null;
+    }
+  }, []);
+
+  const finish = useCallback((result: RecoveryResult) => {
+    if (result === "authenticated") {
+      router.replace(nextPath);
+      router.refresh();
+      return true;
+    }
+    if (result === "unauthenticated") {
+      router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
+      router.refresh();
+      return true;
+    }
+    return false;
+  }, [nextPath, router]);
 
   useEffect(() => {
+    let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      const now = Date.now();
-      const saved = JSON.parse(sessionStorage.getItem(storageKey) || "null") as
-        | { startedAt?: number; attempts?: number }
-        | null;
-      const withinWindow = Boolean(saved?.startedAt && now - saved.startedAt < RECOVERY_WINDOW_MS);
-      const attempts = withinWindow ? Number(saved?.attempts || 0) : 0;
-      const startedAt = withinWindow ? Number(saved?.startedAt) : now;
-      if (attempts >= MAX_AUTOMATIC_RETRIES) return;
-      sessionStorage.setItem(
-        storageKey,
-        JSON.stringify({ startedAt, attempts: attempts + 1 }),
-      );
-      timer = setTimeout(() => router.refresh(), attempts === 0 ? 900 : 2_200);
-    } catch {
-      timer = setTimeout(() => router.refresh(), 1_200);
-    }
+
+    const run = async (attempt: number) => {
+      const result = await recover();
+      if (cancelled || finish(result)) return;
+      if (attempt + 1 >= MAX_AUTOMATIC_ATTEMPTS) return;
+      timer = setTimeout(() => void run(attempt + 1), RETRY_DELAYS_MS[attempt] ?? 2_200);
+    };
+
+    void run(0);
     return () => {
+      cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [router, storageKey]);
+  }, [finish, recover]);
+
+  const retryManually = async () => {
+    finish(await recover());
+  };
 
   return (
     <main className="md-shell min-h-[70vh] grid place-items-center px-4" id="main-content">
@@ -43,7 +83,7 @@ export default function SessionRecoveryState({ nextPath }: { nextPath: string })
           نعيد الاتصال بحسابك بأمان. لن نسجّل خروجك بسبب انقطاع مؤقت في خدمة التحقق.
         </p>
         <div className="mt-6 flex justify-center">
-          <button type="button" className="md-button md-button-secondary" onClick={() => router.refresh()}>
+          <button type="button" className="md-button md-button-secondary" onClick={retryManually}>
             المحاولة مجددًا
           </button>
         </div>
