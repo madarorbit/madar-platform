@@ -40,7 +40,7 @@ export default function GuidedLearningBoundary({
   const controller = controllerRef.current;
   return (
     <GuidedLearningControllerContext.Provider value={controller}>
-      {children}
+      <div data-madar-guide-app-root className="md-guide-app-root">{children}</div>
       <GuidedLearningHost controller={controller} />
     </GuidedLearningControllerContext.Provider>
   );
