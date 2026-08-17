@@ -121,6 +121,20 @@ test("active contextual-style guide can be dismissed distinctly from skip", asyn
   assert.equal(progress?.skippedAt, undefined);
 });
 
+test("pause and resume preserve the active foreground step", async () => {
+  const { runtime, store } = runtimeFor();
+  await runtime.startGuide(fixtureId, { subject });
+  await runtime.nextStep(subject);
+  const paused = await runtime.pauseGuide(subject);
+  assert.equal(paused.phase, "paused");
+  assert.equal(paused.stepIndex, 1);
+  assert.equal((await store.getProgress(subject, fixtureId))?.status, "in_progress");
+
+  const resumed = await runtime.resumeGuide();
+  assert.equal(resumed.phase, "active");
+  assert.equal(resumed.stepIndex, 1);
+});
+
 test("in-progress state restores the correct step after runtime recreation", async () => {
   const { registry, store, runtime } = runtimeFor();
   await runtime.startGuide(fixtureId, { subject });
